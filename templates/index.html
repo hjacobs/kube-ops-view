@@ -1,8 +1,106 @@
+<!doctype html>
 <html>
     <head>
+        <meta charset="utf-8">
         <title>Kubernetes Operational View</title>
+        <style>* {padding: 0; margin: 0}</style>
     </head>
     <body>
+        <script src="/static/pixi.min.js"></script>
+<script>
+//Create the renderer
+const renderer = PIXI.autoDetectRenderer(256, 256);
+renderer.view.style.position = "absolute";
+renderer.view.style.display = "block";
+renderer.autoResize = true;
+renderer.resize(window.innerWidth, window.innerHeight);
+
+//Add the canvas to the HTML document
+document.body.appendChild(renderer.view);
+
+
+//Create a container object called the `stage`
+const stage = new PIXI.Container();
+
+var graphics = new PIXI.Graphics();
+
+var tooltip = new PIXI.Graphics()
+tooltip.lineStyle(2, 0xaaaaff, 1)
+tooltip.drawRect(0, 0, 200, 400)
+tooltip.visible = false
+graphics.addChild(tooltip)
+
+stage.addChild(graphics);
+
+var clusters = []
+
+function update(clusters) {
+    graphics.clear();
+    graphics.lineStyle(2, 0xaaaaff, 1);
+    var x = 50;
+    for (let cluster of clusters) {
+        var clusterBox = new PIXI.Graphics()
+        clusterBox.x = x
+        clusterBox.y = 50
+        graphics.addChild(clusterBox)
+        clusterBox.interactive = true
+            clusterBox.on('mouseover', function() {
+                var text = new PIXI.Text('cluster', {fill: 0xffffff})
+                tooltip.addChild(text)
+                tooltip.visible = true
+            })
+            clusterBox.on('mouseout', function() {
+                tooltip.visible = false
+            })
+        var innerX = 10;
+        for (let node of cluster.nodes) {
+            var nodeBox = new PIXI.Graphics()
+            nodeBox.x = innerX
+            nodeBox.y = 10
+            nodeBox.lineStyle(2, 0xaaaaff, 1);
+            nodeBox.drawRect(0, 0, 50, 50)
+            nodeBox.lineStyle(2, 0x00ff00, 1);
+            for (var i=0; i<parseInt(node.status.capacity.cpu); i++) {
+                nodeBox.drawRect(5, 5 + i * 8, 5, 5)
+            }
+            var mem = parseInt(node.status.capacity.memory.replace('Ki', ''))
+            console.log(mem)
+            nodeBox.drawRect(10, 5, 5, mem/(1024*512))
+            clusterBox.addChild(nodeBox)
+            var text = new PIXI.Text(node.name + '\n' + node.labels['beta.kubernetes.io/instance-type'], {fontSize: 10, fill: 0xffffff})
+            nodeBox.addChild(text)
+            innerX += nodeBox.width + 5
+        }
+        clusterBox.lineStyle(2, 0xaaaaff, 1);
+        clusterBox.drawRect(0, 0, innerX, 200);
+        x += 250;
+    }
+}
+
+fetch('/kubernetes-clusters')
+  .then(function(response) {
+     return response.json()
+        })
+   .then(function(json) {
+       clusters = json.kubernetes_clusters;
+       update(clusters)
+       console.log(json);
+   });
+
+function state() {
+}
+
+function mainLoop() {
+    requestAnimationFrame(mainLoop);
+
+    state();
+
+    //Tell the `renderer` to `render` the `stage`
+    renderer.render(stage);
+}
+
+mainLoop();
+</script>
     </body>
 
 </html>

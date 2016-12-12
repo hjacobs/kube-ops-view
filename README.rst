@@ -4,6 +4,17 @@ Kubernetes Operational View
 
 Goal: provide a common operational picture for multiple Kubernetes clusters.
 
+Usage
+=====
+
+.. code-block:: bash
+
+    $ pip3 install -r requirements.txt
+    $ kubectl proxy &
+    $ ./app.py
+
+Now direct your browser to http://localhost:8080
+
 
 License
 =======

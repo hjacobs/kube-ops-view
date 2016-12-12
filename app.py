@@ -5,10 +5,12 @@ gevent.monkey.patch_all()
 
 import connexion
 import flask
-from gevent.wsgi import WSGIServer
+import requests
 
 
 app = connexion.App(__name__)
+session = requests.Session()
+
 
 @app.app.route('/')
 def index():
@@ -16,9 +18,16 @@ def index():
 
 
 def get_clusters():
-    pass
+    response = session.get('http://localhost:8001/api/v1/nodes', timeout=5)
+    response.raise_for_status()
+    nodes = []
+    for node in response.json()['items']:
+        print(node)
+        nodes.append({'name': node['metadata']['name'], 'labels': node['metadata']['labels'], 'status': node['status']})
+    return {'kubernetes_clusters': [{'nodes': nodes}]}
+
 
 app.add_api('swagger.yaml')
 
 if __name__ == '__main__':
-    app.run(port=8080, server='gevent')
+    app.run(port=8080, debug=True) #, server='gevent')
