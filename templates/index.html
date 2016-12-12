@@ -24,17 +24,23 @@ const stage = new PIXI.Container();
 
 var graphics = new PIXI.Graphics();
 
-var tooltip = new PIXI.Graphics()
-tooltip.lineStyle(2, 0xaaaaff, 1)
-tooltip.drawRect(0, 0, 200, 400)
-tooltip.visible = false
-graphics.addChild(tooltip)
 
 stage.addChild(graphics);
 
 var clusters = []
 
 function update(clusters) {
+    var tooltip = new PIXI.Graphics()
+    tooltip.lineStyle(2, 0xaaaaff, 1)
+    tooltip.beginFill(0x999999, 0.5)
+    tooltip.drawRect(0, 0, 200, 400)
+    tooltip.endFill()
+    var text = new PIXI.Text('', {fontSize: 12, fill: 0xffffff})
+    text.x = 2
+    text.y = 2
+    tooltip.addChild(text)
+    tooltip.text = text
+    tooltip.visible = false
     graphics.clear();
     graphics.lineStyle(2, 0xaaaaff, 1);
     var x = 50;
@@ -43,38 +49,65 @@ function update(clusters) {
         clusterBox.x = x
         clusterBox.y = 50
         graphics.addChild(clusterBox)
-        clusterBox.interactive = true
-            clusterBox.on('mouseover', function() {
-                var text = new PIXI.Text('cluster', {fill: 0xffffff})
-                tooltip.addChild(text)
-                tooltip.visible = true
-            })
-            clusterBox.on('mouseout', function() {
-                tooltip.visible = false
-            })
         var innerX = 10;
         for (let node of cluster.nodes) {
             var nodeBox = new PIXI.Graphics()
             nodeBox.x = innerX
             nodeBox.y = 10
             nodeBox.lineStyle(2, 0xaaaaff, 1);
+            nodeBox.beginFill(0x999999, 0.5)
             nodeBox.drawRect(0, 0, 50, 50)
+            nodeBox.endFill()
             nodeBox.lineStyle(2, 0x00ff00, 1);
             for (var i=0; i<parseInt(node.status.capacity.cpu); i++) {
                 nodeBox.drawRect(5, 5 + i * 8, 5, 5)
             }
+            nodeBox.interactive = true
+            nodeBox.hitArea = new PIXI.Rectangle(0, 0, 50, 50)
+            nodeBox.on('mouseover', function() {
+                var s = node.name
+                for (let key of Object.keys(node.labels)) {
+                    s += '\n' + key + ': ' + node.labels[key]
+                }
+                tooltip.text.text = s
+                tooltip.x = this.toGlobal(new PIXI.Point(0, 0)).x
+                tooltip.y = this.toGlobal(new PIXI.Point(0,0)).y
+                tooltip.visible = true
+            })
+            nodeBox.on('mouseout', function() {
+                tooltip.visible = false
+            })
             var mem = parseInt(node.status.capacity.memory.replace('Ki', ''))
-            console.log(mem)
-            nodeBox.drawRect(10, 5, 5, mem/(1024*512))
+            nodeBox.drawRect(12, 5, 5, mem/(1024*512))
             clusterBox.addChild(nodeBox)
-            var text = new PIXI.Text(node.name + '\n' + node.labels['beta.kubernetes.io/instance-type'], {fontSize: 10, fill: 0xffffff})
+            var text = new PIXI.Text('', {fontSize: 10, fill: 0xffffff})
             nodeBox.addChild(text)
+
+
+            var px = 20
+            var py = 10
+            for (let pod of node.pods) {
+                var podBox = new PIXI.Graphics()
+                    podBox.x = px
+                    podBox.y = py
+            podBox.lineStyle(2, 0xaaaaff, 1);
+            podBox.beginFill(0x999999, 0.5)
+            podBox.drawRect(0, 0, 10, 10)
+                nodeBox.addChild(podBox)
+                px += 10
+                if (px > 50) {
+                    px = 20
+                    py += 10
+                }
+            }
+
             innerX += nodeBox.width + 5
         }
         clusterBox.lineStyle(2, 0xaaaaff, 1);
         clusterBox.drawRect(0, 0, innerX, 200);
         x += 250;
     }
+    graphics.addChild(tooltip)
 }
 
 fetch('/kubernetes-clusters')
