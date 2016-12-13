@@ -5,6 +5,8 @@ gevent.monkey.patch_all()
 
 import connexion
 import flask
+import logging
+import os
 import requests
 
 
@@ -36,4 +38,9 @@ def get_clusters():
 app.add_api('swagger.yaml')
 
 if __name__ == '__main__':
-    app.run(port=8080, debug=True) #, server='gevent')
+    logging.basicConfig(level=logging.INFO)
+    if os.getenv('DEBUG', False):
+        kwargs = {'debug': True}
+    else:
+        kwargs = {'server': 'gevent'}
+    app.run(port=8080, **kwargs)
