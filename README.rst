@@ -4,6 +4,21 @@ Kubernetes Operational View
 
 Goal: provide a common operational picture for multiple Kubernetes clusters.
 
+* Render nodes and indicate their overall status ("Ready")
+* Show node capacity and resource usage (CPU, memory)
+
+  * Render one "box" per CPU and fill up to sum of pod CPU requests
+  * Render vertical bar for total memory and fill up to sum of pod memory requests
+
+* Render individual pods
+
+  * Indicate pod status by border line color (green: ready/running, yellow: pending, red: error etc)
+  * Show current CPU usage (gather from Heapster) by tinting ("hot" color: high CPU usage)
+  * System pods ("kube-system" namespace) should be grouped together
+
+* Provide tooltip information for nodes and pods
+
+
 Usage
 =====
 
