@@ -56,7 +56,7 @@ function update(clusters) {
             nodeBox.y = 10
             nodeBox.lineStyle(2, 0xaaaaff, 1);
             nodeBox.beginFill(0x999999, 0.5)
-            nodeBox.drawRect(0, 0, 50, 50)
+            nodeBox.drawRect(0, 0, 100, 100)
             nodeBox.endFill()
             nodeBox.lineStyle(2, 0x00ff00, 1);
             for (var i=0; i<parseInt(node.status.capacity.cpu); i++) {
@@ -88,16 +88,22 @@ function update(clusters) {
             var py = 10
             for (let pod of node.pods) {
                 var podBox = new PIXI.Graphics()
-                    podBox.x = px
-                    podBox.y = py
-            podBox.lineStyle(2, 0xaaaaff, 1);
-            podBox.beginFill(0x999999, 0.5)
-            podBox.drawRect(0, 0, 10, 10)
+                podBox.x = px
+                podBox.y = py
+                if (pod.status.phase == 'Running') {
+                    podBox.lineStyle(2, 0xaaffaa, 1);
+                } else if (pod.status.phase == 'Pending') {
+                    podBox.lineStyle(2, 0xffffaa, 1);
+                } else {
+                    podBox.lineStyle(2, 0xff9999, 1);
+                }
+                podBox.beginFill(0x999999, 0.5)
+                podBox.drawRect(0, 0, 10, 10)
                 nodeBox.addChild(podBox)
-                px += 10
+                px += 13
                 if (px > 50) {
                     px = 20
-                    py += 10
+                    py += 13
                 }
             }
 
