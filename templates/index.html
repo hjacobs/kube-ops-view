@@ -186,6 +186,11 @@ class Pod extends PIXI.Graphics {
         } else if (this.pod.status.phase == 'Pending') {
             podBox.lineStyle(2, 0xffffaa, 1);
         } else {
+
+            PIXI.ticker.shared.add(function(t) {
+                var v = Math.sin((PIXI.ticker.shared.lastTime % 1000)/1000.* Math.PI)
+                podBox.tint = PIXI.utils.rgb2hex([1, v, v])
+            })
             podBox.lineStyle(2, 0xff9999, 1);
         }
         podBox.beginFill(0x999999, 0.5)
