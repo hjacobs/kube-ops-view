@@ -181,7 +181,10 @@ class Pod extends PIXI.Graphics {
                 ready = false
             }
         }
-        if (this.pod.status.phase == 'Running' && ready) {
+        if (this.pod.status.phase == 'Succeeded') {
+            // completed Job
+            podBox.lineStyle(2, 0xaaaaff, 1);
+        } else if (this.pod.status.phase == 'Running' && ready) {
             podBox.lineStyle(2, 0xaaffaa, 1);
         } else if (this.pod.status.phase == 'Pending') {
             podBox.lineStyle(2, 0xffffaa, 1);

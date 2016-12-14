@@ -31,7 +31,8 @@ def get_clusters():
     response = session.get('http://localhost:8001/api/v1/pods', timeout=5)
     response.raise_for_status()
     for pod in response.json()['items']:
-        nodes_by_name[pod['spec']['nodeName']]['pods'].append(pod)
+        if 'nodeName' in pod['spec']:
+            nodes_by_name[pod['spec']['nodeName']]['pods'].append(pod)
     return {'kubernetes_clusters': [{'nodes': nodes}]}
 
 
