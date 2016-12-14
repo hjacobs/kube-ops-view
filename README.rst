@@ -18,6 +18,12 @@ Goal: provide a common operational picture for multiple Kubernetes clusters.
 
 * Provide tooltip information for nodes and pods
 
+What it is not:
+
+* It's not a replacement for the `Kubernetes Dashboard`_. The Kubernetes Dashboard is a general purpose UI which allows managing applications.
+* It's not a monitoring solution. Use your preferred monitoring system to alert on production issues.
+* It's not a operation management tool. Kubernetes Operational View does not allow interacting with the actual cluster.
+
 
 Usage
 =====
@@ -46,3 +52,5 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see http://www.gnu.org/licenses/.
+
+.. _Kubernetes Dashboard: https://github.com/kubernetes/dashboard
