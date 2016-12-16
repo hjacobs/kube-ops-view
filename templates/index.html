@@ -183,15 +183,17 @@ class Pod extends PIXI.Graphics {
     }
 
     draw() {
+        // pod.status.containerStatuses might be undefined!
+        const containerStatuses = this.pod.status.containerStatuses || []
         var ready = 0
-        for (let containerStatus of this.pod.status.containerStatuses) {
+        for (let containerStatus of containerStatuses) {
             if (containerStatus.ready) {
                 ready++
             }
         }
-        const allReady = ready >= this.pod.status.containerStatuses.length
+        const allReady = ready >= containerStatuses.length
 
-        var podBox = this
+        const podBox = this
         podBox.interactive = true
         podBox.on('mouseover', function() {
             var filter = new PIXI.filters.ColorMatrixFilter()
@@ -203,8 +205,8 @@ class Pod extends PIXI.Graphics {
                     s += '\n' + key + ': ' + this.pod.metadata.labels[key]
                 }
             }
-            s += '\nReady: ' + ready + '/' + this.pod.status.containerStatuses.length
-            for (let containerStatus of this.pod.status.containerStatuses) {
+            s += '\nReady: ' + ready + '/' + containerStatuses.length
+            for (let containerStatus of containerStatuses) {
                 var key = Object.keys(containerStatus.state)[0]
                 s += '\n' + key
                 if (containerStatus.state[key].reason) {
