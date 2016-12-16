@@ -37,6 +37,18 @@ Usage
 Now direct your browser to http://localhost:8080
 
 
+Supported Browsers
+==================
+
+The UI uses WebGL and ECMAScript 6 features.
+The following browsers are known to work:
+
+* Chrome/Chromium 53.0+
+* Mozilla Firefox 49.0+
+
+See the `ECMAScript 6 Compatibility Table`_ for details on supported browser versions.
+
+
 License
 =======
 
@@ -54,3 +66,4 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see http://www.gnu.org/licenses/.
 
 .. _Kubernetes Dashboard: https://github.com/kubernetes/dashboard
+.. _ECMAScript 6 Compatibility Table: https://kangax.github.io/compat-table/es6/
