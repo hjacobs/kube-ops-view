@@ -72,18 +72,25 @@ class Node extends PIXI.Graphics {
     getResourceUsage() {
         const resources = {}
         for (let key of Object.keys(this.node.status.capacity)) {
-            resources[key] = {'capacity': parseResource(this.node.status.capacity[key]), 'used': 0}
+            resources[key] = {'capacity': parseResource(this.node.status.capacity[key]),
+                              'requested': 0,
+                              'used': 0}
+        }
+        if (this.node.usage) {
+        for (let key of Object.keys(this.node.usage)) {
+            resources[key]['used'] = parseResource(this.node.usage[key])
+        }
         }
         for (let pod of this.node.pods) {
             for (let container of pod.spec.containers) {
                 if (container.resources && container.resources.requests) {
                     for (let key of Object.keys(container.resources.requests)) {
-                        resources[key].used += parseResource(container.resources.requests[key])
+                        resources[key].requested += parseResource(container.resources.requests[key])
                     }
                 }
             }
         }
-        resources['pods'].used = this.node.pods.length
+        resources['pods'].requested = this.node.pods.length
         return resources
     }
     draw () {
@@ -123,17 +130,22 @@ class Node extends PIXI.Graphics {
             nodeBox.tooltip.visible = false
         })
         const resources = this.getResourceUsage()
-        for (var i=0; i<resources.cpu.capacity; i++) {
-            nodeBox.drawRect(5, 105 - i * 5, 5, 5)
-        }
+        const cpuHeight = 80 / resources.cpu.capacity
+        nodeBox.lineStyle(2, 0xaaffaa, 1)
         nodeBox.beginFill(0xaaffaa, 1)
-        nodeBox.drawRect(5, 110 - resources.cpu.used * 5, 5, resources.cpu.used * 5)
+        nodeBox.drawRect(3, 110 - resources.cpu.requested * cpuHeight, 3, resources.cpu.requested * cpuHeight)
+        nodeBox.drawRect(5, 110 - resources.cpu.used * cpuHeight, 5, resources.cpu.used * cpuHeight)
         nodeBox.endFill()
+        nodeBox.lineStyle(2, 0xaaaaaa, 1);
+        for (var i=0; i<resources.cpu.capacity; i++) {
+            nodeBox.drawRect(5, 110 - (i+1) * cpuHeight, 5, cpuHeight)
+        }
 
-        const scale = 1000*1000*200
+        const scale = resources.memory.capacity / 80
         nodeBox.drawRect(14, 110 - resources.memory.capacity/scale, 5, resources.memory.capacity/scale)
         nodeBox.lineStyle(2, 0xaaffaa, 1)
         nodeBox.beginFill(0xaaffaa, 1)
+        nodeBox.drawRect(13, 110 - resources.memory.requested/scale, 3, resources.memory.requested/scale)
         nodeBox.drawRect(15, 110 - resources.memory.used/scale, 3, resources.memory.used/scale)
         nodeBox.endFill()
         var text = new PIXI.Text('', {fontSize: 10, fill: 0xffffff})
@@ -205,6 +217,7 @@ class Pod extends PIXI.Graphics {
                     s += '\n' + key + ': ' + this.pod.metadata.labels[key]
                 }
             }
+            s += '\nStatus: ' + this.pod.status.phase
             s += '\nReady: ' + ready + '/' + containerStatuses.length
             for (let containerStatus of containerStatuses) {
                 var key = Object.keys(containerStatus.state)[0]
@@ -218,6 +231,7 @@ class Pod extends PIXI.Graphics {
             this.tooltip.x = this.toGlobal(new PIXI.Point(10, 10)).x
             this.tooltip.y = this.toGlobal(new PIXI.Point(10, 10)).y
             this.tooltip.visible = true
+            console.log(this.pod)
         })
         podBox.on('mouseout', function() {
             podBox.filters = []

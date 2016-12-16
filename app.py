@@ -20,7 +20,8 @@ def index():
 
 
 def get_clusters():
-    response = session.get('http://localhost:8001/api/v1/nodes', timeout=5)
+    api_server_url = 'http://localhost:8001/'
+    response = session.get('{}/api/v1/nodes'.format(api_server_url), timeout=5)
     response.raise_for_status()
     nodes = []
     nodes_by_name = {}
@@ -33,6 +34,15 @@ def get_clusters():
     for pod in response.json()['items']:
         if 'nodeName' in pod['spec']:
             nodes_by_name[pod['spec']['nodeName']]['pods'].append(pod)
+
+    try:
+        response = session.get('{}/api/v1/namespaces/kube-system/services/heapster/proxy/apis/metrics/v1alpha1/nodes'.format(api_server_url), timeout=5)
+        response.raise_for_status()
+        for metrics in response.json()['items']:
+            nodes_by_name[metrics['metadata']['name']]['usage'] = metrics['usage']
+    except:
+        logging.exception('Failed to get metrics')
+
     return {'kubernetes_clusters': [{'nodes': nodes}]}
 
 
