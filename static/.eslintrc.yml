@@ -15,4 +15,4 @@ rules:
     - error
     - single
   prefer-const:
-    - error
+    - warn

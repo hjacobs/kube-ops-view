@@ -61,7 +61,7 @@ class Node extends PIXI.Graphics {
     }
     getResourceUsage() {
         const resources = {}
-        for (const key of Object.keys(this.node.status.capacity)) {
+        for (var key of Object.keys(this.node.status.capacity)) {
             resources[key] = {
                 'capacity': parseResource(this.node.status.capacity[key]),
                 'requested': 0,
@@ -69,14 +69,14 @@ class Node extends PIXI.Graphics {
             }
         }
         if (this.node.usage) {
-            for (const key of Object.keys(this.node.usage)) {
+            for (var key of Object.keys(this.node.usage)) {
                 resources[key]['used'] = parseResource(this.node.usage[key])
             }
         }
-        for (const pod of this.node.pods) {
-            for (const container of pod.spec.containers) {
+        for (var pod of this.node.pods) {
+            for (var container of pod.spec.containers) {
                 if (container.resources && container.resources.requests) {
-                    for (const key of Object.keys(container.resources.requests)) {
+                    for (var key of Object.keys(container.resources.requests)) {
                         resources[key].requested += parseResource(container.resources.requests[key])
                     }
                 }
@@ -110,7 +110,7 @@ class Node extends PIXI.Graphics {
         topHandle.interactive = true
         topHandle.on('mouseover', function() {
             var s = nodeBox.node.name
-            for (const key of Object.keys(nodeBox.node.labels)) {
+            for (var key of Object.keys(nodeBox.node.labels)) {
                 s += '\n' + key + ': ' + nodeBox.node.labels[key]
             }
             nodeBox.tooltip.text.text = s
@@ -145,7 +145,7 @@ class Node extends PIXI.Graphics {
 
         var px = 24
         var py = 20
-        for (const pod of this.node.pods) {
+        for (var pod of this.node.pods) {
             if (pod.metadata.namespace != 'kube-system') {
                 var podBox = new Pod(pod, this.tooltip)
                 podBox.x = px
@@ -161,7 +161,7 @@ class Node extends PIXI.Graphics {
         }
         var px = 24
         var py = 100
-        for (const pod of this.node.pods) {
+        for (var pod of this.node.pods) {
             if (pod.metadata.namespace == 'kube-system') {
                 var podBox = new Pod(pod, this.tooltip)
                 podBox.x = px
@@ -190,7 +190,7 @@ class Pod extends PIXI.Graphics {
         // pod.status.containerStatuses might be undefined!
         const containerStatuses = this.pod.status.containerStatuses || []
         var ready = 0
-        for (const containerStatus of containerStatuses) {
+        for (var containerStatus of containerStatuses) {
             if (containerStatus.ready) {
                 ready++
             }
@@ -204,14 +204,14 @@ class Pod extends PIXI.Graphics {
             filter.brightness(1.3)
             podBox.filters = [filter]
             var s = this.pod.metadata.name
-            for (const key of Object.keys(this.pod.metadata.labels)) {
+            for (var key of Object.keys(this.pod.metadata.labels)) {
                 if (key !== 'pod-template-hash') {
                     s += '\n' + key + ': ' + this.pod.metadata.labels[key]
                 }
             }
             s += '\nStatus: ' + this.pod.status.phase
             s += '\nReady: ' + ready + '/' + containerStatuses.length
-            for (const containerStatus of containerStatuses) {
+            for (var containerStatus of containerStatuses) {
                 var key = Object.keys(containerStatus.state)[0]
                 s += '\n' + key
                 if (containerStatus.state[key].reason) {
@@ -232,7 +232,7 @@ class Pod extends PIXI.Graphics {
         podBox.lineStyle(2, 0xaaaaaa, 1);
         var i = 0
         var w = 10 / this.pod.spec.containers.length
-        for (const container of this.pod.spec.containers) {
+        for (var container of this.pod.spec.containers) {
             podBox.drawRect(0 + i * w, 0, w, 10)
             i++
         }
@@ -264,13 +264,13 @@ function update(clusters) {
     graphics.removeChildren();
     graphics.lineStyle(2, 0xaaaaff, 1);
     var x = 50;
-    for (const cluster of clusters) {
+    for (var cluster of clusters) {
         var clusterBox = new PIXI.Graphics()
         clusterBox.x = x
         clusterBox.y = 50
         graphics.addChild(clusterBox)
         var rows = [10, 10]
-        for (const node of cluster.nodes) {
+        for (var node of cluster.nodes) {
             var nodeBox = new Node(node, tooltip)
             nodeBox.draw()
             if (nodeBox.isMaster()) {
