@@ -292,7 +292,7 @@ function update(clusters) {
 }
 
 function fetchData() {
-    fetch('/kubernetes-clusters')
+    fetch('kubernetes-clusters')
     .then(function(response) {
         return response.json()
     })
