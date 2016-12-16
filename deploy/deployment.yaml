@@ -1,0 +1,45 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    application: kube-ops-view
+    version: v0.0.1
+  name: kube-ops-view
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      application: kube-ops-view
+  template:
+    metadata:
+      labels:
+        application: kube-ops-view
+        version: v0.0.1
+    spec:
+      containers:
+      - name: service
+        image: hjacobs/kube-ops-view
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 200m
+            memory: 100Mi
+          requests:
+            cpu: 50m
+            memory: 50Mi
+      - name: kubectl
+        image: registry.opensource.zalan.do/teapot/hyperkube:v1.4.7_zalando.0
+        command:
+        - /hyperkube
+        args:
+        - kubectl
+        - proxy
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+          requests:
+            cpu: 25m
+            memory: 25Mi
