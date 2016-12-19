@@ -28,7 +28,6 @@ export default class Cluster extends PIXI.Graphics {
 
 
         for (var pod of this.cluster.unassigned_pods) {
-            console.log(pod)
             var podBox = new Pod(pod, this.tooltip)
             podBox.x = rows[0]
             podBox.y = 20
