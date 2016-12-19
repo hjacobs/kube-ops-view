@@ -15,7 +15,7 @@ module.exports = {
     output: {
         path: path.resolve(pkg.config.buildDir),
         publicPath: DEBUG ? "/" : "./",
-        filename: "app.js"
+        filename: DEBUG ? 'app.js' : 'app-[hash].js'
     },
     node: {
         fs: 'empty'

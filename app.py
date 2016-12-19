@@ -11,8 +11,7 @@ import json
 import requests
 import tokens
 
-from flask import Flask, redirect, url_for, session, request, send_from_directory
-from flask_oauthlib.client import OAuth, OAuthRemoteApp
+from flask import Flask
 from urllib.parse import urljoin
 
 
@@ -29,7 +28,12 @@ tokens.manage('read-only')
 
 @app.route('/')
 def index():
-    return flask.render_template('index.html')
+    app_js = None
+    for entry in os.listdir('static'):
+        if entry.startswith('app'):
+            app_js = entry
+            break
+    return flask.render_template('index.html', app_js=app_js)
 
 
 @app.route('/kubernetes-clusters')
@@ -52,8 +56,8 @@ def get_clusters():
         response.raise_for_status()
         for pod in response.json()['items']:
             obj = {'name': pod['metadata']['name'],
-                    'namespace': pod['metadata']['namespace'],
-                    'labels': pod['metadata'].get('labels', {}), 'status': pod['status'], 'containers': []}
+                   'namespace': pod['metadata']['namespace'],
+                   'labels': pod['metadata'].get('labels', {}), 'status': pod['status'], 'containers': []}
             for cont in pod['spec']['containers']:
                 obj['containers'].append({'name': cont['name'], 'image': cont['image'], 'resources': cont['resources']})
             if 'nodeName' in pod['spec'] and pod['spec']['nodeName'] in nodes_by_name:
@@ -70,7 +74,7 @@ def get_clusters():
             logging.exception('Failed to get metrics')
         clusters.append({'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods})
 
-    return json.dumps({'kubernetes_clusters': clusters}, separators=(',',':'))
+    return json.dumps({'kubernetes_clusters': clusters}, separators=(',', ':'))
 
 
 if __name__ == '__main__':
@@ -79,4 +83,3 @@ if __name__ == '__main__':
     http_server = gevent.wsgi.WSGIServer(('0.0.0.0', port), app)
     logging.info('Listening on {}..'.format(port))
     http_server.serve_forever()
-
