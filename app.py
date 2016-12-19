@@ -30,7 +30,9 @@ def index():
 def get_clusters():
     clusters = []
     for api_server_url in os.getenv('CLUSTERS', DEFAULT_CLUSTERS).split(','):
-        session.headers['Authorization'] = 'Bearer {}'.format(tokens.get('read-only'))
+        if 'localhost' not in api_server_url:
+            # TODO: hacky way of detecting whether we need a token or not
+            session.headers['Authorization'] = 'Bearer {}'.format(tokens.get('read-only'))
         response = session.get(urljoin(api_server_url, '/api/v1/nodes'), timeout=5)
         response.raise_for_status()
         nodes = []
