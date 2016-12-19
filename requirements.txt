@@ -1,3 +1,5 @@
-connexion
+Flask
+Flask-OAuthlib
 gevent
-stups-tokens
+requests
+stups-tokens>=1.0.19
