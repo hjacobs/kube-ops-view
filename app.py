@@ -4,14 +4,15 @@ import gevent.monkey
 gevent.monkey.patch_all()
 
 import flask
+import functools
 import gevent.wsgi
+import json
 import logging
 import os
-import json
 import requests
 import tokens
 
-from flask import Flask, redirect, url_for, session, request, send_from_directory
+from flask import Flask, redirect, url_for
 from flask_oauthlib.client import OAuth, OAuthRemoteApp
 from urllib.parse import urljoin
 
@@ -21,6 +22,56 @@ DEFAULT_CLUSTERS = 'http://localhost:8001/'
 app = Flask(__name__)
 app.debug = os.getenv('DEBUG') == 'true'
 app.secret_key = os.getenv('SECRET_KEY', 'development')
+
+oauth = OAuth(app)
+
+
+class OAuthRemoteAppWithRefresh(OAuthRemoteApp):
+    '''Same as flask_oauthlib.client.OAuthRemoteApp, but always loads client credentials from file.'''
+
+    def __init__(self, oauth, name, **kwargs):
+        # constructor expects some values, so make it happy..
+        kwargs['consumer_key'] = 'not-needed-here'
+        kwargs['consumer_secret'] = 'not-needed-here'
+        OAuthRemoteApp.__init__(self, oauth, name, **kwargs)
+
+    def refresh_credentials(self):
+        with open(os.path.join(os.getenv('CREDENTIALS_DIR', ''), 'authcode-client-id')) as fd:
+            self._consumer_key = fd.read().strip()
+        with open(os.path.join(os.getenv('CREDENTIALS_DIR', ''), 'authcode-client-secret')) as fd:
+            self._consumer_secret = fd.read().strip()
+
+    @property
+    def consumer_key(self):
+        self.refresh_credentials()
+        return self._consumer_key
+
+    @property
+    def consumer_secrect(self):
+        self.refresh_credentials()
+        return self._consumer_secret
+
+
+def authorize(f):
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        if os.getenv('AUTHORIZE_URL') and 'auth_token' not in flask.session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+
+    return wrapper
+
+
+auth = OAuthRemoteAppWithRefresh(
+    oauth,
+    'auth',
+    request_token_url=None,
+    access_token_method='POST',
+    access_token_url=os.getenv('ACCESS_TOKEN_URL'),
+    authorize_url=os.getenv('AUTHORIZE_URL')
+)
+oauth.remote_apps['auth'] = auth
+
 session = requests.Session()
 
 tokens.configure(from_file_only=True)
@@ -28,11 +79,13 @@ tokens.manage('read-only')
 
 
 @app.route('/')
+@authorize
 def index():
     return flask.render_template('index.html')
 
 
 @app.route('/kubernetes-clusters')
+@authorize
 def get_clusters():
     clusters = []
     for api_server_url in os.getenv('CLUSTERS', DEFAULT_CLUSTERS).split(','):
@@ -68,7 +121,40 @@ def get_clusters():
             logging.exception('Failed to get metrics')
         clusters.append({'api_server_url': api_server_url, 'nodes': nodes})
 
-    return json.dumps({'kubernetes_clusters': clusters}, separators=(',',':'))
+    return json.dumps({'kubernetes_clusters': clusters}, separators=(',', ':'))
+
+
+@app.route('/login')
+def login():
+    redirect_uri = urljoin(os.getenv('APP_URL', ''), '/login/authorized')
+    print(redirect_uri)
+    return auth.authorize(callback=redirect_uri)
+
+
+@app.route('/logout')
+def logout():
+    flask.session.pop('auth_token', None)
+    return redirect(url_for('index'))
+
+
+@app.route('/login/authorized')
+@auth.authorized_handler
+def authorized(resp):
+    if resp is None:
+        return 'Access denied: reason=%s error=%s' % (
+            flask.request.args['error'],
+            flask.request.args['error_description']
+        )
+    print(resp)
+    if not isinstance(resp, dict):
+        return 'Invalid auth response'
+    flask.session['auth_token'] = (resp['access_token'], '')
+    return redirect(url_for('index'))
+
+
+@auth.tokengetter
+def get_auth_oauth_token():
+    return flask.session.get('auth_token')
 
 
 if __name__ == '__main__':
@@ -77,4 +163,3 @@ if __name__ == '__main__':
     http_server = gevent.wsgi.WSGIServer(('0.0.0.0', port), app)
     logging.info('Listening on {}..'.format(port))
     http_server.serve_forever()
-
