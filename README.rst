@@ -34,6 +34,8 @@ You can run the app locally:
 
     $ pip3 install -r requirements.txt
     $ kubectl proxy &
+    $ cd app && npm start &
+    $ cd -
     $ ./app.py
 
 Now direct your browser to http://localhost:8080

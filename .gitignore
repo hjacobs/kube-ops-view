@@ -2,3 +2,5 @@ __pycache__
 *.swp
 *.pyc
 .idea/
+**/node_modules/
+static/
