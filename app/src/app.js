@@ -1,3 +1,5 @@
+const PIXI = require('pixi.js')
+
 //Create the renderer
 const renderer = PIXI.autoDetectRenderer(256, 256, {resolution: 2});
 renderer.view.style.position = 'absolute';

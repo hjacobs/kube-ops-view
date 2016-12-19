@@ -1,0 +1,42 @@
+{
+  "name": "kube-ops-view",
+  "version": "1.0.0",
+  "description": "=========================== Kubernetes Operational View ===========================",
+  "main": "src/app.js",
+  "config": {
+    "buildDir": "../static"
+  },
+  "scripts": {
+    "prestart": "npm install",
+    "start": "NODE_ENV=development webpack --watch",
+    "webpack": "webpack -p --config ./webpack.config.js",
+    "build": "NODE_ENV=production npm run webpack",
+    "prewebpack": "npm run clean",
+    "lint": "eslint ./src/**/*.js",
+    "clean": "rimraf $npm_package_config_buildDir && mkdir $npm_package_config_buildDir"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hjacobs/kube-ops-view.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hjacobs/kube-ops-view/issues"
+  },
+  "homepage": "https://github.com/hjacobs/kube-ops-view#readme",
+  "dependencies": {
+    "pixi.js": "^4.3.0"
+  },
+  "devDependencies": {
+    "babel-core": "^6.21.0",
+    "babel-loader": "^6.2.10",
+    "babel-preset-es2015": "^6.18.0",
+    "babel-runtime": "^6.20.0",
+    "brfs": "^1.4.3",
+    "eslint": "^3.12.2",
+    "rimraf": "^2.5.4",
+    "transform-loader": "^0.2.3",
+    "webpack": "^1.14.0"
+  }
+}

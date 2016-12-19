@@ -1,6 +1,6 @@
 FROM alpine:3.4
 
-RUN apk add --no-cache python3 python3-dev alpine-sdk zlib-dev libffi-dev openssl-dev && \
+RUN apk add --no-cache python3 python3-dev alpine-sdk zlib-dev libffi-dev openssl-dev nodejs && \
     python3 -m ensurepip && \
     rm -r /usr/lib/python*/ensurepip && \
     # compile gevent
@@ -16,8 +16,11 @@ RUN pip3 install -r /requirements.txt
 
 COPY app.py /
 COPY templates /templates
-COPY static /static
+COPY app /app
 COPY swagger.yaml /
+
+WORKDIR /app
+RUN npm install && npm run build
 
 WORKDIR /
 CMD /app.py
