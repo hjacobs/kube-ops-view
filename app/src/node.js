@@ -47,6 +47,10 @@ export default class Node extends PIXI.Graphics {
         return PIXI.utils.rgb2hex([r, g, b])
     }
 
+    getBarColor(usage, capacity) {
+        return this.hsvToRgb(0.4 - (0.4 * (usage / capacity)), 0.6, 1)
+    }
+
     getResourceUsage() {
         const resources = {}
         for (var key of Object.keys(this.node.status.capacity)) {
@@ -113,9 +117,9 @@ export default class Node extends PIXI.Graphics {
         const resources = this.getResourceUsage()
         const cpuHeight = 80 / resources.cpu.capacity
         nodeBox.lineStyle(0, 0xaaffaa, 1)
-        nodeBox.beginFill(this.hsvToRgb(0.4 - (0.4 * (resources.cpu.requested / resources.cpu.capacity)), 0.6, 1), 1)
+        nodeBox.beginFill(this.getBarColor(resources.cpu.requested, resources.cpu.capacity), 1)
         nodeBox.drawRect(5, 110 - resources.cpu.requested * cpuHeight, 2.5, resources.cpu.requested * cpuHeight)
-        nodeBox.beginFill(this.hsvToRgb(0.4 - (0.4 * (resources.cpu.used / resources.cpu.capacity)), 0.6, 1), 1)
+        nodeBox.beginFill(this.getBarColor(resources.cpu.used, resources.cpu.capacity), 1)
         nodeBox.drawRect(7.5, 110 - resources.cpu.used * cpuHeight, 2.5, resources.cpu.used * cpuHeight)
         nodeBox.endFill()
         nodeBox.lineStyle(1, 0xaaaaaa, 1);
@@ -126,9 +130,9 @@ export default class Node extends PIXI.Graphics {
         const scale = resources.memory.capacity / 80
         nodeBox.drawRect(14, 110 - resources.memory.capacity/scale, 5, resources.memory.capacity/scale)
         nodeBox.lineStyle(0, 0xaaffaa, 1)
-        nodeBox.beginFill(this.hsvToRgb(0.4 - (0.4 * (resources.memory.requested / resources.memory.capacity)), 0.6, 1), 1)
+        nodeBox.beginFill(this.getBarColor(resources.memory.requested, resources.memory.capacity), 1)
         nodeBox.drawRect(14, 110 - resources.memory.requested/scale, 2.5, resources.memory.requested/scale)
-        nodeBox.beginFill(this.hsvToRgb(0.4 - (0.4 * (resources.memory.used / resources.memory.capacity)), 0.6, 1), 1)
+        nodeBox.beginFill(this.getBarColor(resources.memory.used, resources.memory.capacity), 1)
         nodeBox.drawRect(16.5, 110 - resources.memory.used/scale, 2.5, resources.memory.used/scale)
         nodeBox.endFill()
         var text = new PIXI.Text('', {fontSize: 10, fill: 0xffffff})
