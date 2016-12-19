@@ -43,6 +43,7 @@ def get_clusters():
         response.raise_for_status()
         nodes = []
         nodes_by_name = {}
+        unassigned_pods = []
         for node in response.json()['items']:
             obj = {'name': node['metadata']['name'], 'labels': node['metadata']['labels'], 'status': node['status'], 'pods': []}
             nodes.append(obj)
@@ -50,14 +51,15 @@ def get_clusters():
         response = session.get(urljoin(api_server_url, '/api/v1/pods'), timeout=5)
         response.raise_for_status()
         for pod in response.json()['items']:
-            if 'nodeName' in pod['spec']:
-                obj = {'name': pod['metadata']['name'],
-                       'namespace': pod['metadata']['namespace'],
-                       'labels': pod['metadata']['labels'], 'status': pod['status'], 'containers': []}
-                for cont in pod['spec']['containers']:
-                    obj['containers'].append({'name': cont['name'], 'image': cont['image'], 'resources': cont['resources']})
-                # TODO: filter pod attributes
+            obj = {'name': pod['metadata']['name'],
+                    'namespace': pod['metadata']['namespace'],
+                    'labels': pod['metadata'].get('labels', {}), 'status': pod['status'], 'containers': []}
+            for cont in pod['spec']['containers']:
+                obj['containers'].append({'name': cont['name'], 'image': cont['image'], 'resources': cont['resources']})
+            if 'nodeName' in pod['spec'] and pod['spec']['nodeName'] in nodes_by_name:
                 nodes_by_name[pod['spec']['nodeName']]['pods'].append(obj)
+            else:
+                unassigned_pods.append(obj)
 
         try:
             response = session.get(urljoin(api_server_url, '/api/v1/namespaces/kube-system/services/heapster/proxy/apis/metrics/v1alpha1/nodes'), timeout=5)
@@ -66,7 +68,7 @@ def get_clusters():
                 nodes_by_name[metrics['metadata']['name']]['usage'] = metrics['usage']
         except:
             logging.exception('Failed to get metrics')
-        clusters.append({'api_server_url': api_server_url, 'nodes': nodes})
+        clusters.append({'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods})
 
     return json.dumps({'kubernetes_clusters': clusters}, separators=(',',':'))
 
