@@ -1,6 +1,23 @@
 import Pod from './pod.js'
 const PIXI = require('pixi.js')
 
+// see https://github.com/kubernetes/kubernetes/blob/master/docs/design/resources.md
+const FACTORS = {
+    'm': 1/1000,
+    'K': 1000,
+    'M': Math.pow(1000, 2),
+    'G': Math.pow(1000, 3),
+    'T': Math.pow(1000, 4),
+    'P': Math.pow(1000, 5),
+    'E': Math.pow(1000, 6),
+    'Ki': 1024,
+    'Mi': Math.pow(1024, 2),
+    'Gi': Math.pow(1024, 3),
+    'Ti': Math.pow(1024, 4),
+    'Pi': Math.pow(1024, 5),
+    'Ei': Math.pow(1024, 6)
+}
+
 export default class Node extends PIXI.Graphics {
     constructor (node, tooltip) {
         super()
@@ -13,11 +30,6 @@ export default class Node extends PIXI.Graphics {
     }
 
     parseResource(v) {
-        const FACTORS = {
-            'm': 1/1000,
-            'Ki': 1000,
-            'Mi': 1000 * 1000
-        }
         const match = v.match(/^(\d*)(\D*)$/)
         const factor = FACTORS[match[2]] || 1
         return parseInt(match[1]) * factor
