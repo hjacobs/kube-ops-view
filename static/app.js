@@ -263,11 +263,11 @@ tooltip.draw()
 function update(clusters) {
     graphics.removeChildren();
     graphics.lineStyle(2, 0xaaaaff, 1);
-    var x = 50;
+    var y = 50;
     for (var cluster of clusters) {
         var clusterBox = new PIXI.Graphics()
-        clusterBox.x = x
-        clusterBox.y = 50
+        clusterBox.x = 50
+        clusterBox.y = y
         graphics.addChild(clusterBox)
         var rows = [10, 10]
         for (var node of cluster.nodes) {
@@ -286,7 +286,7 @@ function update(clusters) {
         }
         clusterBox.lineStyle(2, 0xaaaaff, 1);
         clusterBox.drawRect(0, 0, Math.max(rows[0], rows[1]), nodeBox.height * 2 + 20);
-        x += 250;
+        y += 270;
     }
     graphics.addChild(tooltip)
 }
