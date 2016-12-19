@@ -51,7 +51,11 @@ def get_clusters():
         response.raise_for_status()
         for pod in response.json()['items']:
             if 'nodeName' in pod['spec']:
-                obj = pod
+                obj = {'name': pod['metadata']['name'],
+                       'namespace': pod['metadata']['namespace'],
+                       'labels': pod['metadata']['labels'], 'status': pod['status'], 'containers': []}
+                for cont in pod['spec']['containers']:
+                    obj['containers'].append({'name': cont['name'], 'image': cont['image'], 'resources': cont['resources']})
                 # TODO: filter pod attributes
                 nodes_by_name[pod['spec']['nodeName']]['pods'].append(obj)
 

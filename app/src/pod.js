@@ -24,10 +24,10 @@ export default class Pod extends PIXI.Graphics {
             var filter = new PIXI.filters.ColorMatrixFilter()
             filter.brightness(1.3)
             podBox.filters = [filter]
-            var s = this.pod.metadata.name
-            for (var key of Object.keys(this.pod.metadata.labels)) {
+            var s = this.pod.name
+            for (var key of Object.keys(this.pod.labels)) {
                 if (key !== 'pod-template-hash') {
-                    s += '\n' + key + ': ' + this.pod.metadata.labels[key]
+                    s += '\n' + key + ': ' + this.pod.labels[key]
                 }
             }
             s += '\nStatus: ' + this.pod.status.phase
@@ -52,8 +52,8 @@ export default class Pod extends PIXI.Graphics {
         })
         podBox.lineStyle(2, 0xaaaaaa, 1);
         var i = 0
-        var w = 10 / this.pod.spec.containers.length
-        for (var container of this.pod.spec.containers) {
+        var w = 10 / this.pod.containers.length
+        for (var container of this.pod.containers) {
             podBox.drawRect(0 + i * w, 0, w, 10)
             i++
         }
