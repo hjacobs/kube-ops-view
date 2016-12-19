@@ -18,6 +18,8 @@ from urllib.parse import urljoin
 
 
 DEFAULT_CLUSTERS = 'http://localhost:8001/'
+CREDENTIALS_DIR = os.getenv('CREDENTIALS_DIR', '')
+AUTHORIZE_URL = os.getenv('AUTHORIZE_URL')
 
 app = Flask(__name__)
 app.debug = os.getenv('DEBUG') == 'true'
@@ -36,9 +38,9 @@ class OAuthRemoteAppWithRefresh(OAuthRemoteApp):
         OAuthRemoteApp.__init__(self, oauth, name, **kwargs)
 
     def refresh_credentials(self):
-        with open(os.path.join(os.getenv('CREDENTIALS_DIR', ''), 'authcode-client-id')) as fd:
+        with open(os.path.join(CREDENTIALS_DIR, 'authcode-client-id')) as fd:
             self._consumer_key = fd.read().strip()
-        with open(os.path.join(os.getenv('CREDENTIALS_DIR', ''), 'authcode-client-secret')) as fd:
+        with open(os.path.join(CREDENTIALS_DIR, 'authcode-client-secret')) as fd:
             self._consumer_secret = fd.read().strip()
 
     @property
@@ -55,7 +57,7 @@ class OAuthRemoteAppWithRefresh(OAuthRemoteApp):
 def authorize(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-        if os.getenv('AUTHORIZE_URL') and 'auth_token' not in flask.session:
+        if AUTHORIZE_URL and 'auth_token' not in flask.session:
             return redirect(url_for('login'))
         return f(*args, **kwargs)
 
@@ -68,7 +70,7 @@ auth = OAuthRemoteAppWithRefresh(
     request_token_url=None,
     access_token_method='POST',
     access_token_url=os.getenv('ACCESS_TOKEN_URL'),
-    authorize_url=os.getenv('AUTHORIZE_URL')
+    authorize_url=AUTHORIZE_URL
 )
 oauth.remote_apps['auth'] = auth
 
@@ -145,7 +147,6 @@ def authorized(resp):
             flask.request.args['error'],
             flask.request.args['error_description']
         )
-    print(resp)
     if not isinstance(resp, dict):
         return 'Invalid auth response'
     flask.session['auth_token'] = (resp['access_token'], '')
