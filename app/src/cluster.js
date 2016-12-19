@@ -1,4 +1,5 @@
 import Node from './node.js'
+import Pod from './pod.js'
 const PIXI = require('pixi.js')
 
 export default class Cluster extends PIXI.Graphics {
@@ -24,6 +25,17 @@ export default class Cluster extends PIXI.Graphics {
             }
             this.addChild(nodeBox)
         }
+
+
+        for (var pod of this.cluster.unassigned_pods) {
+            var podBox = new Pod(pod, this.tooltip)
+            podBox.x = rows[0]
+            podBox.y = 20
+            podBox.draw()
+            this.addChild(podBox)
+            rows[0] += 20
+        }
+
         this.lineStyle(2, 0xaaaaff, 1);
         const width = Math.max(rows[0], rows[1])
         this.drawRect(0, 0, width, nodeBox.height * 2 + 30);

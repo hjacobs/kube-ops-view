@@ -1,0 +1,12 @@
+# example Pod which cannot be assigned to any node
+apiVersion: v1
+kind: Pod
+metadata:
+  name: unassigned-test
+spec:
+  # use a node selector which will never match..
+  nodeSelector:
+    stuff: x
+  containers:
+  - name: test
+    image: foo
