@@ -1,5 +1,5 @@
 //Create the renderer
-const renderer = PIXI.autoDetectRenderer(256, 256);
+const renderer = PIXI.autoDetectRenderer(256, 256, {resolution: 2});
 renderer.view.style.position = 'absolute';
 renderer.view.style.display = 'block';
 renderer.autoResize = true;
