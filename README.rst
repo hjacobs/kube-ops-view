@@ -54,6 +54,19 @@ Afterwards you can open "kube-ops-view" via the kubectl proxy:
 Now direct your browser to http://localhost:8001/api/v1/proxy/namespaces/default/services/kube-ops-view/
 
 
+Configuration
+=============
+
+The following environment variables are supported:
+
+``CLUSTERS``
+    Comma separated list of Kubernetes API server URLs. It defaults to ``http://localhost:8001/`` (default endpoint of ``kubectl proxy``).
+``CREDENTIALS_DIR``
+    Directory to read (OAuth) credentials from --- these credentials are only used for non-localhost cluster URLs.
+``DEBUG``
+    Set to a non-empty value for local development to reload code changes.
+
+
 Supported Browsers
 ==================
 
