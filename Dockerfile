@@ -15,7 +15,6 @@ RUN pip3 install -r /requirements.txt
 COPY app.py /
 COPY templates /templates
 COPY app /app
-COPY swagger.yaml /
 
 WORKDIR /app
 RUN npm install && npm run build
