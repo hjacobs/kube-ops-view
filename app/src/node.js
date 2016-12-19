@@ -38,7 +38,7 @@ export default class Node extends PIXI.Graphics {
             }
         }
         for (var pod of this.node.pods) {
-            for (var container of pod.spec.containers) {
+            for (var container of pod.containers) {
                 if (container.resources && container.resources.requests) {
                     for (var key of Object.keys(container.resources.requests)) {
                         resources[key].requested += this.parseResource(container.resources.requests[key])
@@ -111,7 +111,7 @@ export default class Node extends PIXI.Graphics {
         var px = 24
         var py = 20
         for (var pod of this.node.pods) {
-            if (pod.metadata.namespace != 'kube-system') {
+            if (pod.namespace != 'kube-system') {
                 var podBox = new Pod(pod, this.tooltip)
                 podBox.x = px
                 podBox.y = py
@@ -127,7 +127,7 @@ export default class Node extends PIXI.Graphics {
         var px = 24
         var py = 100
         for (var pod of this.node.pods) {
-            if (pod.metadata.namespace == 'kube-system') {
+            if (pod.namespace == 'kube-system') {
                 var podBox = new Pod(pod, this.tooltip)
                 podBox.x = px
                 podBox.y = py

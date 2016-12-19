@@ -1,5 +1,8 @@
+parserOptions:
+  sourceType: module
 env:
   browser: true
+  node: true
   es6: true
 extends: 'eslint:recommended'
 rules:
@@ -13,4 +16,8 @@ rules:
     - error
     - single
   prefer-const:
+    - warn
+  no-redeclare:
+    - warn
+  no-unused-vars:
     - warn

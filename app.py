@@ -3,30 +3,36 @@
 import gevent.monkey
 gevent.monkey.patch_all()
 
-import connexion
 import flask
+import gevent.wsgi
 import logging
 import os
+import json
 import requests
 import tokens
 
+from flask import Flask, redirect, url_for, session, request, send_from_directory
+from flask_oauthlib.client import OAuth, OAuthRemoteApp
 from urllib.parse import urljoin
 
 
 DEFAULT_CLUSTERS = 'http://localhost:8001/'
 
-app = connexion.App(__name__)
+app = Flask(__name__)
+app.debug = os.getenv('DEBUG') == 'true'
+app.secret_key = os.getenv('SECRET_KEY', 'development')
 session = requests.Session()
 
 tokens.configure(from_file_only=True)
 tokens.manage('read-only')
 
 
-@app.app.route('/')
+@app.route('/')
 def index():
     return flask.render_template('index.html')
 
 
+@app.route('/kubernetes-clusters')
 def get_clusters():
     clusters = []
     for api_server_url in os.getenv('CLUSTERS', DEFAULT_CLUSTERS).split(','):
@@ -45,7 +51,13 @@ def get_clusters():
         response.raise_for_status()
         for pod in response.json()['items']:
             if 'nodeName' in pod['spec']:
-                nodes_by_name[pod['spec']['nodeName']]['pods'].append(pod)
+                obj = {'name': pod['metadata']['name'],
+                       'namespace': pod['metadata']['namespace'],
+                       'labels': pod['metadata']['labels'], 'status': pod['status'], 'containers': []}
+                for cont in pod['spec']['containers']:
+                    obj['containers'].append({'name': cont['name'], 'image': cont['image'], 'resources': cont['resources']})
+                # TODO: filter pod attributes
+                nodes_by_name[pod['spec']['nodeName']]['pods'].append(obj)
 
         try:
             response = session.get(urljoin(api_server_url, '/api/v1/namespaces/kube-system/services/heapster/proxy/apis/metrics/v1alpha1/nodes'), timeout=5)
@@ -56,16 +68,13 @@ def get_clusters():
             logging.exception('Failed to get metrics')
         clusters.append({'api_server_url': api_server_url, 'nodes': nodes})
 
-    return {'kubernetes_clusters': clusters}
+    return json.dumps({'kubernetes_clusters': clusters}, separators=(',',':'))
 
-
-app.add_api('swagger.yaml')
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
+    port = 8080
+    http_server = gevent.wsgi.WSGIServer(('0.0.0.0', port), app)
+    logging.info('Listening on {}..'.format(port))
+    http_server.serve_forever()
 
-    if os.getenv('DEBUG', False):
-        kwargs = {'debug': True}
-    else:
-        kwargs = {'server': 'gevent'}
-    app.run(port=8080, **kwargs)
