@@ -1,7 +1,8 @@
 const PIXI = require('pixi.js')
 
 export default class Pod extends PIXI.Graphics {
-    constructor (pod, tooltip) {
+
+    constructor(pod, tooltip) {
         super()
         this.pod = pod
         this.tooltip = tooltip
@@ -46,7 +47,7 @@ export default class Pod extends PIXI.Graphics {
             this.tooltip.visible = true
             // console.log(this.pod)
         })
-        podBox.on('mouseout', function() {
+        podBox.on('mouseout', function () {
             podBox.filters = []
             this.tooltip.visible = false
         })
@@ -70,8 +71,8 @@ export default class Pod extends PIXI.Graphics {
             podBox.lineStyle(2, 0xffffaa, 1);
         } else {
 
-            PIXI.ticker.shared.add(function(_) {
-                var v = Math.sin((PIXI.ticker.shared.lastTime % 1000)/1000.* Math.PI)
+            PIXI.ticker.shared.add(function (_) {
+                var v = Math.sin((PIXI.ticker.shared.lastTime % 1000) / 1000. * Math.PI)
                 podBox.tint = PIXI.utils.rgb2hex([1, v, v])
             })
             podBox.lineStyle(2, 0xff9999, 1);

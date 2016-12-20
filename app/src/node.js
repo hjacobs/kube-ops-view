@@ -1,28 +1,13 @@
-import Pod from './pod.js'
-const PIXI = require('pixi.js')
-
-// see https://github.com/kubernetes/kubernetes/blob/master/docs/design/resources.md
-const FACTORS = {
-    'm': 1/1000,
-    'K': 1000,
-    'M': Math.pow(1000, 2),
-    'G': Math.pow(1000, 3),
-    'T': Math.pow(1000, 4),
-    'P': Math.pow(1000, 5),
-    'E': Math.pow(1000, 6),
-    'Ki': 1024,
-    'Mi': Math.pow(1024, 2),
-    'Gi': Math.pow(1024, 3),
-    'Ti': Math.pow(1024, 4),
-    'Pi': Math.pow(1024, 5),
-    'Ei': Math.pow(1024, 6)
-}
+import Pod from './pod.js';
+import Bars from './bars.js'
+import {FACTORS} from './utils.js'
+const PIXI = require('pixi.js');
 
 export default class Node extends PIXI.Graphics {
-    constructor (node, tooltip) {
-        super()
-        this.node = node
-        this.tooltip = tooltip
+    constructor(node, tooltip) {
+        super();
+        this.node = node;
+        this.tooltip = tooltip;
     }
 
     isMaster() {
@@ -30,37 +15,9 @@ export default class Node extends PIXI.Graphics {
     }
 
     parseResource(v) {
-        const match = v.match(/^(\d*)(\D*)$/)
-        const factor = FACTORS[match[2]] || 1
+        const match = v.match(/^(\d*)(\D*)$/);
+        const factor = FACTORS[match[2]] || 1;
         return parseInt(match[1]) * factor
-    }
-
-    hsvToRgb(h, s, v) {
-        var r, g, b, i, f, p, q, t;
-        i = Math.floor(h * 6);
-        f = h * 6 - i;
-        p = v * (1 - s);
-        q = v * (1 - f * s);
-        t = v * (1 - (1 - f) * s);
-        switch (i % 6) {
-        case 0:
-            r = v, g = t, b = p; break;
-        case 1:
-            r = q, g = v, b = p; break;
-        case 2:
-            r = p, g = v, b = t; break;
-        case 3:
-            r = p, g = q, b = v; break;
-        case 4:
-            r = t, g = p, b = v; break;
-        case 5:
-            r = v, g = p, b = q; break;
-        }
-        return PIXI.utils.rgb2hex([r, g, b])
-    }
-
-    getBarColor(usage, capacity) {
-        return this.hsvToRgb(0.4 - (0.4 * (usage / capacity)), 0.6, 1)
     }
 
     getResourceUsage() {
@@ -109,45 +66,29 @@ export default class Node extends PIXI.Graphics {
         topHandle.addChild(text)
         nodeBox.addChild(topHandle)
         nodeBox.lineStyle(2, 0xaaaaff, 1);
-        nodeBox.beginFill(0x999999, 0.5)
-        nodeBox.drawRect(0, 0, 105, 115)
-        nodeBox.endFill()
+        nodeBox.beginFill(0x999999, 0.5);
+        nodeBox.drawRect(0, 0, 105, 115);
+        nodeBox.endFill();
         nodeBox.lineStyle(2, 0xaaaaaa, 1);
-        topHandle.interactive = true
-        topHandle.on('mouseover', function() {
-            var s = nodeBox.node.name
+        topHandle.interactive = true;
+        topHandle.on('mouseover', function () {
+            var s = nodeBox.node.name;
             for (var key of Object.keys(nodeBox.node.labels)) {
                 s += '\n' + key + ': ' + nodeBox.node.labels[key]
             }
-            nodeBox.tooltip.text.text = s
-            nodeBox.tooltip.x = nodeBox.toGlobal(new PIXI.Point(0, 0)).x
-            nodeBox.tooltip.y = nodeBox.toGlobal(new PIXI.Point(0,0)).y
+            nodeBox.tooltip.text.text = s;
+            nodeBox.tooltip.x = nodeBox.toGlobal(new PIXI.Point(0, 0)).x;
+            nodeBox.tooltip.y = nodeBox.toGlobal(new PIXI.Point(0, 0)).y;
             nodeBox.tooltip.visible = true
-        })
-        topHandle.on('mouseout', function() {
+        });
+        topHandle.on('mouseout', function () {
             nodeBox.tooltip.visible = false
-        })
-        const resources = this.getResourceUsage()
-        const cpuHeight = 80 / resources.cpu.capacity
-        nodeBox.lineStyle(0, 0xaaffaa, 1)
-        nodeBox.beginFill(this.getBarColor(resources.cpu.requested, resources.cpu.capacity), 1)
-        nodeBox.drawRect(5, 110 - resources.cpu.requested * cpuHeight, 2.5, resources.cpu.requested * cpuHeight)
-        nodeBox.beginFill(this.getBarColor(resources.cpu.used, resources.cpu.capacity), 1)
-        nodeBox.drawRect(7.5, 110 - resources.cpu.used * cpuHeight, 2.5, resources.cpu.used * cpuHeight)
-        nodeBox.endFill()
-        nodeBox.lineStyle(1, 0xaaaaaa, 1);
-        for (var i=0; i<resources.cpu.capacity; i++) {
-            nodeBox.drawRect(5, 110 - (i+1) * cpuHeight, 5, cpuHeight)
-        }
-
-        const scale = resources.memory.capacity / 80
-        nodeBox.drawRect(14, 110 - resources.memory.capacity/scale, 5, resources.memory.capacity/scale)
-        nodeBox.lineStyle(0, 0xaaffaa, 1)
-        nodeBox.beginFill(this.getBarColor(resources.memory.requested, resources.memory.capacity), 1)
-        nodeBox.drawRect(14, 110 - resources.memory.requested/scale, 2.5, resources.memory.requested/scale)
-        nodeBox.beginFill(this.getBarColor(resources.memory.used, resources.memory.capacity), 1)
-        nodeBox.drawRect(16.5, 110 - resources.memory.used/scale, 2.5, resources.memory.used/scale)
-        nodeBox.endFill()
+        });
+        const resources = this.getResourceUsage();
+        const bars = new Bars(nodeBox, resources, nodeBox.tooltip);
+        bars.x = 0
+        bars.y = 1
+        nodeBox.addChild(bars.draw());
 
         var px = 24
         var py = 20
@@ -159,7 +100,7 @@ export default class Node extends PIXI.Graphics {
                 nodeBox.addChild(podBox.draw())
                 px += 13
                 if (px > 90) {
-                    px = 24
+                    px = 24;
                     py += 13
                 }
             }
@@ -175,7 +116,7 @@ export default class Node extends PIXI.Graphics {
                 nodeBox.addChild(podBox.draw())
                 px += 13
                 if (px > 90) {
-                    px = 24
+                    px = 24;
                     py -= 13
                 }
             }
@@ -183,4 +124,5 @@ export default class Node extends PIXI.Graphics {
         }
         return nodeBox
     }
+
 }
