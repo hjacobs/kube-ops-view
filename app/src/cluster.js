@@ -1,5 +1,5 @@
 import Node from './node.js'
-import Pod from './pod.js'
+import {Pod} from './pod.js'
 const PIXI = require('pixi.js')
 
 export default class Cluster extends PIXI.Graphics {
@@ -24,10 +24,11 @@ export default class Cluster extends PIXI.Graphics {
                 nodeBox.y = nodeBox.height + 25
             }
             this.addChild(nodeBox)
+
         }
 
 
-        for (var pod of this.cluster.unassigned_pods) {
+        for (const pod of this.cluster.unassigned_pods) {
             var podBox = new Pod(pod, this.tooltip)
             podBox.x = rows[0]
             podBox.y = 20

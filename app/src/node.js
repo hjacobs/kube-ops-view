@@ -1,4 +1,4 @@
-import Pod from './pod.js';
+import {Pod} from './pod.js';
 import Bars from './bars.js'
 import {FACTORS} from './utils.js'
 const PIXI = require('pixi.js');

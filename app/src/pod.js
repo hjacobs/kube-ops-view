@@ -1,11 +1,15 @@
 const PIXI = require('pixi.js')
 
-export default class Pod extends PIXI.Graphics {
+export const ALL_PODS = {}
+
+export class Pod extends PIXI.Graphics {
 
     constructor(pod, tooltip) {
         super()
         this.pod = pod
         this.tooltip = tooltip
+
+        ALL_PODS[pod.namespace + '/' + pod.name] = this
     }
 
     draw() {
