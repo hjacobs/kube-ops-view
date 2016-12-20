@@ -43,13 +43,13 @@ export default class Bars extends PIXI.Graphics {
             s += subText;
             subText = '';
             s += '\nMemory: \n';
-            for (var subKey of Object.keys(bars.resources.memory)) {
+            for (subKey of Object.keys(bars.resources.memory)) {
                 subText += '\t\t' + subKey + ': ' + (bars.resources.memory[subKey] / FACTORS.Gi).toFixed(2) + 'GiB\n'
             }
             s += subText;
             subText = '';
             s += '\nPods: \n';
-            for (var subKey of Object.keys(bars.resources.pods)) {
+            for (subKey of Object.keys(bars.resources.pods)) {
                 subText += '\t\t' + subKey + ': ' + bars.resources.pods[subKey] + '\n'
             }
             s += subText;

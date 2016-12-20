@@ -4,8 +4,6 @@ var path = require('path'),
     DEBUG = process.env.NODE_ENV !== 'production',
     entry = [
         './src/app.js',
-        'webpack-dev-server/client?http://localhost:8080',
-        'webpack/hot/only-dev-server',
     ];
 
 module.exports = {

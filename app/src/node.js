@@ -84,15 +84,11 @@ export default class Node extends PIXI.Graphics {
         topHandle.on('mouseout', function () {
             nodeBox.tooltip.visible = false
         });
-
-        const scale = resources.memory.capacity / 80
-        nodeBox.drawRect(14, 110 - resources.memory.capacity/scale, 5, resources.memory.capacity/scale)
-        nodeBox.lineStyle(0, 0xaaffaa, 1)
-        nodeBox.beginFill(this.getBarColor(resources.memory.requested, resources.memory.capacity), 1)
-        nodeBox.drawRect(14, 110 - resources.memory.requested/scale, 2.5, resources.memory.requested/scale)
-        nodeBox.beginFill(this.getBarColor(resources.memory.used, resources.memory.capacity), 1)
-        nodeBox.drawRect(16.5, 110 - resources.memory.used/scale, 2.5, resources.memory.used/scale)
-        nodeBox.endFill()
+        const resources = this.getResourceUsage();
+        const bars = new Bars(nodeBox, resources, nodeBox.tooltip);
+        bars.x = 0
+        bars.y = 1
+        nodeBox.addChild(bars.draw());
 
         var px = 24
         var py = 20

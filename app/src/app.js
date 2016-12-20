@@ -135,8 +135,3 @@ export default class App {
 }
 
 module.exports = App
-
-export {
-    renderer,
-    stage
-};
