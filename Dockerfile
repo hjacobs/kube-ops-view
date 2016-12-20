@@ -1,6 +1,6 @@
 FROM alpine:3.4
 
-RUN apk add --no-cache python3 python3-dev alpine-sdk zlib-dev libffi-dev openssl-dev nodejs && \
+RUN apk add --no-cache python3 python3-dev alpine-sdk zlib-dev libffi-dev openssl-dev nodejs ca-certificates && \
     python3 -m ensurepip && \
     rm -r /usr/lib/python*/ensurepip && \
     pip3 install --upgrade pip setuptools gevent && \
