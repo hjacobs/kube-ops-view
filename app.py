@@ -108,6 +108,7 @@ def get_clusters():
         response.raise_for_status()
         nodes = []
         nodes_by_name = {}
+        pods_by_namespace_name = {}
         unassigned_pods = []
         for node in response.json()['items']:
             obj = {'name': node['metadata']['name'], 'labels': node['metadata']['labels'], 'status': node['status'], 'pods': []}
@@ -121,6 +122,7 @@ def get_clusters():
                    'labels': pod['metadata'].get('labels', {}), 'status': pod['status'], 'containers': []}
             for cont in pod['spec']['containers']:
                 obj['containers'].append({'name': cont['name'], 'image': cont['image'], 'resources': cont['resources']})
+            pods_by_namespace_name[(obj['namespace'], obj['name'])] = obj
             if 'nodeName' in pod['spec'] and pod['spec']['nodeName'] in nodes_by_name:
                 nodes_by_name[pod['spec']['nodeName']]['pods'].append(obj)
             else:
@@ -133,6 +135,18 @@ def get_clusters():
                 nodes_by_name[metrics['metadata']['name']]['usage'] = metrics['usage']
         except:
             logging.exception('Failed to get metrics')
+        try:
+            response = session.get(urljoin(api_server_url, '/api/v1/namespaces/kube-system/services/heapster/proxy/apis/metrics/v1alpha1/pods'), timeout=5)
+            response.raise_for_status()
+            for metrics in response.json()['items']:
+                pod = pods_by_namespace_name.get((metrics['metadata']['namespace'], metrics['metadata']['name']))
+                if pod:
+                    for container in pod['containers']:
+                        for container_metrics in metrics['containers']:
+                            if container['name'] == container_metrics['name']:
+                                container['resources']['usage'] = container_metrics['usage']
+        except:
+            logging.exception('Failed to get metrics')
         clusters.append({'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods})
 
     return json.dumps({'kubernetes_clusters': clusters}, separators=(',', ':'))
@@ -141,7 +155,6 @@ def get_clusters():
 @app.route('/login')
 def login():
     redirect_uri = urljoin(os.getenv('APP_URL', ''), '/login/authorized')
-    print(redirect_uri)
     return auth.authorize(callback=redirect_uri)
 
 
