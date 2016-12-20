@@ -26,7 +26,8 @@
   },
   "homepage": "https://github.com/hjacobs/kube-ops-view#readme",
   "dependencies": {
-    "pixi.js": "^4.3.0"
+    "pixi.js": "^4.3.0",
+    "webpack-dev-server": "^1.16.2"
   },
   "devDependencies": {
     "babel-core": "^6.21.0",

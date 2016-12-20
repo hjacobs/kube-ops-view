@@ -66,3 +66,8 @@ function mainLoop() {
 }
 
 mainLoop();
+
+export {
+    renderer,
+    stage
+};
