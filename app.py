@@ -12,7 +12,7 @@ import os
 import requests
 import tokens
 
-from flask import Flask, redirect, url_for
+from flask import Flask, redirect
 from flask_oauthlib.client import OAuth, OAuthRemoteApp
 from urllib.parse import urljoin
 
@@ -20,6 +20,7 @@ from urllib.parse import urljoin
 DEFAULT_CLUSTERS = 'http://localhost:8001/'
 CREDENTIALS_DIR = os.getenv('CREDENTIALS_DIR', '')
 AUTHORIZE_URL = os.getenv('AUTHORIZE_URL')
+APP_URL = os.getenv('APP_URL')
 
 app = Flask(__name__)
 app.debug = os.getenv('DEBUG') == 'true'
@@ -58,7 +59,7 @@ def authorize(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
         if AUTHORIZE_URL and 'auth_token' not in flask.session:
-            return redirect(url_for('login'))
+            return redirect(urljoin(APP_URL, '/login'))
         return f(*args, **kwargs)
 
     return wrapper
@@ -154,14 +155,14 @@ def get_clusters():
 
 @app.route('/login')
 def login():
-    redirect_uri = urljoin(os.getenv('APP_URL', ''), '/login/authorized')
+    redirect_uri = urljoin(APP_URL, '/login/authorized')
     return auth.authorize(callback=redirect_uri)
 
 
 @app.route('/logout')
 def logout():
     flask.session.pop('auth_token', None)
-    return redirect(url_for('index'))
+    return redirect(urljoin(APP_URL, '/'))
 
 
 @app.route('/login/authorized')
@@ -175,7 +176,7 @@ def authorized(resp):
     if not isinstance(resp, dict):
         return 'Invalid auth response'
     flask.session['auth_token'] = (resp['access_token'], '')
-    return redirect(url_for('index'))
+    return redirect(urljoin(APP_URL, '/'))
 
 
 @auth.tokengetter
