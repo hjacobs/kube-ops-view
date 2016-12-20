@@ -4,6 +4,29 @@ const PIXI = require('pixi.js')
 
 export default class App {
     constructor() {
+        this.filterString = ''
+    }
+
+    filter() {
+        const searchString = this.filterString
+        this.searchText.text = '> ' + searchString
+        const filter = new PIXI.filters.ColorMatrixFilter()
+        filter.desaturate()
+        for (const cluster of this.stage.children) {
+            for (const node of cluster.children) {
+                for (const pod of node.children) {
+                    const name = pod.pod && pod.pod.name
+                    if (name) {
+                        if (!name.includes(searchString)){
+                            pod.filters = [filter]
+                        } else {
+                            // TODO: pod might have other filters set..
+                            pod.filters = []
+                        }
+                    }
+                }
+            }
+        }
     }
 
     initialize() {
@@ -20,11 +43,33 @@ export default class App {
         //Create a container object called the `stage`
         const stage = new PIXI.Container();
 
+        const searchText = new PIXI.Text('> ', {fontSize: 24, fill: 0xaaaaff})
+        searchText.x = 50
+        searchText.y = 5
+
         const tooltip = new Tooltip()
         tooltip.draw()
 
+        function downHandler(event) {
+            if (event.key && event.key.length == 1 && !event.ctrlKey) {
+                this.filterString += event.key
+                this.filter()
+                event.preventDefault();
+            }
+            else if (event.key == 'Backspace') {
+                this.filterString = this.filterString.slice(0, Math.max(0, this.filterString.length-1))
+                this.filter()
+                event.preventDefault();
+            }
+        }
+
+        addEventListener(
+            'keydown', downHandler.bind(this), false
+        );
+
         this.renderer = renderer
         this.stage = stage
+        this.searchText = searchText
         this.tooltip = tooltip
     }
 
@@ -44,6 +89,8 @@ export default class App {
                 that.stage.addChild(clusterBox)
                 y += 270;
             }
+            that.filter()
+            that.stage.addChild(that.searchText)
             that.stage.addChild(that.tooltip)
         }
 
