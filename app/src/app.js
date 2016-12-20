@@ -40,7 +40,7 @@ function update(clusters) {
 }
 
 function fetchData() {
-    fetch('kubernetes-clusters')
+    fetch('kubernetes-clusters', {credentials: 'include'})
     .then(function(response) {
         return response.json()
     })
