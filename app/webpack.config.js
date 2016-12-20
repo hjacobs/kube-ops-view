@@ -13,6 +13,7 @@ module.exports = {
     target : 'web',
     devtool : DEBUG ? 'inline-source-map' : false,
     output: {
+        library: 'App',
         path: path.resolve(pkg.config.buildDir),
         publicPath: DEBUG ? "/" : "./",
         filename: DEBUG ? 'app.js' : 'app-[hash].js'
