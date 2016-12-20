@@ -1,4 +1,4 @@
-import {FACTORS, getBarColor} from "./utils";
+import {FACTORS, getBarColor} from './utils';
 
 const PIXI = require('pixi.js');
 
@@ -11,7 +11,7 @@ export default class Bars extends PIXI.Graphics {
     }
 
     draw() {
-        let bars = this;
+        const bars = this;
         const cpuHeight = 80 / bars.resources.cpu.capacity;
         bars.interactive = true;
         bars.lineStyle(0, 0xaaffaa, 1);
@@ -34,7 +34,6 @@ export default class Bars extends PIXI.Graphics {
         bars.drawRect(16.5, 110 - bars.resources.memory.used / scale, 2.5, bars.resources.memory.used / scale);
         bars.endFill();
         bars.on('mouseover', function () {
-            console.log(bars.resources)
             var s = '';
             var subText = '';
             s += 'CPU: \n';

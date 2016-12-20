@@ -2,7 +2,6 @@ var path = require('path'),
     webpack = require('webpack'),
     pkg = require('./package.json'),
     DEBUG = process.env.NODE_ENV !== 'production',
-    util = require('util'),
     entry = [
         './src/app.js',
         'webpack-dev-server/client?http://localhost:8080',
@@ -17,7 +16,7 @@ module.exports = {
     devtool: DEBUG ? 'inline-source-map' : false,
     output: {
         path: path.resolve(pkg.config.buildDir),
-        publicPath: DEBUG ? "/" : "./",
+        publicPath: DEBUG ? '/' : './',
         filename: DEBUG ? 'app.js' : 'app-[hash].js'
     },
     node: {
@@ -27,11 +26,14 @@ module.exports = {
         new webpack.HotModuleReplacementPlugin()
     ],
     module: {
+        preLoaders: [
+            {test: /\.jsx?$/, exclude: /(node_modules|lodash)/, loaders: ['eslint']}
+        ],
         loaders: [
-            {test: /\.js$/, exclude: /node_modules/, loader: "babel-loader", query: {presets: ['es2015']}},
-            {test: /\.html$/, exclude: /node_modules/, loader: "file-loader?name=[path][name].[ext]"},
-            {test: /\.jpe?g$|\.svg$|\.png$/, exclude: /node_modules/, loader: "file-loader?name=[path][name].[ext]"},
-            {test: /\.json$/, exclude: /node_modules/, loader: "json"},
+            {test: /\.js$/, exclude: /node_modules/, loader: 'babel-loader', query: {presets: ['es2015']}},
+            {test: /\.html$/, exclude: /node_modules/, loader: 'file-loader?name=[path][name].[ext]'},
+            {test: /\.jpe?g$|\.svg$|\.png$/, exclude: /node_modules/, loader: 'file-loader?name=[path][name].[ext]'},
+            {test: /\.json$/, exclude: /node_modules/, loader: 'json'},
             {test: /\.json$/, include: path.join(__dirname, 'node_modules', 'pixi.js'), loader: 'json'}
         ],
         postLoaders: [{
