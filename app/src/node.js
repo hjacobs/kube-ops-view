@@ -21,8 +21,8 @@ export default class Node extends PIXI.Graphics {
     }
 
     getResourceUsage() {
-        const resources = {};
-        for (var key of Object.keys(this.node.status.capacity)) {
+        const resources = {}
+        for (const key of Object.keys(this.node.status.capacity)) {
             resources[key] = {
                 'capacity': this.parseResource(this.node.status.capacity[key]),
                 'requested': 0,
@@ -30,41 +30,41 @@ export default class Node extends PIXI.Graphics {
             }
         }
         if (this.node.usage) {
-            for (var key of Object.keys(this.node.usage)) {
+            for (const key of Object.keys(this.node.usage)) {
                 resources[key]['used'] = this.parseResource(this.node.usage[key])
             }
         }
-        for (var pod of this.node.pods) {
-            for (var container of pod.containers) {
+        for (const pod of this.node.pods) {
+            for (const container of pod.containers) {
                 if (container.resources && container.resources.requests) {
-                    for (var key of Object.keys(container.resources.requests)) {
+                    for (const key of Object.keys(container.resources.requests)) {
                         resources[key].requested += this.parseResource(container.resources.requests[key])
                     }
                 }
             }
         }
-        resources['pods'].requested = this.node.pods.length;
+        resources['pods'].requested = this.node.pods.length
+        resources['pods'].used = this.node.pods.length
         return resources
     }
 
-
-    draw() {
-        var nodeBox = this;
-        var topHandle = new PIXI.Graphics();
-        topHandle.beginFill(0xaaaaff, 1);
-        topHandle.drawRect(0, 0, 105, 15);
-        topHandle.endFill();
-        var text = new PIXI.Text(this.node.name, {fontSize: 10, fill: 0x000000});
-        text.cacheAsBitmap = true;
-        var mask = new PIXI.Graphics();
-        mask.beginFill(0x0);
-        mask.drawRect(0, 0, 100, 15);
-        mask.endFill();
-        text.mask = mask;
-        text.x = 2;
-        text.y = 2;
-        topHandle.addChild(text);
-        nodeBox.addChild(topHandle);
+    draw () {
+        var nodeBox = this
+        var topHandle = new PIXI.Graphics()
+        topHandle.beginFill(0xaaaaff, 1)
+        topHandle.drawRect(0, 0, 105, 15)
+        topHandle.endFill()
+        const text = new PIXI.Text(this.node.name, {fontSize: 10, fill: 0x000000})
+        text.cacheAsBitmap = true
+        const mask = new PIXI.Graphics()
+        mask.beginFill(0x0)
+        mask.drawRect(0, 0, 100, 15)
+        mask.endFill()
+        text.mask = mask
+        text.x = 2
+        text.y = 2
+        topHandle.addChild(text)
+        nodeBox.addChild(topHandle)
         nodeBox.lineStyle(2, 0xaaaaff, 1);
         nodeBox.beginFill(0x999999, 0.5);
         nodeBox.drawRect(0, 0, 105, 115);
@@ -85,24 +85,24 @@ export default class Node extends PIXI.Graphics {
             nodeBox.tooltip.visible = false
         });
 
-        const resources = this.getResourceUsage();
-        const cpuHeight = 80 / resources.cpu.capacity;
-        var bars = new Bars(nodeBox, resources, nodeBox.tooltip);
-        bars.x = 0
-        bars.y = 1
-        nodeBox.addChild(bars.draw());
-        var text = new PIXI.Text('', {fontSize: 10, fill: 0xffffff});
-        nodeBox.addChild(text);
+        const scale = resources.memory.capacity / 80
+        nodeBox.drawRect(14, 110 - resources.memory.capacity/scale, 5, resources.memory.capacity/scale)
+        nodeBox.lineStyle(0, 0xaaffaa, 1)
+        nodeBox.beginFill(this.getBarColor(resources.memory.requested, resources.memory.capacity), 1)
+        nodeBox.drawRect(14, 110 - resources.memory.requested/scale, 2.5, resources.memory.requested/scale)
+        nodeBox.beginFill(this.getBarColor(resources.memory.used, resources.memory.capacity), 1)
+        nodeBox.drawRect(16.5, 110 - resources.memory.used/scale, 2.5, resources.memory.used/scale)
+        nodeBox.endFill()
 
-        var px = 24;
-        var py = 20;
-        for (var pod of this.node.pods) {
+        var px = 24
+        var py = 20
+        for (const pod of this.node.pods) {
             if (pod.namespace != 'kube-system') {
-                var podBox = new Pod(pod, this.tooltip);
-                podBox.x = px;
-                podBox.y = py;
-                nodeBox.addChild(podBox.draw());
-                px += 13;
+                const podBox = new Pod(pod, this.tooltip)
+                podBox.x = px
+                podBox.y = py
+                nodeBox.addChild(podBox.draw())
+                px += 13
                 if (px > 90) {
                     px = 24;
                     py += 13
@@ -110,15 +110,15 @@ export default class Node extends PIXI.Graphics {
             }
 
         }
-        var px = 24;
-        var py = 100;
-        for (var pod of this.node.pods) {
+        px = 24
+        py = 100
+        for (const pod of this.node.pods) {
             if (pod.namespace == 'kube-system') {
-                var podBox = new Pod(pod, this.tooltip);
-                podBox.x = px;
-                podBox.y = py;
-                nodeBox.addChild(podBox.draw());
-                px += 13;
+                const podBox = new Pod(pod, this.tooltip)
+                podBox.x = px
+                podBox.y = py
+                nodeBox.addChild(podBox.draw())
+                px += 13
                 if (px > 90) {
                     px = 24;
                     py -= 13
