@@ -63,6 +63,10 @@ export default class Pod extends PIXI.Graphics {
         } else if (this.pod.status.phase == 'Running' && allReady) {
             podBox.lineStyle(2, 0xaaffaa, 1);
         } else if (this.pod.status.phase == 'Pending') {
+            PIXI.ticker.shared.add(function(_) {
+                var v = Math.sin((PIXI.ticker.shared.lastTime % 1000)/1000.* Math.PI)
+                podBox.alpha = v
+            })
             podBox.lineStyle(2, 0xffffaa, 1);
         } else {
 
