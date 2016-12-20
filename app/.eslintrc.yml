@@ -16,8 +16,8 @@ rules:
     - error
     - single
   prefer-const:
-    - warn
+    - error
   no-redeclare:
-    - warn
+    - error
   no-unused-vars:
     - warn
