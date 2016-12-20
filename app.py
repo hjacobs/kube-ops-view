@@ -166,8 +166,8 @@ def logout():
 
 
 @app.route('/login/authorized')
-@auth.authorized_handler
-def authorized(resp):
+def authorized():
+    resp = auth.authorized_response()
     if resp is None:
         return 'Access denied: reason=%s error=%s' % (
             flask.request.args['error'],
