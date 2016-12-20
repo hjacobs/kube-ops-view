@@ -9,10 +9,10 @@ export default class App {
 
     filter() {
         const searchString = this.filterString
-        this.searchText.text = '> ' + searchString
+        this.searchText.text = searchString
         const filter = new PIXI.filters.ColorMatrixFilter()
         filter.desaturate()
-        for (const cluster of this.stage.children) {
+        for (const cluster of this.viewContainer.children) {
             for (const node of cluster.children) {
                 for (const pod of node.children) {
                     const name = pod.pod && pod.pod.name
@@ -43,12 +43,29 @@ export default class App {
         //Create a container object called the `stage`
         const stage = new PIXI.Container();
 
-        const searchText = new PIXI.Text('> ', {fontSize: 24, fill: 0xaaaaff})
-        searchText.x = 50
+        const searchPrompt = new PIXI.Text('>', {fontSize: 18, fill: 0xaaaaff})
+        searchPrompt.x = 20
+        searchPrompt.y = 5
+        PIXI.ticker.shared.add(function(_) {
+            var v = Math.sin((PIXI.ticker.shared.lastTime % 2000)/2000.* Math.PI)
+            searchPrompt.alpha = v
+        })
+        stage.addChild(searchPrompt)
+
+        const searchText = new PIXI.Text('', {fontSize: 18, fill: 0xaaaaff})
+        searchText.x = 40
         searchText.y = 5
+        stage.addChild(searchText)
+
+        const viewContainer = new PIXI.Container()
+        viewContainer.x = 20
+        viewContainer.y = 40
+        stage.addChild(viewContainer)
+
 
         const tooltip = new Tooltip()
         tooltip.draw()
+        stage.addChild(tooltip)
 
         function downHandler(event) {
             if (event.key && event.key.length == 1 && !event.ctrlKey) {
@@ -70,6 +87,7 @@ export default class App {
         this.renderer = renderer
         this.stage = stage
         this.searchText = searchText
+        this.viewContainer = viewContainer
         this.tooltip = tooltip
     }
 
@@ -79,19 +97,17 @@ export default class App {
         const that = this
 
         function update(clusters) {
-            that.stage.removeChildren();
-            var y = 50;
+            that.viewContainer.removeChildren();
+            var y = 0;
             for (var cluster of clusters) {
                 var clusterBox = new Cluster(cluster, that.tooltip)
                 clusterBox.draw()
-                clusterBox.x = 50
+                clusterBox.x = 0
                 clusterBox.y = y
-                that.stage.addChild(clusterBox)
+                that.viewContainer.addChild(clusterBox)
                 y += 270;
             }
             that.filter()
-            that.stage.addChild(that.searchText)
-            that.stage.addChild(that.tooltip)
         }
 
         function fetchData() {
