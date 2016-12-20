@@ -80,6 +80,11 @@ tokens.configure(from_file_only=True)
 tokens.manage('read-only')
 
 
+@app.route('/health')
+def health():
+    return 'OK'
+
+
 @app.route('/')
 @authorize
 def index():
