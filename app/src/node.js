@@ -1,6 +1,6 @@
 import {Pod} from './pod.js'
 import Bars from './bars.js'
-import {FACTORS} from './utils.js'
+import {parseResource} from './utils.js'
 const PIXI = require('pixi.js')
 
 export default class Node extends PIXI.Graphics {
@@ -14,31 +14,25 @@ export default class Node extends PIXI.Graphics {
         return this.node.labels.master == 'true'
     }
 
-    parseResource(v) {
-        const match = v.match(/^(\d*)(\D*)$/)
-        const factor = FACTORS[match[2]] || 1
-        return parseInt(match[1]) * factor
-    }
-
     getResourceUsage() {
         const resources = {}
         for (const key of Object.keys(this.node.status.capacity)) {
             resources[key] = {
-                'capacity': this.parseResource(this.node.status.capacity[key]),
+                'capacity': parseResource(this.node.status.capacity[key]),
                 'requested': 0,
                 'used': 0
             }
         }
         if (this.node.usage) {
             for (const key of Object.keys(this.node.usage)) {
-                resources[key]['used'] = this.parseResource(this.node.usage[key])
+                resources[key]['used'] = parseResource(this.node.usage[key])
             }
         }
         for (const pod of this.node.pods) {
             for (const container of pod.containers) {
                 if (container.resources && container.resources.requests) {
                     for (const key of Object.keys(container.resources.requests)) {
-                        resources[key].requested += this.parseResource(container.resources.requests[key])
+                        resources[key].requested += parseResource(container.resources.requests[key])
                     }
                 }
             }

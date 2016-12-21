@@ -1,3 +1,5 @@
+import { PodFill, PendingPodBorder, RunningPodBorder, CompletedPodBorder } from './colors.js'
+import { parseResource, getBarColor } from './utils.js'
 const PIXI = require('pixi.js')
 
 export const ALL_PODS = {}
@@ -23,6 +25,46 @@ export class Pod extends PIXI.Graphics {
             return existingPod
         } else {
             return new Pod(pod, tooltip)
+        }
+    }
+
+    getResourceUsage() {
+        const units = {
+            cpu: 'm',
+            memory: 'Mi'
+        }
+
+        const metric = (metric, type) =>
+            metric ? (metric[type] ? parseInt(metric[type]) : 0) : 0
+
+        const podResource = type => (containers, resource) =>
+            containers
+                .map(({resources}) => metric(resources[resource], type))
+                .reduce((a, b) => a + b, 0)
+                .toString().concat(units[type])
+
+        const podCpu = podResource('cpu')
+        const podMem = podResource('memory')
+
+        const cpuLimits = parseResource(podCpu(this.pod.containers, 'limits'))
+        const cpuUsage = parseResource(podCpu(this.pod.containers, 'usage'))
+        const cpuRequests = parseResource(podCpu(this.pod.containers, 'requests'))
+
+        const memLimits = parseResource(podMem(this.pod.containers, 'limits'))
+        const memUsage = parseResource(podMem(this.pod.containers, 'usage'))
+        const memRequests = parseResource(podMem(this.pod.containers, 'requests'))
+
+        return {
+            memory: {
+                limit: memLimits,
+                requested: memRequests,
+                used: memUsage
+            },
+            cpu: {
+                limit: cpuLimits,
+                requested: cpuRequests,
+                used: cpuUsage
+            }
         }
     }
 
@@ -73,7 +115,6 @@ export class Pod extends PIXI.Graphics {
             this.tooltip.x = this.toGlobal(new PIXI.Point(10, 10)).x
             this.tooltip.y = this.toGlobal(new PIXI.Point(10, 10)).y
             this.tooltip.visible = true
-            // console.log(this.pod)
         })
         podBox.on('mouseout', function () {
             podBox.filters = []
@@ -83,27 +124,27 @@ export class Pod extends PIXI.Graphics {
         var i = 0
         var w = 10 / this.pod.containers.length
         for (const container of this.pod.containers) {
-            podBox.drawRect(0 + i * w, 0, w, 10)
+            podBox.drawRect(i * w, 0, w, 10)
             i++
         }
         if (this.pod.status.phase == 'Succeeded') {
             // completed Job
-            podBox.lineStyle(2, 0xaaaaff, 1)
+            podBox.lineStyle(2, CompletedPodBorder, 1);
         } else if (this.pod.status.phase == 'Running' && allReady) {
-            podBox.lineStyle(2, 0xaaffaa, 1)
+            podBox.lineStyle(2, RunningPodBorder, 1);
         } else if (this.pod.status.phase == 'Running' && allRunning && !allReady) {
             // all containers running, but some not ready (readinessProbe)
             this.tick = function(_) {
                 var v = Math.sin((PIXI.ticker.shared.lastTime % 1000)/1000.* Math.PI)
                 podBox.alpha = v
-            }
-            podBox.lineStyle(2, 0xaaffaa, 1)
+            })
+            podBox.lineStyle(2, RunningPodBorder, 1);
         } else if (this.pod.status.phase == 'Pending') {
             this.tick = function(_) {
                 var v = Math.sin((PIXI.ticker.shared.lastTime % 1000)/1000.* Math.PI)
                 podBox.alpha = v
-            }
-            podBox.lineStyle(2, 0xffffaa, 1)
+            })
+            podBox.lineStyle(2, PendingPodBorder, 1);
         } else {
             // CrashLoopBackOff, ImagePullBackOff or other unknown state
 
@@ -113,7 +154,7 @@ export class Pod extends PIXI.Graphics {
             }
             podBox.lineStyle(2, 0xff9999, 1)
         }
-        podBox.beginFill(0x999999, 0.5)
+        podBox.beginFill(PodFill, 0.5)
         podBox.drawRect(0, 0, 10, 10)
         if (this.pod.deleted) {
             podBox.lineStyle(2, 0x000000, 0.8)
@@ -132,6 +173,35 @@ export class Pod extends PIXI.Graphics {
         if (this.tick) {
             PIXI.ticker.shared.add(this.tick)
         }
+
+        const resources = this.getResourceUsage()
+
+        const cpuHeight = resources.cpu.limit !== 0 ? 8 / resources.cpu.limit : 0
+        podBox.lineStyle(0, 0xaaffaa, 1)
+        podBox.beginFill(getBarColor(resources.cpu.requested, resources.cpu.limit), 1)
+        podBox.drawRect(1, 9 - resources.cpu.requested * cpuHeight, 1, resources.cpu.requested * cpuHeight)
+        podBox.beginFill(getBarColor(resources.cpu.used, resources.cpu.limit), 1)
+        podBox.drawRect(2, 9 - resources.cpu.used * cpuHeight, 1, resources.cpu.used * cpuHeight)
+        podBox.endFill()
+        podBox.lineStyle(1, 0xaaaaaa, 1)
+
+        let limitExceeded = false
+        if (resources.memory.used > resources.memory.limit) {
+            resources.memory.limit = resources.memory.used
+            limitExceeded = true
+        }
+
+        const scale = resources.memory.limit / 8
+        const scaledMemReq = resources.memory.requested !== 0 && scale !== 0 ? resources.memory.requested / scale : 0
+        const scaledMemUsed = resources.memory.used !== 0 && scale !== 0 ? resources.memory.used / scale : 0
+
+        podBox.lineStyle(0, 0xaaffaa, 1)
+        podBox.beginFill(getBarColor(resources.memory.requested, resources.memory.limit), 1)
+        podBox.drawRect(3, 9 - scaledMemReq, 1, scaledMemReq)
+        podBox.beginFill(getBarColor(resources.memory.used, resources.memory.limit), 1)
+        podBox.drawRect(4, 9 - scaledMemUsed, 1, scaledMemUsed)
+        podBox.endFill()
+
         return this
     }
 }

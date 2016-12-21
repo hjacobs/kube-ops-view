@@ -62,4 +62,10 @@ function getBarColor(usage, capacity) {
     return hsvToRgb(0.4 - (0.4 * (usage / capacity)), 0.6, 1)
 }
 
-export {FACTORS, hsvToRgb, getBarColor}
+function parseResource(v) {
+    const match = v.match(/^(\d*)(\D*)$/)
+    const factor = FACTORS[match[2]] || 1
+    return parseInt(match[1]) * factor
+}
+
+export {FACTORS, hsvToRgb, getBarColor, parseResource};
