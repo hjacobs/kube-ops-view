@@ -33,9 +33,6 @@ export default class App {
     }
 
     initialize() {
-        PIXI.ticker.shared.autoStart = false
-        PIXI.ticker.shared.stop()
-
         //Create the renderer
         const renderer = PIXI.autoDetectRenderer(256, 256, {resolution: 2})
         renderer.view.style.position = 'absolute'
@@ -104,26 +101,29 @@ export default class App {
         const angle = Math.random()*Math.PI*2
         const cos = Math.cos(angle)
         const sin = Math.sin(angle)
-        const distance = window.innerWidth*0.75
+        const distance = Math.max(200, Math.random() * Math.min(window.innerWidth, window.innerHeight))
         // blur filter looks cool, but has huge performance penalty
         // const blur = new PIXI.filters.BlurFilter(20, 2)
         // pod.filters = [blur]
         pod.pivot.x = pod.width / 2
         pod.pivot.y = pod.height / 2
         pod.alpha = 0
+        pod._progress = 0
         originalPod.visible = false
         const that = this
         const tick = function(t) {
-            const alpha = Math.min(1, pod.alpha + (0.01 * t))
-            const scale = 1 + ((1 - alpha) * 140)
-            pod.x = targetPosition.x + (distance * cos * (1 - alpha))
-            pod.y = targetPosition.y + (distance * sin * (1 - alpha))
-            pod.alpha = alpha
-            pod.rotation = alpha * alpha * Math.PI * 2
+            // progress goes from 0 to 1
+            const progress = Math.min(1, pod._progress + (0.01 * t))
+            const scale = 1 + ((1 - progress) * 140)
+            pod._progress = progress
+            pod.x = targetPosition.x + (distance * cos * (1 - progress))
+            pod.y = targetPosition.y + (distance * sin * (1 - progress))
+            pod.alpha = progress
+            pod.rotation = progress * progress * Math.PI * 2
             // blur.blur = (1 - alpha) * 20
             pod.scale.x = scale
             pod.scale.y = scale
-            if (alpha >= 1) {
+            if (progress >= 1) {
                 PIXI.ticker.shared.remove(tick)
                 that.stage.removeChild(pod)
                 originalPod.visible = true
@@ -163,6 +163,10 @@ export default class App {
         }
     }
 
+    tick(time) {
+        this.renderer.render(this.stage)
+    }
+
     run() {
         this.initialize()
 
@@ -182,13 +186,7 @@ export default class App {
 
         fetchData()
 
-        function mainLoop(time) {
-            PIXI.ticker.shared.update(time)
-            that.renderer.render(that.stage)
-            requestAnimationFrame(mainLoop)
-        }
-
-        mainLoop(performance.now())
+        PIXI.ticker.shared.add(this.tick, this)
     }
 }
 

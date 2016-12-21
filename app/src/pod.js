@@ -10,6 +10,7 @@ export class Pod extends PIXI.Graphics {
         this.pod = pod
         this.tooltip = tooltip
         this.tick = null
+        this._progress = 1
 
         if (register) {
             ALL_PODS[pod.namespace + '/' + pod.name] = this
@@ -61,10 +62,28 @@ export class Pod extends PIXI.Graphics {
         }
     }
 
+    pulsate(time) {
+        const v = Math.sin((PIXI.ticker.shared.lastTime % 1000)/1000.* Math.PI)
+        this.alpha = v * this._progress
+    }
+
+    crashing(time) {
+        const v = Math.sin((PIXI.ticker.shared.lastTime % 1000) / 1000. * Math.PI)
+        this.tint = PIXI.utils.rgb2hex([1, v, v])
+    }
+
+    terminating(time) {
+        const v = Math.sin(((1000 + PIXI.ticker.shared.lastTime) % 1000) / 1000. * Math.PI)
+        this.cross.alpha = v
+    }
+
     draw() {
 
         if (this.tick) {
-            PIXI.ticker.shared.remove(this.tick)
+            PIXI.ticker.shared.remove(this.tick, this)
+            this.tick = null
+            this.alpha = this._progress
+            this.tint = 0xffffff
         }
 
         // pod.status.containerStatuses might be undefined!
@@ -137,46 +156,38 @@ export class Pod extends PIXI.Graphics {
             podBox.lineStyle(2, 0xaaffaa, 1)
         } else if (this.pod.status.phase == 'Running' && allRunning && !allReady) {
             // all containers running, but some not ready (readinessProbe)
-            this.tick = function(_) {
-                var v = Math.sin((PIXI.ticker.shared.lastTime % 1000)/1000.* Math.PI)
-                podBox.alpha = v
-            }
+            this.tick = this.pulsate
             podBox.lineStyle(2, 0xaaffaa, 1)
         } else if (this.pod.status.phase == 'Pending') {
-            this.tick = function(_) {
-                var v = Math.sin((PIXI.ticker.shared.lastTime % 1000)/1000.* Math.PI)
-                podBox.alpha = v
-            }
+            this.tick = this.pulsate
             podBox.lineStyle(2, 0xffffaa, 1)
         } else {
             // CrashLoopBackOff, ImagePullBackOff or other unknown state
-
-            this.tick = function(_) {
-                var v = Math.sin((PIXI.ticker.shared.lastTime % 1000) / 1000. * Math.PI)
-                podBox.tint = PIXI.utils.rgb2hex([1, v, v])
-            }
+            this.tick = this.crashing
             podBox.lineStyle(2, 0xff9999, 1)
         }
         podBox.beginFill(0x999999, 0.5)
         podBox.drawRect(0, 0, 10, 10)
         if (this.pod.deleted) {
-            podBox.lineStyle(2, 0x000000, 0.8)
-            podBox.moveTo(0, 0)
-            podBox.lineTo(10, 10)
-            podBox.moveTo(10, 0)
-            podBox.lineTo(0, 10)
-            /*
-            PIXI.ticker.shared.add(function (_) {
-                const now = new Date().getTime() / 1000
-                // TODO: better animation
-                podBox.alpha = Math.min(0.8, Math.max(0.2, (podBox.pod.deleted - now)/30))
-            })
-            */
+            if (!this.cross) {
+                const cross = new PIXI.Graphics()
+                cross.lineStyle(3, 0xff6666, 1)
+                cross.moveTo(0, 0)
+                cross.lineTo(10, 10)
+                cross.moveTo(10, 0)
+                cross.lineTo(0, 10)
+                cross.pivot.x = 5
+                cross.pivot.y = 5
+                cross.x = 5
+                cross.y = 5
+                this.addChild(cross)
+                this.cross = cross
+            }
+            this.tick = this.terminating
         }
         if (this.tick) {
-            PIXI.ticker.shared.add(this.tick)
+            PIXI.ticker.shared.add(this.tick, this)
         }
-
 
         const cpuHeight = resources.cpu.limit !== 0 ? 8 / resources.cpu.limit : 0
         podBox.lineStyle(0, 0xaaffaa, 1)

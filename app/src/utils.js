@@ -59,7 +59,7 @@ function hsvToRgb(h, s, v) {
 }
 
 function getBarColor(usage, capacity) {
-    return hsvToRgb(0.4 - (0.4 * (usage / capacity)), 0.6, 1)
+    return hsvToRgb(Math.max(0, Math.min(1, 0.4 - (0.4 * (usage / capacity)))), 0.6, 1)
 }
 
 function parseResource(v) {
