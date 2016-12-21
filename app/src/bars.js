@@ -13,11 +13,13 @@ export default class Bars extends PIXI.Graphics {
     draw() {
         const bars = this
 
+        const barHeight = 92
+
         bars.lineStyle(0, 0xaaffaa, 1)
-        bars.beginFill(0xaaffaa, 0.1)
-        bars.drawRect(5, 30, 15, 80)
+        bars.beginFill(0x999999, 0.1)
+        bars.drawRect(5, 110 - barHeight, 15, barHeight)
         bars.endFill()
-        const cpuHeight = 80 / bars.resources.cpu.capacity
+        const cpuHeight = barHeight / bars.resources.cpu.capacity
         bars.interactive = true
         bars.lineStyle(0, 0xaaffaa, 1)
         bars.beginFill(getBarColor(bars.resources.cpu.requested, bars.resources.cpu.capacity), 1)
@@ -30,7 +32,7 @@ export default class Bars extends PIXI.Graphics {
             bars.drawRect(5, 110 - (i + 1) * cpuHeight, 5, cpuHeight)
         }
 
-        const scale = bars.resources.memory.capacity / 80
+        const scale = bars.resources.memory.capacity / barHeight
         bars.drawRect(14, 110 - bars.resources.memory.capacity / scale, 5, bars.resources.memory.capacity / scale)
         bars.lineStyle(0, 0xaaffaa, 1)
         bars.beginFill(getBarColor(bars.resources.memory.requested, bars.resources.memory.capacity), 1)
@@ -57,8 +59,7 @@ export default class Bars extends PIXI.Graphics {
             s += '\t\t Used      : ' + podsUsed + '\n'
 
             bars.tooltip.text.text = s
-            bars.tooltip.x = bars.toGlobal(new PIXI.Point(0, 0)).x
-            bars.tooltip.y = bars.toGlobal(new PIXI.Point(0, 0)).y
+            bars.tooltip.position = bars.toGlobal(new PIXI.Point(22, 16))
             bars.tooltip.visible = true
         })
         bars.on('mouseout', function () {

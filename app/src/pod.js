@@ -106,13 +106,13 @@ export class Pod extends PIXI.Graphics {
                 }
             }
             s += '\nCPU:'
-            s += '\n\t\tRequested: ' + resources.cpu.requested
-            s += '\n\t\tLimit: ' + resources.cpu.limit
-            s += '\n\t\tUsed: ' + resources.cpu.used
+            s += '\n\t\tRequested: ' + (resources.cpu.requested / FACTORS.m).toFixed(0) + ' m'
+            s += '\n\t\tLimit: ' + (resources.cpu.limit / FACTORS.m).toFixed(0) + ' m'
+            s += '\n\t\tUsed: ' + (resources.cpu.used / FACTORS.m).toFixed(0) + ' m'
             s += '\nMemory:'
-            s += '\n\t\tRequested: ' + (resources.memory.requested / FACTORS.Mi).toFixed(2) + ' MiB'
-            s += '\n\t\tLimit: ' + (resources.memory.limit / FACTORS.Mi).toFixed(2) + ' MiB'
-            s += '\n\t\tUsed: ' + (resources.memory.used / FACTORS.Mi).toFixed(2) + ' MiB'
+            s += '\n\t\tRequested: ' + (resources.memory.requested / FACTORS.Mi).toFixed(0) + ' MiB'
+            s += '\n\t\tLimit: ' + (resources.memory.limit / FACTORS.Mi).toFixed(0) + ' MiB'
+            s += '\n\t\tUsed: ' + (resources.memory.used / FACTORS.Mi).toFixed(0) + ' MiB'
 
             this.tooltip.text.text = s
             this.tooltip.x = this.toGlobal(new PIXI.Point(10, 10)).x

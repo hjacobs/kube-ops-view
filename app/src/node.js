@@ -66,8 +66,7 @@ export default class Node extends PIXI.Graphics {
                 s += '\n' + key + ': ' + nodeBox.node.labels[key]
             }
             nodeBox.tooltip.text.text = s
-            nodeBox.tooltip.x = nodeBox.toGlobal(new PIXI.Point(0, 0)).x
-            nodeBox.tooltip.y = nodeBox.toGlobal(new PIXI.Point(0, 0)).y
+            nodeBox.tooltip.position = nodeBox.toGlobal(new PIXI.Point(0, 15))
             nodeBox.tooltip.visible = true
         })
         topHandle.on('mouseout', function () {
