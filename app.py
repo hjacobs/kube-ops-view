@@ -91,7 +91,7 @@ def health():
 @authorize
 def index():
     app_js = None
-    for entry in os.listdir('static'):
+    for entry in os.listdir('static/build'):
         if entry.startswith('app'):
             app_js = entry
             break

@@ -3,5 +3,5 @@ __pycache__
 *.pyc
 .idea/
 **/node_modules/
-static/
+static/build/
 *-secret
