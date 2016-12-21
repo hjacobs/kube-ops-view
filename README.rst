@@ -7,16 +7,17 @@ Goal: provide a common operational picture for multiple Kubernetes clusters.
 * Render nodes and indicate their overall status ("Ready")
 * Show node capacity and resource usage (CPU, memory)
 
-  * Render one "box" per CPU and fill up to sum of pod CPU requests
-  * Render vertical bar for total memory and fill up to sum of pod memory requests
+  * Render one "box" per CPU and fill up to sum of pod CPU requests/usage
+  * Render vertical bar for total memory and fill up to sum of pod memory requests/usage
 
 * Render individual pods
 
   * Indicate pod status by border line color (green: ready/running, yellow: pending, red: error etc)
-  * Show current CPU usage (gather from Heapster) by tinting ("hot" color: high CPU usage)
-  * System pods ("kube-system" namespace) should be grouped together
+  * Show current CPU/memory usage (gathered from Heapster) by small vertical bars
+  * System pods ("kube-system" namespace) will be grouped together at the bottom
 
 * Provide tooltip information for nodes and pods
+* Animate pod creation and termination
 
 What it is not:
 
