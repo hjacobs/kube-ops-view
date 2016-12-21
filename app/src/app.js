@@ -3,11 +3,10 @@ import Cluster from './cluster.js'
 import { Pod, ALL_PODS } from './pod.js'
 const PIXI = require('pixi.js')
 
-const SEEN_PODS = {}
-
 export default class App {
     constructor() {
         this.filterString = ''
+        this.seenPods = {}
     }
 
     filter() {
@@ -95,7 +94,7 @@ export default class App {
     }
 
     animatePodCreation(originalPod, globalX, globalY) {
-        const pod = new Pod(originalPod.pod, this.tooltip)
+        const pod = new Pod(originalPod.pod, this.tooltip, false)
         pod.draw()
         pod.x = globalX
         pod.y = globalY
@@ -125,39 +124,41 @@ export default class App {
         PIXI.ticker.shared.add(tick)
         this.stage.addChild(pod)
     }
+    update(clusters) {
+        this.viewContainer.removeChildren();
+        var y = 0;
+        for (var cluster of clusters) {
+            var clusterBox = new Cluster(cluster, this.tooltip)
+            clusterBox.draw()
+            clusterBox.x = 0
+            clusterBox.y = y
+            this.viewContainer.addChild(clusterBox)
+            y += 270;
+        }
+        this.filter()
+
+        let i = 0
+        const that = this
+        const firstTime = Object.keys(this.seenPods).length == 0
+        for (const key of Object.keys(ALL_PODS)) {
+            if (!this.seenPods[key]) {
+                const pod = ALL_PODS[key]
+                this.seenPods[key] = pod
+                const globalPos = pod.toGlobal({x: 0, y: 0})
+                if (!firstTime && i < 5) {
+                    window.setTimeout(function() {
+                        that.animatePodCreation(pod, globalPos.x, globalPos.y)
+                    }, 100 * i)
+                }
+                i++
+            }
+        }
+    }
 
     run() {
         this.initialize()
 
         const that = this
-
-        function update(clusters) {
-            that.viewContainer.removeChildren();
-            var y = 0;
-            for (var cluster of clusters) {
-                var clusterBox = new Cluster(cluster, that.tooltip)
-                clusterBox.draw()
-                clusterBox.x = 0
-                clusterBox.y = y
-                that.viewContainer.addChild(clusterBox)
-                y += 270;
-            }
-            that.filter()
-
-            let i = 0
-            const firstTime = Object.keys(SEEN_PODS).length == 0
-            for (const key of Object.keys(ALL_PODS)) {
-                if (!SEEN_PODS[key]) {
-                    const pod = ALL_PODS[key]
-                    SEEN_PODS[key] = pod
-                    const globalPos = pod.toGlobal({x: 0, y: 0})
-                    if (!firstTime && i < 5) {
-                        that.animatePodCreation(pod, globalPos.x, globalPos.y)
-                    }
-                    i++
-                }
-            }
-        }
 
         function fetchData() {
             fetch('kubernetes-clusters', {credentials: 'include'})
@@ -166,7 +167,7 @@ export default class App {
             })
             .then(function(json) {
                 const clusters = json.kubernetes_clusters;
-                update(clusters)
+                that.update(clusters)
             });
             window.setTimeout(fetchData, 5000)
         }

@@ -4,12 +4,14 @@ export const ALL_PODS = {}
 
 export class Pod extends PIXI.Graphics {
 
-    constructor(pod, tooltip) {
+    constructor(pod, tooltip, register=true) {
         super()
         this.pod = pod
         this.tooltip = tooltip
 
-        ALL_PODS[pod.namespace + '/' + pod.name] = this
+        if (register) {
+            ALL_PODS[pod.namespace + '/' + pod.name] = this
+        }
     }
 
     draw() {
