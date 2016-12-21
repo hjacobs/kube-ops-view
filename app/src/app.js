@@ -3,11 +3,11 @@ import Cluster from './cluster.js'
 import { Pod, ALL_PODS } from './pod.js'
 const PIXI = require('pixi.js')
 
-const SEEN_PODS = {}
-
 export default class App {
+
     constructor() {
         this.filterString = ''
+        this.seenPods = {}
     }
 
     filter() {
@@ -33,6 +33,9 @@ export default class App {
     }
 
     initialize() {
+        PIXI.ticker.shared.autoStart = false
+        PIXI.ticker.shared.stop()
+
         //Create the renderer
         const renderer = PIXI.autoDetectRenderer(256, 256, {resolution: 2})
         renderer.view.style.position = 'absolute'
@@ -95,25 +98,29 @@ export default class App {
     }
 
     animatePodCreation(originalPod, globalX, globalY) {
-        const pod = new Pod(originalPod.pod, this.tooltip)
+        const pod = new Pod(originalPod.pod, this.tooltip, false)
         pod.draw()
-        pod.x = globalX
-        pod.y = globalY
-        const blur = new PIXI.filters.BlurFilter(60)
-        pod.filters = [blur]
+        const targetPosition = new PIXI.Point(globalX, globalY)
+        const angle = Math.random()*Math.PI*2
+        const cos = Math.cos(angle)
+        const sin = Math.sin(angle)
+        const distance = window.innerWidth*0.75
+        // blur filter looks cool, but has huge performance penalty
+        // const blur = new PIXI.filters.BlurFilter(20, 2)
+        // pod.filters = [blur]
         pod.pivot.x = pod.width / 2
         pod.pivot.y = pod.height / 2
-        pod.scale.x = 401
-        pod.scale.y = 401
         pod.alpha = 0
         originalPod.visible = false
         const that = this
         const tick = function(t) {
             const alpha = Math.min(1, pod.alpha + (0.01 * t))
-            const scale = 1 + ((1 - alpha) * 400)
+            const scale = 1 + ((1 - alpha) * 140)
+            pod.x = targetPosition.x + (distance * cos * (1 - alpha))
+            pod.y = targetPosition.y + (distance * sin * (1 - alpha))
             pod.alpha = alpha
             pod.rotation = alpha * alpha * Math.PI * 2
-            blur.blur = (1 - alpha) * 60
+            // blur.blur = (1 - alpha) * 20
             pod.scale.x = scale
             pod.scale.y = scale
             if (alpha >= 1) {
@@ -125,39 +132,41 @@ export default class App {
         PIXI.ticker.shared.add(tick)
         this.stage.addChild(pod)
     }
+    update(clusters) {
+        this.viewContainer.removeChildren()
+        var y = 0
+        for (var cluster of clusters) {
+            var clusterBox = new Cluster(cluster, this.tooltip)
+            clusterBox.draw()
+            clusterBox.x = 0
+            clusterBox.y = y
+            this.viewContainer.addChild(clusterBox)
+            y += 270
+        }
+        this.filter()
+
+        let i = 0
+        const that = this
+        const firstTime = Object.keys(this.seenPods).length == 0
+        for (const key of Object.keys(ALL_PODS)) {
+            if (!this.seenPods[key]) {
+                const pod = ALL_PODS[key]
+                this.seenPods[key] = pod
+                const globalPos = pod.toGlobal({x: 0, y: 0})
+                if (!firstTime && i < 10) {
+                    window.setTimeout(function() {
+                        that.animatePodCreation(pod, globalPos.x, globalPos.y)
+                    }, 100 * i)
+                }
+                i++
+            }
+        }
+    }
 
     run() {
         this.initialize()
 
         const that = this
-
-        function update(clusters) {
-            that.viewContainer.removeChildren()
-            var y = 0
-            for (var cluster of clusters) {
-                var clusterBox = new Cluster(cluster, that.tooltip)
-                clusterBox.draw()
-                clusterBox.x = 0
-                clusterBox.y = y
-                that.viewContainer.addChild(clusterBox)
-                y += 270
-            }
-            that.filter()
-
-            let i = 0
-            const firstTime = Object.keys(SEEN_PODS).length == 0
-            for (const key of Object.keys(ALL_PODS)) {
-                if (!SEEN_PODS[key]) {
-                    const pod = ALL_PODS[key]
-                    SEEN_PODS[key] = pod
-                    const globalPos = pod.toGlobal({x: 0, y: 0})
-                    if (!firstTime && i < 5) {
-                        that.animatePodCreation(pod, globalPos.x, globalPos.y)
-                    }
-                    i++
-                }
-            }
-        }
 
         function fetchData() {
             fetch('kubernetes-clusters', {credentials: 'include'})
@@ -166,20 +175,20 @@ export default class App {
             })
             .then(function(json) {
                 const clusters = json.kubernetes_clusters
-                update(clusters)
+                that.update(clusters)
             })
             window.setTimeout(fetchData, 5000)
         }
 
         fetchData()
 
-
-        function mainLoop() {
-            requestAnimationFrame(mainLoop)
+        function mainLoop(time) {
+            PIXI.ticker.shared.update(time)
             that.renderer.render(that.stage)
+            requestAnimationFrame(mainLoop)
         }
 
-        mainLoop()
+        mainLoop(performance.now())
     }
 }
 
