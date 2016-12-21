@@ -46,7 +46,7 @@ export default class App {
         //Create a container object called the `stage`
         const stage = new PIXI.Container()
 
-        const searchPrompt = new PIXI.Text('>', {fontSize: 18, fill: 0xaaaaff})
+        const searchPrompt = new PIXI.Text('>', {fontFamily: 'ShareTechMono', fontSize: 18, fill: 0xaaaaff})
         searchPrompt.x = 20
         searchPrompt.y = 5
         PIXI.ticker.shared.add(function(_) {
@@ -55,7 +55,7 @@ export default class App {
         })
         stage.addChild(searchPrompt)
 
-        const searchText = new PIXI.Text('', {fontSize: 18, fill: 0xaaaaff})
+        const searchText = new PIXI.Text('', {fontFamily: 'ShareTechMono', fontSize: 18, fill: 0xaaaaff})
         searchText.x = 40
         searchText.y = 5
         stage.addChild(searchText)

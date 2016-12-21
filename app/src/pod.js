@@ -79,12 +79,6 @@ export class Pod extends PIXI.Graphics {
 
     draw() {
 
-        if (this.tick) {
-            PIXI.ticker.shared.remove(this.tick, this)
-            this.tick = null
-            this.alpha = this._progress
-            this.tint = 0xffffff
-        }
 
         // pod.status.containerStatuses might be undefined!
         const containerStatuses = this.pod.status.containerStatuses || []
@@ -101,6 +95,8 @@ export class Pod extends PIXI.Graphics {
         const allReady = ready >= containerStatuses.length
         const allRunning = running >= containerStatuses.length
         const resources = this.getResourceUsage()
+
+        var newTick = null
 
         const podBox = this
         podBox.interactive = true
@@ -133,9 +129,8 @@ export class Pod extends PIXI.Graphics {
             s += '\n\t\tLimit: ' + (resources.memory.limit / FACTORS.Mi).toFixed(0) + ' MiB'
             s += '\n\t\tUsed: ' + (resources.memory.used / FACTORS.Mi).toFixed(0) + ' MiB'
 
-            this.tooltip.text.text = s
-            this.tooltip.x = this.toGlobal(new PIXI.Point(10, 10)).x
-            this.tooltip.y = this.toGlobal(new PIXI.Point(10, 10)).y
+            this.tooltip.setText(s)
+            this.tooltip.position = this.toGlobal(new PIXI.Point(10, 10))
             this.tooltip.visible = true
         })
         podBox.on('mouseout', function () {
@@ -156,14 +151,14 @@ export class Pod extends PIXI.Graphics {
             podBox.lineStyle(2, 0xaaffaa, 1)
         } else if (this.pod.status.phase == 'Running' && allRunning && !allReady) {
             // all containers running, but some not ready (readinessProbe)
-            this.tick = this.pulsate
+            newTick = this.pulsate
             podBox.lineStyle(2, 0xaaffaa, 1)
         } else if (this.pod.status.phase == 'Pending') {
-            this.tick = this.pulsate
+            newTick = this.pulsate
             podBox.lineStyle(2, 0xffffaa, 1)
         } else {
             // CrashLoopBackOff, ImagePullBackOff or other unknown state
-            this.tick = this.crashing
+            newTick = this.crashing
             podBox.lineStyle(2, 0xff9999, 1)
         }
         podBox.beginFill(0x999999, 0.5)
@@ -183,10 +178,16 @@ export class Pod extends PIXI.Graphics {
                 this.addChild(cross)
                 this.cross = cross
             }
-            this.tick = this.terminating
+            newTick = this.terminating
         }
-        if (this.tick) {
+        if (newTick) {
+            this.tick = newTick
             PIXI.ticker.shared.add(this.tick, this)
+        } else if (this.tick) {
+            PIXI.ticker.shared.remove(this.tick, this)
+            this.tick = null
+            this.alpha = this._progress
+            this.tint = 0xffffff
         }
 
         const cpuHeight = resources.cpu.limit !== 0 ? 8 / resources.cpu.limit : 0

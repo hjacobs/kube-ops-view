@@ -3,19 +3,23 @@ const PIXI = require('pixi.js')
 export default class Tooltip extends PIXI.Graphics {
     constructor () {
         super()
+        this.text = new PIXI.Text('', {fontFamily: 'ShareTechMono', fontSize: 12, fill: 0xffffff})
+        this.text.x = 4
+        this.text.y = 4
+        this.addChild(this.text)
+        this.visible = false
+    }
+
+    setText(text) {
+        this.text.text = text
+        this.draw()
     }
 
     draw () {
-        var tooltip = this
-        tooltip.lineStyle(1, 0x000000, 1)
-        tooltip.beginFill(0x666666, 0.8)
-        tooltip.drawRect(0, 0, 200, 400)
-        tooltip.endFill()
-        var text = new PIXI.Text('', {fontSize: 12, fill: 0xffffff})
-        text.x = 2
-        text.y = 2
-        tooltip.addChild(text)
-        tooltip.text = text
-        tooltip.visible = false
+        this.clear()
+        this.lineStyle(2, 0x333333, 0.8)
+        this.beginFill(0x333333, 0.8)
+        this.drawRect(0, 0, this.text.width + 8, this.text.height + 8)
+        this.endFill()
     }
 }

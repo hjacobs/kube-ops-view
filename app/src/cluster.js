@@ -45,7 +45,7 @@ export default class Cluster extends PIXI.Graphics {
         topHandle.beginFill(0xaaaaff, 1)
         topHandle.drawRect(0, 0, width, 15)
         topHandle.endFill()
-        var text = new PIXI.Text(this.cluster.api_server_url, {fontSize: 10, fill: 0x000000})
+        var text = new PIXI.Text(this.cluster.api_server_url, {fontFamily: 'ShareTechMono', fontSize: 10, fill: 0x000000})
         text.x = 2
         text.y = 2
         topHandle.addChild(text)

@@ -58,7 +58,7 @@ export default class Bars extends PIXI.Graphics {
             s += '\t\t Capacity  : ' + podsCap + '\n'
             s += '\t\t Used      : ' + podsUsed + '\n'
 
-            bars.tooltip.text.text = s
+            bars.tooltip.setText(s)
             bars.tooltip.position = bars.toGlobal(new PIXI.Point(22, 16))
             bars.tooltip.visible = true
         })

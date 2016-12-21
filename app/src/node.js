@@ -48,8 +48,8 @@ export default class Node extends PIXI.Graphics {
         topHandle.beginFill(0xaaaaff, 1)
         topHandle.drawRect(0, 0, 105, 15)
         topHandle.endFill()
-        const ellipsizedNodeName = this.node.name.substring(0, 20).concat('...')
-        const text = new PIXI.Text(ellipsizedNodeName, {fontSize: 10, fill: 0x000000})
+        const ellipsizedNodeName = this.node.name.substring(0, 18).concat('...')
+        const text = new PIXI.Text(ellipsizedNodeName, {fontFamily: 'ShareTechMono', fontSize: 10, fill: 0x000000})
         text.x = 2
         text.y = 2
         topHandle.addChild(text)
@@ -65,7 +65,7 @@ export default class Node extends PIXI.Graphics {
             for (var key of Object.keys(nodeBox.node.labels)) {
                 s += '\n' + key + ': ' + nodeBox.node.labels[key]
             }
-            nodeBox.tooltip.text.text = s
+            nodeBox.tooltip.setText(s)
             nodeBox.tooltip.position = nodeBox.toGlobal(new PIXI.Point(0, 15))
             nodeBox.tooltip.visible = true
         })
