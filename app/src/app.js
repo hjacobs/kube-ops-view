@@ -1,6 +1,9 @@
 import Tooltip from './tooltip.js'
 import Cluster from './cluster.js'
+import { Pod, ALL_PODS } from './pod.js'
 const PIXI = require('pixi.js')
+
+const SEEN_PODS = {}
 
 export default class App {
     constructor() {
@@ -91,6 +94,38 @@ export default class App {
         this.tooltip = tooltip
     }
 
+    animatePodCreation(originalPod, globalX, globalY) {
+        const pod = new Pod(originalPod.pod, this.tooltip)
+        pod.draw()
+        pod.x = globalX
+        pod.y = globalY
+        const blur = new PIXI.filters.BlurFilter(60)
+        pod.filters = [blur]
+        pod.pivot.x = pod.width / 2
+        pod.pivot.y = pod.height / 2
+        pod.scale.x = 401
+        pod.scale.y = 401
+        pod.alpha = 0
+        originalPod.visible = false
+        const that = this
+        const tick = function(t) {
+            const alpha = Math.min(1, pod.alpha + (0.01 * t))
+            const scale = 1 + ((1 - alpha) * 400)
+            pod.alpha = alpha
+            pod.rotation = alpha * alpha * Math.PI * 2
+            blur.blur = (1 - alpha) * 60
+            pod.scale.x = scale
+            pod.scale.y = scale
+            if (alpha >= 1) {
+                PIXI.ticker.shared.remove(tick)
+                that.stage.removeChild(pod)
+                originalPod.visible = true
+            }
+        }
+        PIXI.ticker.shared.add(tick)
+        this.stage.addChild(pod)
+    }
+
     run() {
         this.initialize()
 
@@ -108,6 +143,20 @@ export default class App {
                 y += 270;
             }
             that.filter()
+
+            let i = 0
+            const firstTime = Object.keys(SEEN_PODS).length == 0
+            for (const key of Object.keys(ALL_PODS)) {
+                if (!SEEN_PODS[key]) {
+                    const pod = ALL_PODS[key]
+                    SEEN_PODS[key] = pod
+                    const globalPos = pod.toGlobal({x: 0, y: 0})
+                    if (!firstTime && i < 5) {
+                        that.animatePodCreation(pod, globalPos.x, globalPos.y)
+                    }
+                    i++
+                }
+            }
         }
 
         function fetchData() {

@@ -1,11 +1,15 @@
 const PIXI = require('pixi.js')
 
-export default class Pod extends PIXI.Graphics {
+export const ALL_PODS = {}
+
+export class Pod extends PIXI.Graphics {
 
     constructor(pod, tooltip) {
         super()
         this.pod = pod
         this.tooltip = tooltip
+
+        ALL_PODS[pod.namespace + '/' + pod.name] = this
     }
 
     draw() {
@@ -92,6 +96,18 @@ export default class Pod extends PIXI.Graphics {
         }
         podBox.beginFill(0x999999, 0.5)
         podBox.drawRect(0, 0, 10, 10)
+        if (this.pod.deleted) {
+            podBox.lineStyle(2, 0x000000, 0.8);
+            podBox.moveTo(0, 0)
+            podBox.lineTo(10, 10)
+            podBox.moveTo(10, 0)
+            podBox.lineTo(0, 10)
+            PIXI.ticker.shared.add(function (_) {
+                const now = new Date().getTime() / 1000
+                // TODO: better animation
+                podBox.alpha = Math.min(0.8, Math.max(0.2, (podBox.pod.deleted - now)/30))
+            })
+        }
         return this
     }
 }
