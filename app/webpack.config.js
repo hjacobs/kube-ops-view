@@ -4,7 +4,7 @@ var path = require('path'),
     DEBUG = process.env.NODE_ENV !== 'production',
     entry = [
         './src/app.js',
-    ];
+    ]
 
 module.exports = {
     context: path.join(__dirname, './'),
@@ -40,4 +40,4 @@ module.exports = {
             loader: 'transform?brfs'
         }]
     }
-};
+}
