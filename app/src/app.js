@@ -37,17 +37,17 @@ export default class App {
         PIXI.ticker.shared.stop();
 
         //Create the renderer
-        const renderer = PIXI.autoDetectRenderer(256, 256, {resolution: 2});
-        renderer.view.style.position = 'absolute';
-        renderer.view.style.display = 'block';
-        renderer.autoResize = true;
-        renderer.resize(window.innerWidth, window.innerHeight);
+        const renderer = PIXI.autoDetectRenderer(256, 256, {resolution: 2})
+        renderer.view.style.position = 'absolute'
+        renderer.view.style.display = 'block'
+        renderer.autoResize = true
+        renderer.resize(window.innerWidth, window.innerHeight)
 
         //Add the canvas to the HTML document
-        document.body.appendChild(renderer.view);
+        document.body.appendChild(renderer.view)
 
         //Create a container object called the `stage`
-        const stage = new PIXI.Container();
+        const stage = new PIXI.Container()
 
         const searchPrompt = new PIXI.Text('>', {fontSize: 18, fill: 0xaaaaff})
         searchPrompt.x = 20
@@ -77,18 +77,18 @@ export default class App {
             if (event.key && event.key.length == 1 && !event.ctrlKey) {
                 this.filterString += event.key
                 this.filter()
-                event.preventDefault();
+                event.preventDefault()
             }
             else if (event.key == 'Backspace') {
                 this.filterString = this.filterString.slice(0, Math.max(0, this.filterString.length-1))
                 this.filter()
-                event.preventDefault();
+                event.preventDefault()
             }
         }
 
         addEventListener(
             'keydown', downHandler.bind(this), false
-        );
+        )
 
         this.renderer = renderer
         this.stage = stage
@@ -174,9 +174,9 @@ export default class App {
                 return response.json()
             })
             .then(function(json) {
-                const clusters = json.kubernetes_clusters;
-                that.update(clusters)
-            });
+                const clusters = json.kubernetes_clusters
+                update(clusters)
+            })
             window.setTimeout(fetchData, 5000)
         }
 
