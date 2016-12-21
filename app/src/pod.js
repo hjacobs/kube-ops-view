@@ -1,5 +1,5 @@
 const PIXI = require('pixi.js')
-import {parseResource, getBarColor} from './utils.js'
+import {FACTORS, parseResource, getBarColor} from './utils.js'
 
 export const ALL_PODS = {}
 
@@ -81,6 +81,7 @@ export class Pod extends PIXI.Graphics {
         }
         const allReady = ready >= containerStatuses.length
         const allRunning = running >= containerStatuses.length
+        const resources = this.getResourceUsage()
 
         const podBox = this
         podBox.interactive = true
@@ -104,6 +105,15 @@ export class Pod extends PIXI.Graphics {
                     s += ': ' + containerStatus.state[key].reason
                 }
             }
+            s += '\nCPU:'
+            s += '\n\t\tRequested: ' + resources.cpu.requested
+            s += '\n\t\tLimit: ' + resources.cpu.limit
+            s += '\n\t\tUsed: ' + resources.cpu.used
+            s += '\nMemory:'
+            s += '\n\t\tRequested: ' + (resources.memory.requested / FACTORS.Mi).toFixed(2) + ' MiB'
+            s += '\n\t\tLimit: ' + (resources.memory.limit / FACTORS.Mi).toFixed(2) + ' MiB'
+            s += '\n\t\tUsed: ' + (resources.memory.used / FACTORS.Mi).toFixed(2) + ' MiB'
+
             this.tooltip.text.text = s
             this.tooltip.x = this.toGlobal(new PIXI.Point(10, 10)).x
             this.tooltip.y = this.toGlobal(new PIXI.Point(10, 10)).y
@@ -167,7 +177,6 @@ export class Pod extends PIXI.Graphics {
             PIXI.ticker.shared.add(this.tick)
         }
 
-        const resources = this.getResourceUsage()
 
         const cpuHeight = resources.cpu.limit !== 0 ? 8 / resources.cpu.limit : 0
         podBox.lineStyle(0, 0xaaffaa, 1)
