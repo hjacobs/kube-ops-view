@@ -4,6 +4,9 @@ Kubernetes Operational View
 
 **This project is in pre-alpha, but it might already be useful.**
 
+.. image:: screenshot.png
+   :alt: Screenshot
+
 Goal: provide a common operational picture for multiple Kubernetes clusters.
 
 * Render nodes and indicate their overall status ("Ready")
