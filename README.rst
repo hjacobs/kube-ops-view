@@ -2,7 +2,7 @@
 Kubernetes Operational View
 ===========================
 
-**This project is in pre-alpha, but it might already be useful**
+**This project is in pre-alpha, but it might already be useful.**
 
 Goal: provide a common operational picture for multiple Kubernetes clusters.
 
