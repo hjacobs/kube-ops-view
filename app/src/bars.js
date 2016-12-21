@@ -11,7 +11,12 @@ export default class Bars extends PIXI.Graphics {
     }
 
     draw() {
-        const bars = this;
+        const bars = this
+
+        bars.lineStyle(0, 0xaaffaa, 1)
+        bars.beginFill(0xaaffaa, 0.1)
+        bars.drawRect(5, 30, 15, 80)
+        bars.endFill()
         const cpuHeight = 80 / bars.resources.cpu.capacity;
         bars.interactive = true;
         bars.lineStyle(0, 0xaaffaa, 1);
@@ -34,35 +39,33 @@ export default class Bars extends PIXI.Graphics {
         bars.drawRect(16.5, 110 - bars.resources.memory.used / scale, 2.5, bars.resources.memory.used / scale);
         bars.endFill();
         bars.on('mouseover', function () {
-            var s = '';
-            var subText = '';
-            s += 'CPU: \n';
-            for (var subKey of Object.keys(bars.resources.cpu)) {
-                subText += '\t\t' + subKey + ': ' + (bars.resources.cpu[subKey]).toFixed(2) + '\n'
-            }
-            s += subText;
-            subText = '';
-            s += '\nMemory: \n';
-            for (subKey of Object.keys(bars.resources.memory)) {
-                subText += '\t\t' + subKey + ': ' + (bars.resources.memory[subKey] / FACTORS.Gi).toFixed(2) + 'GiB\n'
-            }
-            s += subText;
-            subText = '';
-            s += '\nPods: \n';
-            for (subKey of Object.keys(bars.resources.pods)) {
-                subText += '\t\t' + subKey + ': ' + bars.resources.pods[subKey] + '\n'
-            }
-            s += subText;
-            bars.tooltip.text.text = s;
-            bars.tooltip.x = bars.toGlobal(new PIXI.Point(0, 0)).x;
-            bars.tooltip.y = bars.toGlobal(new PIXI.Point(0, 0)).y;
+            let s = 'CPU: \n'
+            const {capacity: cpuCap, requested: cpuReq, used: cpuUsed} = bars.resources.cpu
+            s += '\t\t Capactiy  : ' + cpuCap + '\n'
+            s += '\t\t Requested : ' + cpuReq.toFixed(2) + '\n'
+            s += '\t\t Used      : ' + cpuUsed.toFixed(2) + '\n'
+            s += '\nMemory: \n'
+
+            const {capacity: memCap, requested: memReq, used: memUsed} = bars.resources.memory
+            s += '\t\t Capactiy  : ' + (memCap / FACTORS.Gi).toFixed(2) + ' GiB\n'
+            s += '\t\t Requested : ' + (memReq / FACTORS.Gi).toFixed(2) + ' GiB\n'
+            s += '\t\t Used      : ' + (memUsed / FACTORS.Gi).toFixed(2) + ' GiB\n'
+
+            s += '\nPods: \n'
+            const {capacity: podsCap, used: podsUsed} = bars.resources.pods
+            s += '\t\t Capactiy  : ' + podsCap + '\n'
+            s += '\t\t Used      : ' + podsUsed + '\n'
+
+            bars.tooltip.text.text = s
+            bars.tooltip.x = bars.toGlobal(new PIXI.Point(0, 0)).x
+            bars.tooltip.y = bars.toGlobal(new PIXI.Point(0, 0)).y
             bars.tooltip.visible = true
         });
         bars.on('mouseout', function () {
             bars.tooltip.visible = false
         });
 
-        return bars;
+        return bars
     }
 
 }
