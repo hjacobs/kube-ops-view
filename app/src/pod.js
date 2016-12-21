@@ -6,12 +6,26 @@ export const ALL_PODS = {}
 
 export class Pod extends PIXI.Graphics {
 
-    constructor(pod, tooltip) {
+    constructor(pod, tooltip, register=true) {
         super()
         this.pod = pod
         this.tooltip = tooltip
+        this.tick = null
 
-        ALL_PODS[pod.namespace + '/' + pod.name] = this
+        if (register) {
+            ALL_PODS[pod.namespace + '/' + pod.name] = this
+        }
+    }
+
+    static getOrCreate(pod, tooltip) {
+        const existingPod = ALL_PODS[pod.namespace + '/' + pod.name]
+        if (existingPod) {
+            existingPod.pod = pod
+            existingPod.clear()
+            return existingPod
+        } else {
+            return new Pod(pod, tooltip)
+        }
     }
 
     getResourceUsage() {
@@ -55,6 +69,11 @@ export class Pod extends PIXI.Graphics {
     }
 
     draw() {
+
+        if (this.tick) {
+            PIXI.ticker.shared.remove(this.tick)
+        }
+
         // pod.status.containerStatuses might be undefined!
         const containerStatuses = this.pod.status.containerStatuses || []
         var ready = 0
@@ -101,7 +120,7 @@ export class Pod extends PIXI.Graphics {
             podBox.filters = []
             this.tooltip.visible = false
         })
-        podBox.lineStyle(2, 0xaaaaaa, 1);
+        podBox.lineStyle(2, 0xaaaaaa, 1)
         var i = 0
         var w = 10 / this.pod.containers.length
         for (const container of this.pod.containers) {
@@ -115,13 +134,13 @@ export class Pod extends PIXI.Graphics {
             podBox.lineStyle(2, RunningPodBorder, 1);
         } else if (this.pod.status.phase == 'Running' && allRunning && !allReady) {
             // all containers running, but some not ready (readinessProbe)
-            PIXI.ticker.shared.add(function(_) {
+            this.tick = function(_) {
                 var v = Math.sin((PIXI.ticker.shared.lastTime % 1000)/1000.* Math.PI)
                 podBox.alpha = v
             })
             podBox.lineStyle(2, RunningPodBorder, 1);
         } else if (this.pod.status.phase == 'Pending') {
-            PIXI.ticker.shared.add(function(_) {
+            this.tick = function(_) {
                 var v = Math.sin((PIXI.ticker.shared.lastTime % 1000)/1000.* Math.PI)
                 podBox.alpha = v
             })
@@ -129,25 +148,30 @@ export class Pod extends PIXI.Graphics {
         } else {
             // CrashLoopBackOff, ImagePullBackOff or other unknown state
 
-            PIXI.ticker.shared.add(function (_) {
+            this.tick = function(_) {
                 var v = Math.sin((PIXI.ticker.shared.lastTime % 1000) / 1000. * Math.PI)
                 podBox.tint = PIXI.utils.rgb2hex([1, v, v])
-            })
-            podBox.lineStyle(2, 0xff9999, 1);
+            }
+            podBox.lineStyle(2, 0xff9999, 1)
         }
         podBox.beginFill(PodFill, 0.5)
         podBox.drawRect(0, 0, 10, 10)
         if (this.pod.deleted) {
-            podBox.lineStyle(2, 0x000000, 0.8);
+            podBox.lineStyle(2, 0x000000, 0.8)
             podBox.moveTo(0, 0)
             podBox.lineTo(10, 10)
             podBox.moveTo(10, 0)
             podBox.lineTo(0, 10)
+            /*
             PIXI.ticker.shared.add(function (_) {
                 const now = new Date().getTime() / 1000
                 // TODO: better animation
                 podBox.alpha = Math.min(0.8, Math.max(0.2, (podBox.pod.deleted - now)/30))
             })
+            */
+        }
+        if (this.tick) {
+            PIXI.ticker.shared.add(this.tick)
         }
 
         const resources = this.getResourceUsage()

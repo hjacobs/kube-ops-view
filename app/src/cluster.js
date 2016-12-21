@@ -29,7 +29,7 @@ export default class Cluster extends PIXI.Graphics {
 
 
         for (const pod of this.cluster.unassigned_pods) {
-            var podBox = new Pod(pod, this.tooltip)
+            var podBox = Pod.getOrCreate(pod, this.tooltip)
             podBox.x = rows[0]
             podBox.y = 20
             podBox.draw()
@@ -37,9 +37,9 @@ export default class Cluster extends PIXI.Graphics {
             rows[0] += 20
         }
 
-        this.lineStyle(2, 0xaaaaff, 1);
+        this.lineStyle(2, 0xaaaaff, 1)
         const width = Math.max(rows[0], rows[1])
-        this.drawRect(0, 0, width, nodeBox.height * 2 + 30);
+        this.drawRect(0, 0, width, nodeBox.height * 2 + 30)
 
         var topHandle = new PIXI.Graphics()
         topHandle.beginFill(0xaaaaff, 1)
