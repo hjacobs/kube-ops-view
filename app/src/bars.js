@@ -41,19 +41,19 @@ export default class Bars extends PIXI.Graphics {
         bars.on('mouseover', function () {
             let s = 'CPU: \n'
             const {capacity: cpuCap, requested: cpuReq, used: cpuUsed} = bars.resources.cpu
-            s += '\t\t Capactiy  : ' + cpuCap + '\n'
+            s += '\t\t Capacity  : ' + cpuCap + '\n'
             s += '\t\t Requested : ' + cpuReq.toFixed(2) + '\n'
             s += '\t\t Used      : ' + cpuUsed.toFixed(2) + '\n'
             s += '\nMemory: \n'
 
             const {capacity: memCap, requested: memReq, used: memUsed} = bars.resources.memory
-            s += '\t\t Capactiy  : ' + (memCap / FACTORS.Gi).toFixed(2) + ' GiB\n'
+            s += '\t\t Capacity  : ' + (memCap / FACTORS.Gi).toFixed(2) + ' GiB\n'
             s += '\t\t Requested : ' + (memReq / FACTORS.Gi).toFixed(2) + ' GiB\n'
             s += '\t\t Used      : ' + (memUsed / FACTORS.Gi).toFixed(2) + ' GiB\n'
 
             s += '\nPods: \n'
             const {capacity: podsCap, used: podsUsed} = bars.resources.pods
-            s += '\t\t Capactiy  : ' + podsCap + '\n'
+            s += '\t\t Capacity  : ' + podsCap + '\n'
             s += '\t\t Used      : ' + podsUsed + '\n'
 
             bars.tooltip.text.text = s
