@@ -105,29 +105,30 @@ export class Pod extends PIXI.Graphics {
             filter.brightness(1.3)
             podBox.filters = [filter]
             let s = this.pod.name
+            s += '\nStatus: ' + this.pod.status.phase + ' (' + ready + '/' + containerStatuses.length + ' ready)'
+            s += '\nLabels:'
             for (var key of Object.keys(this.pod.labels)) {
                 if (key !== 'pod-template-hash') {
-                    s += '\n' + key + ': ' + this.pod.labels[key]
+                    s += '\n  ' + key + ': ' + this.pod.labels[key]
                 }
             }
-            s += '\nStatus: ' + this.pod.status.phase
-            s += '\nReady: ' + ready + '/' + containerStatuses.length
+            s += '\nContainers:'
             for (const containerStatus of containerStatuses) {
                 const key = Object.keys(containerStatus.state)[0]
-                s += '\n' + key
+                s += '\n  ' + containerStatus.name + ': ' + key
                 if (containerStatus.state[key].reason) {
                     // "CrashLoopBackOff"
                     s += ': ' + containerStatus.state[key].reason
                 }
             }
             s += '\nCPU:'
-            s += '\n\t\tRequested: ' + (resources.cpu.requested / FACTORS.m).toFixed(0) + ' m'
-            s += '\n\t\tLimit: ' + (resources.cpu.limit / FACTORS.m).toFixed(0) + ' m'
-            s += '\n\t\tUsed: ' + (resources.cpu.used / FACTORS.m).toFixed(0) + ' m'
+            s += '\n  Requested: ' + (resources.cpu.requested / FACTORS.m).toFixed(0) + ' m'
+            s += '\n  Limit:     ' + (resources.cpu.limit / FACTORS.m).toFixed(0) + ' m'
+            s += '\n  Used:      ' + (resources.cpu.used / FACTORS.m).toFixed(0) + ' m'
             s += '\nMemory:'
-            s += '\n\t\tRequested: ' + (resources.memory.requested / FACTORS.Mi).toFixed(0) + ' MiB'
-            s += '\n\t\tLimit: ' + (resources.memory.limit / FACTORS.Mi).toFixed(0) + ' MiB'
-            s += '\n\t\tUsed: ' + (resources.memory.used / FACTORS.Mi).toFixed(0) + ' MiB'
+            s += '\n  Requested: ' + (resources.memory.requested / FACTORS.Mi).toFixed(0) + ' MiB'
+            s += '\n  Limit:     ' + (resources.memory.limit / FACTORS.Mi).toFixed(0) + ' MiB'
+            s += '\n  Used:      ' + (resources.memory.used / FACTORS.Mi).toFixed(0) + ' MiB'
 
             this.tooltip.setText(s)
             this.tooltip.position = this.toGlobal(new PIXI.Point(10, 10))
