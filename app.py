@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import requests
+import datetime
 import tokens
 
 from flask import Flask, redirect
@@ -121,6 +122,8 @@ def get_clusters():
             obj = {'name': pod['metadata']['name'],
                    'namespace': pod['metadata']['namespace'],
                    'labels': pod['metadata'].get('labels', {}), 'status': pod['status'], 'containers': []}
+            if 'deletionTimestamp' in pod['metadata']:
+                obj['deleted'] = datetime.datetime.strptime(pod['metadata']['deletionTimestamp'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=datetime.timezone.utc).timestamp()
             for cont in pod['spec']['containers']:
                 obj['containers'].append({'name': cont['name'], 'image': cont['image'], 'resources': cont['resources']})
             pods_by_namespace_name[(obj['namespace'], obj['name'])] = obj
