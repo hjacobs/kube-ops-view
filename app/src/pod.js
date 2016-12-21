@@ -60,7 +60,7 @@ export class Pod extends PIXI.Graphics {
             podBox.filters = []
             this.tooltip.visible = false
         })
-        podBox.lineStyle(2, 0xaaaaaa, 1);
+        podBox.lineStyle(2, 0xaaaaaa, 1)
         var i = 0
         var w = 10 / this.pod.containers.length
         for (const container of this.pod.containers) {
@@ -69,22 +69,22 @@ export class Pod extends PIXI.Graphics {
         }
         if (this.pod.status.phase == 'Succeeded') {
             // completed Job
-            podBox.lineStyle(2, 0xaaaaff, 1);
+            podBox.lineStyle(2, 0xaaaaff, 1)
         } else if (this.pod.status.phase == 'Running' && allReady) {
-            podBox.lineStyle(2, 0xaaffaa, 1);
+            podBox.lineStyle(2, 0xaaffaa, 1)
         } else if (this.pod.status.phase == 'Running' && allRunning && !allReady) {
             // all containers running, but some not ready (readinessProbe)
             PIXI.ticker.shared.add(function(_) {
                 var v = Math.sin((PIXI.ticker.shared.lastTime % 1000)/1000.* Math.PI)
                 podBox.alpha = v
             })
-            podBox.lineStyle(2, 0xaaffaa, 1);
+            podBox.lineStyle(2, 0xaaffaa, 1)
         } else if (this.pod.status.phase == 'Pending') {
             PIXI.ticker.shared.add(function(_) {
                 var v = Math.sin((PIXI.ticker.shared.lastTime % 1000)/1000.* Math.PI)
                 podBox.alpha = v
             })
-            podBox.lineStyle(2, 0xffffaa, 1);
+            podBox.lineStyle(2, 0xffffaa, 1)
         } else {
             // CrashLoopBackOff, ImagePullBackOff or other unknown state
 
@@ -92,12 +92,12 @@ export class Pod extends PIXI.Graphics {
                 var v = Math.sin((PIXI.ticker.shared.lastTime % 1000) / 1000. * Math.PI)
                 podBox.tint = PIXI.utils.rgb2hex([1, v, v])
             })
-            podBox.lineStyle(2, 0xff9999, 1);
+            podBox.lineStyle(2, 0xff9999, 1)
         }
         podBox.beginFill(0x999999, 0.5)
         podBox.drawRect(0, 0, 10, 10)
         if (this.pod.deleted) {
-            podBox.lineStyle(2, 0x000000, 0.8);
+            podBox.lineStyle(2, 0x000000, 0.8)
             podBox.moveTo(0, 0)
             podBox.lineTo(10, 10)
             podBox.moveTo(10, 0)

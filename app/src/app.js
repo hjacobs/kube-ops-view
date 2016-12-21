@@ -34,17 +34,17 @@ export default class App {
 
     initialize() {
         //Create the renderer
-        const renderer = PIXI.autoDetectRenderer(256, 256, {resolution: 2});
-        renderer.view.style.position = 'absolute';
-        renderer.view.style.display = 'block';
-        renderer.autoResize = true;
-        renderer.resize(window.innerWidth, window.innerHeight);
+        const renderer = PIXI.autoDetectRenderer(256, 256, {resolution: 2})
+        renderer.view.style.position = 'absolute'
+        renderer.view.style.display = 'block'
+        renderer.autoResize = true
+        renderer.resize(window.innerWidth, window.innerHeight)
 
         //Add the canvas to the HTML document
-        document.body.appendChild(renderer.view);
+        document.body.appendChild(renderer.view)
 
         //Create a container object called the `stage`
-        const stage = new PIXI.Container();
+        const stage = new PIXI.Container()
 
         const searchPrompt = new PIXI.Text('>', {fontSize: 18, fill: 0xaaaaff})
         searchPrompt.x = 20
@@ -74,18 +74,18 @@ export default class App {
             if (event.key && event.key.length == 1 && !event.ctrlKey) {
                 this.filterString += event.key
                 this.filter()
-                event.preventDefault();
+                event.preventDefault()
             }
             else if (event.key == 'Backspace') {
                 this.filterString = this.filterString.slice(0, Math.max(0, this.filterString.length-1))
                 this.filter()
-                event.preventDefault();
+                event.preventDefault()
             }
         }
 
         addEventListener(
             'keydown', downHandler.bind(this), false
-        );
+        )
 
         this.renderer = renderer
         this.stage = stage
@@ -132,15 +132,15 @@ export default class App {
         const that = this
 
         function update(clusters) {
-            that.viewContainer.removeChildren();
-            var y = 0;
+            that.viewContainer.removeChildren()
+            var y = 0
             for (var cluster of clusters) {
                 var clusterBox = new Cluster(cluster, that.tooltip)
                 clusterBox.draw()
                 clusterBox.x = 0
                 clusterBox.y = y
                 that.viewContainer.addChild(clusterBox)
-                y += 270;
+                y += 270
             }
             that.filter()
 
@@ -165,9 +165,9 @@ export default class App {
                 return response.json()
             })
             .then(function(json) {
-                const clusters = json.kubernetes_clusters;
+                const clusters = json.kubernetes_clusters
                 update(clusters)
-            });
+            })
             window.setTimeout(fetchData, 5000)
         }
 
@@ -179,7 +179,7 @@ export default class App {
             that.renderer.render(that.stage)
         }
 
-        mainLoop();
+        mainLoop()
     }
 }
 
