@@ -33,8 +33,8 @@ export default class App {
     }
 
     initialize() {
-        PIXI.ticker.shared.autoStart = false;
-        PIXI.ticker.shared.stop();
+        PIXI.ticker.shared.autoStart = false
+        PIXI.ticker.shared.stop()
 
         //Create the renderer
         const renderer = PIXI.autoDetectRenderer(256, 256, {resolution: 2})
@@ -133,15 +133,15 @@ export default class App {
         this.stage.addChild(pod)
     }
     update(clusters) {
-        this.viewContainer.removeChildren();
-        var y = 0;
+        this.viewContainer.removeChildren()
+        var y = 0
         for (var cluster of clusters) {
             var clusterBox = new Cluster(cluster, this.tooltip)
             clusterBox.draw()
             clusterBox.x = 0
             clusterBox.y = y
             this.viewContainer.addChild(clusterBox)
-            y += 270;
+            y += 270
         }
         this.filter()
 
@@ -175,7 +175,7 @@ export default class App {
             })
             .then(function(json) {
                 const clusters = json.kubernetes_clusters
-                update(clusters)
+                that.update(clusters)
             })
             window.setTimeout(fetchData, 5000)
         }
@@ -188,7 +188,7 @@ export default class App {
             requestAnimationFrame(mainLoop)
         }
 
-        mainLoop(performance.now());
+        mainLoop(performance.now())
     }
 }
 
