@@ -71,7 +71,7 @@ export default class App {
         stage.addChild(tooltip)
 
         function downHandler(event) {
-            if (event.key && event.key.length == 1 && !event.ctrlKey) {
+            if (event.key && event.key.length == 1 && !event.ctrlKey && !event.metaKey) {
                 this.filterString += event.key
                 this.filter()
                 event.preventDefault();
