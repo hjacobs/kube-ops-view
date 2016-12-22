@@ -18,14 +18,18 @@ from flask_oauthlib.client import OAuth, OAuthRemoteApp
 from urllib.parse import urljoin
 
 
+def get_bool(name: str):
+    return os.getenv(name, '').lower() in ('1', 'true')
+
+
 DEFAULT_CLUSTERS = 'http://localhost:8001/'
 CREDENTIALS_DIR = os.getenv('CREDENTIALS_DIR', '')
 AUTHORIZE_URL = os.getenv('AUTHORIZE_URL')
 APP_URL = os.getenv('APP_URL')
-MOCK = os.getenv('MOCK', '').lower() == 'true'
+MOCK = get_bool('MOCK')
 
 app = Flask(__name__)
-app.debug = os.getenv('DEBUG', '').lower() == 'true'
+app.debug = get_bool('DEBUG')
 app.secret_key = os.getenv('SECRET_KEY', 'development')
 
 oauth = OAuth(app)
@@ -106,9 +110,7 @@ def hash_int(x: int):
     return x
 
 
-def generate_mock_cluster_data(index: int):
-    '''Generate deterministic (no randomness!) mock data'''
-    nodes = []
+def generate_mock_pod(index, i, j):
     names = [
         'agent-cooper',
         'black-lodge',
@@ -120,25 +122,33 @@ def generate_mock_cluster_data(index: int):
         'sheriff-truman',
     ]
     pod_phases = ['Pending', 'Running', 'Running']
+    labels = {}
+    phase = pod_phases[hash_int((index + 1) * (i + 1) * (j + 1)) % len(pod_phases)]
+    containers = []
+    for k in range(1):
+        containers.append({'name': 'myapp', 'image': 'foo/bar/{}'.format(j), 'resources': {'requests': {'cpu': '100m', 'memory': '100Mi'}}})
+    status = {'phase': phase}
+    if phase == 'Running':
+        if j % 13 == 0:
+            status['containerStatuses'] = [{'ready': False, 'state': {'waiting': {'reason': 'CrashLoopBackOff'}}}]
+        elif j % 7 == 0:
+            status['containerStatuses'] = [{'ready': True, 'state': {'running': {}}, 'restartCount': 3}]
+    pod = {'name': '{}-{}'.format(names[hash_int((i + 1) * (j + 1)) % len(names)], j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels, 'status': status, 'containers': containers}
+    return pod
+
+
+def generate_mock_cluster_data(index: int):
+    '''Generate deterministic (no randomness!) mock data'''
+    nodes = []
     for i in range(10):
         labels = {}
         if i < 2:
             labels['master'] = 'true'
         pods = []
         for j in range(hash_int((index + 1) * (i + 1)) % 32):
-            phase = pod_phases[hash_int((index + 1) * (i + 1) * (j + 1)) % len(pod_phases)]
-            containers = []
-            for k in range(1):
-                containers.append({'name': 'myapp', 'image': 'foo/bar/{}'.format(j), 'resources': {'requests': {'cpu': '100m', 'memory': '100Mi'}}})
-            status = {'phase': phase}
-            if phase == 'Running':
-                if j % 13 == 0:
-                    status['containerStatuses'] = [{'ready': False, 'state': {'waiting': {'reason': 'CrashLoopBackOff'}}}]
-                elif j % 7 == 0:
-                    status['containerStatuses'] = [{'ready': True, 'state': {'running': {}}, 'restartCount': 3}]
-            pods.append({'name': '{}-{}'.format(names[hash_int((i + 1) * (j + 1)) % len(names)], j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels, 'status': status, 'containers': containers})
+            pods.append(generate_mock_pod(index, i, j))
         nodes.append({'name': 'node-{}'.format(i), 'labels': labels, 'status': {'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'}}, 'pods': pods})
-    unassigned_pods = []
+    unassigned_pods = [generate_mock_pod(index, 0, index)]
     return {
         'api_server_url': 'https://kube-{}.example.org'.format(index),
         'nodes': nodes,

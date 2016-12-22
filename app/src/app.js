@@ -14,6 +14,8 @@ export default class App {
             this.filterString = ''
         }
         this.seenPods = {}
+        this.desaturationFilter = new PIXI.filters.ColorMatrixFilter()
+        this.desaturationFilter.desaturate()
     }
 
     filter() {
@@ -24,10 +26,19 @@ export default class App {
         } else {
             document.location.hash = ''
         }
-        const filter = new PIXI.filters.ColorMatrixFilter()
-        filter.desaturate()
+        const filter = this.desaturationFilter
         for (const cluster of this.viewContainer.children) {
             for (const node of cluster.children) {
+                const name = node.pod && node.pod.name
+                if (name) {
+                    // node is actually unassigned pod
+                    if (!name.includes(searchString)){
+                        node.filters = [filter]
+                    } else {
+                        // TODO: pod might have other filters set..
+                        node.filters = []
+                    }
+                }
                 for (const pod of node.children) {
                     const name = pod.pod && pod.pod.name
                     if (name) {
