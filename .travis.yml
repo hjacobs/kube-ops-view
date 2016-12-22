@@ -1,7 +1,11 @@
 language: node_js
 node_js:
   - '6'
+python:
+  - '3.5'
 before_script:
   - npm install -g eslint
+  - pip3 install flake8
 script:
   - cd app && eslint src
+  - flake8

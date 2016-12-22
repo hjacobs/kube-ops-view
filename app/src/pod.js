@@ -5,9 +5,10 @@ export const ALL_PODS = {}
 
 export class Pod extends PIXI.Graphics {
 
-    constructor(pod, tooltip, cluster) {
+    constructor(pod, cluster, tooltip) {
         super()
         this.pod = pod
+        this.cluster = cluster
         this.tooltip = tooltip
         this.tick = null
         this._progress = 1
@@ -58,7 +59,7 @@ export class Pod extends PIXI.Graphics {
             existingPod.clear()
             return existingPod
         } else {
-            return new Pod(pod, tooltip)
+            return new Pod(pod, cluster, tooltip)
         }
     }
 

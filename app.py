@@ -11,6 +11,7 @@ import logging
 import os
 import requests
 import datetime
+import time
 import tokens
 
 from flask import Flask, redirect
@@ -99,6 +100,9 @@ def index():
     for entry in os.listdir('static/build'):
         if entry.startswith('app'):
             app_js = entry
+            if app.debug:
+                # cache busting for local development
+                app_js += '?_={}'.format(time.time())
             break
     return flask.render_template('index.html', app_js=app_js)
 
@@ -133,7 +137,7 @@ def generate_mock_pod(index, i, j):
             status['containerStatuses'] = [{'ready': False, 'state': {'waiting': {'reason': 'CrashLoopBackOff'}}}]
         elif j % 7 == 0:
             status['containerStatuses'] = [{'ready': True, 'state': {'running': {}}, 'restartCount': 3}]
-    pod = {'name': '{}-{}'.format(names[hash_int((i + 1) * (j + 1)) % len(names)], j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels, 'status': status, 'containers': containers}
+    pod = {'name': '{}-{}-{}'.format(names[hash_int((i + 1) * (j + 1)) % len(names)], i, j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels, 'status': status, 'containers': containers}
     return pod
 
 
@@ -146,9 +150,12 @@ def generate_mock_cluster_data(index: int):
             labels['master'] = 'true'
         pods = []
         for j in range(hash_int((index + 1) * (i + 1)) % 32):
-            pods.append(generate_mock_pod(index, i, j))
+            if j % 17 == 0 and int(time.time() / 10) % 2 == 0:
+                pass
+            else:
+                pods.append(generate_mock_pod(index, i, j))
         nodes.append({'name': 'node-{}'.format(i), 'labels': labels, 'status': {'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'}}, 'pods': pods})
-    unassigned_pods = [generate_mock_pod(index, 0, index)]
+    unassigned_pods = [generate_mock_pod(index, 11, index)]
     return {
         'api_server_url': 'https://kube-{}.example.org'.format(index),
         'nodes': nodes,

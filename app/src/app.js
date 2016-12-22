@@ -13,7 +13,7 @@ export default class App {
         } else {
             this.filterString = ''
         }
-        this.seenPods = {}
+        this.seenPods = new Set()
         this.desaturationFilter = new PIXI.filters.ColorMatrixFilter()
         this.desaturationFilter.desaturate()
     }
@@ -122,7 +122,7 @@ export default class App {
     }
 
     animatePodCreation(originalPod, globalX, globalY) {
-        const pod = new Pod(originalPod.pod, this.tooltip, null)
+        const pod = new Pod(originalPod.pod, null, this.tooltip)
         pod.draw()
         const targetPosition = new PIXI.Point(globalX, globalY)
         const angle = Math.random()*Math.PI*2
@@ -160,10 +160,19 @@ export default class App {
         this.stage.addChild(pod)
     }
     update(clusters) {
+        const podKeys = new Set()
         this.viewContainer.removeChildren()
-        var y = 0
-        for (var cluster of clusters) {
-            var clusterBox = new Cluster(cluster, this.tooltip)
+        let y = 0
+        for (const cluster of clusters) {
+            for (const node of cluster.nodes) {
+                for (const pod of node.pods) {
+                    podKeys.add(cluster.api_server_url + '/' + pod.namespace + '/' + pod.name)
+                }
+            }
+            for (const pod of cluster.unassigned_pods) {
+                podKeys.add(cluster.api_server_url + '/' + pod.namespace + '/' + pod.name)
+            }
+            const clusterBox = new Cluster(cluster, this.tooltip)
             clusterBox.draw()
             clusterBox.x = 0
             clusterBox.y = y
@@ -174,11 +183,16 @@ export default class App {
 
         let i = 0
         const that = this
-        const firstTime = Object.keys(this.seenPods).length == 0
+        const firstTime = this.seenPods.size == 0
         for (const key of Object.keys(ALL_PODS)) {
-            if (!this.seenPods[key]) {
+            if (!podKeys.has(key)) {
+                // pod was deleted
+                delete ALL_PODS[key]
+                this.seenPods.delete(key)
+            } else if (!this.seenPods.has(key)) {
+                // pod was created
+                this.seenPods.add(key)
                 const pod = ALL_PODS[key]
-                this.seenPods[key] = pod
                 const globalPos = pod.toGlobal({x: 0, y: 0})
                 if (!firstTime && i < 10) {
                     window.setTimeout(function() {
