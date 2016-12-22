@@ -19,6 +19,13 @@ export class Pod extends PIXI.Graphics {
         }
     }
 
+    destroy() {
+        if (this.tick) {
+            PIXI.ticker.shared.remove(this.tick, this)
+        }
+        super.destroy()
+    }
+
     animateMove(time) {
         const deltaX = this._targetPosition.x - this.position.x
         const deltaY = this._targetPosition.y - this.position.y
@@ -107,7 +114,6 @@ export class Pod extends PIXI.Graphics {
     }
 
     draw() {
-
 
         // pod.status.containerStatuses might be undefined!
         const containerStatuses = this.pod.status.containerStatuses || []
@@ -225,10 +231,12 @@ export class Pod extends PIXI.Graphics {
             }
         }
 
-        if (newTick) {
+        if (newTick && newTick != this.tick) {
             this.tick = newTick
+            // important: only register new listener if it does not exist yet!
+            // (otherwise we leak listeners)
             PIXI.ticker.shared.add(this.tick, this)
-        } else if (this.tick) {
+        } else if (!newTick && this.tick) {
             PIXI.ticker.shared.remove(this.tick, this)
             this.tick = null
             this.alpha = this._progress

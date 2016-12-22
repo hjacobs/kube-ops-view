@@ -152,6 +152,7 @@ export default class App {
             if (progress >= 1) {
                 PIXI.ticker.shared.remove(tick)
                 that.stage.removeChild(pod)
+                pod.destroy()
                 originalPod.visible = true
             }
         }
@@ -167,7 +168,7 @@ export default class App {
         pod.position = globalPosition.clone()
         pod.alpha = 1
         pod._progress = 1
-        originalPod.visible = false
+        originalPod.destroy()
         const that = this
         const tick = function(t) {
             // progress goes from 1 to 0
@@ -181,6 +182,7 @@ export default class App {
             if (progress <= 0) {
                 PIXI.ticker.shared.remove(tick)
                 that.stage.removeChild(pod)
+                pod.destroy()
             }
         }
         PIXI.ticker.shared.add(tick)
@@ -214,6 +216,8 @@ export default class App {
                     window.setTimeout(function() {
                         that.animatePodDeletion(pod, globalPos)
                     }, 100 * changes)
+                } else {
+                    pod.destroy()
                 }
                 changes++
             }
