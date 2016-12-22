@@ -12,9 +12,37 @@ export class Pod extends PIXI.Graphics {
         this.tooltip = tooltip
         this.tick = null
         this._progress = 1
+        this._targetPosition = null
 
         if (cluster) {
             ALL_PODS[cluster.cluster.api_server_url + '/' + pod.namespace + '/' + pod.name] = this
+        }
+    }
+
+    animateMove(time) {
+        const deltaX = this._targetPosition.x - this.position.x
+        const deltaY = this._targetPosition.y - this.position.y
+        if (Math.abs(deltaX) < 2 && Math.abs(deltaY) < 2) {
+            this.position = this._targetPosition
+            PIXI.ticker.shared.remove(this.animateMove, this)
+        } else {
+            if (Math.abs(deltaX) > time) {
+                this.position.x += time * Math.sign(deltaX)
+            }
+            if (Math.abs(deltaY) > time) {
+                this.position.y += time * Math.sign(deltaY)
+            }
+        }
+    }
+
+    movePodTo(targetPosition) {
+        if (!this._targetPosition) {
+            // just set coords
+            this.position = this._targetPosition = targetPosition
+        } else if (!this._targetPosition.equals(targetPosition)) {
+            // animate moving to new position
+            this._targetPosition = targetPosition
+            PIXI.ticker.shared.add(this.animateMove, this)
         }
     }
 
