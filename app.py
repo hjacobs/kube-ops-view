@@ -111,13 +111,13 @@ def generate_mock_cluster_data(index: int):
     nodes = []
     names = [
         'agent-cooper',
-        'log-lady',
-        'sheriff-truman',
-        'laura-palmer',
         'black-lodge',
         'bob',
-        'leland-palmer',
         'bobby-briggs'
+        'laura-palmer',
+        'leland-palmer',
+        'log-lady',
+        'sheriff-truman',
     ]
     pod_phases = ['Pending', 'Running', 'Running']
     for i in range(10):
