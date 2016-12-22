@@ -5,7 +5,7 @@ python:
   - '3.5'
 before_script:
   - npm install -g eslint
-  - pip3 install flake8
+  - apt-get update && apt-get install python3-pip && pip3 install flake8
 script:
   - cd app && eslint src
   - flake8
