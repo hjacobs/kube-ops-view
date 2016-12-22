@@ -150,7 +150,7 @@ def generate_mock_cluster_data(index: int):
             labels['master'] = 'true'
         pods = []
         for j in range(hash_int((index + 1) * (i + 1)) % 32):
-            if j % 17 == 0 and int(time.time() / 10) % 2 == 0:
+            if j % 17 == 0 and int(time.time() / 6) % 2 == 0:
                 pass
             else:
                 pods.append(generate_mock_pod(index, i, j))
