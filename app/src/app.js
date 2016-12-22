@@ -95,7 +95,7 @@ export default class App {
     }
 
     animatePodCreation(originalPod, globalX, globalY) {
-        const pod = new Pod(originalPod.pod, this.tooltip, false)
+        const pod = new Pod(originalPod.pod, this.tooltip, null)
         pod.draw()
         const targetPosition = new PIXI.Point(globalX, globalY)
         const angle = Math.random()*Math.PI*2

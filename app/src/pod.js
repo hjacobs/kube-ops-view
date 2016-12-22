@@ -5,15 +5,15 @@ export const ALL_PODS = {}
 
 export class Pod extends PIXI.Graphics {
 
-    constructor(pod, tooltip, register=true) {
+    constructor(pod, tooltip, cluster) {
         super()
         this.pod = pod
         this.tooltip = tooltip
         this.tick = null
         this._progress = 1
 
-        if (register) {
-            ALL_PODS[pod.namespace + '/' + pod.name] = this
+        if (cluster) {
+            ALL_PODS[cluster.cluster.api_server_url + '/' + pod.namespace + '/' + pod.name] = this
         }
     }
 
@@ -51,8 +51,8 @@ export class Pod extends PIXI.Graphics {
         }
     }
 
-    static getOrCreate(pod, tooltip) {
-        const existingPod = ALL_PODS[pod.namespace + '/' + pod.name]
+    static getOrCreate(pod, cluster, tooltip) {
+        const existingPod = ALL_PODS[cluster.cluster.api_server_url + '/' + pod.namespace + '/' + pod.name]
         if (existingPod) {
             existingPod.pod = pod
             existingPod.clear()

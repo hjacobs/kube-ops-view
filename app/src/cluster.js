@@ -12,7 +12,7 @@ export default class Cluster extends PIXI.Graphics {
     draw () {
         var rows = [10, 10]
         for (var node of this.cluster.nodes) {
-            var nodeBox = new Node(node, this.tooltip)
+            var nodeBox = new Node(node, this, this.tooltip)
             nodeBox.draw()
             if (nodeBox.isMaster()) {
                 nodeBox.x = rows[0]
@@ -29,7 +29,7 @@ export default class Cluster extends PIXI.Graphics {
 
 
         for (const pod of this.cluster.unassigned_pods) {
-            var podBox = Pod.getOrCreate(pod, this.tooltip)
+            var podBox = Pod.getOrCreate(pod, this, this.tooltip)
             podBox.x = rows[0]
             podBox.y = 20
             podBox.draw()
