@@ -121,10 +121,10 @@ export default class App {
         this.tooltip = tooltip
     }
 
-    animatePodCreation(originalPod, globalX, globalY) {
+    animatePodCreation(originalPod, globalPosition) {
         const pod = new Pod(originalPod.pod, null, this.tooltip)
         pod.draw()
-        const targetPosition = new PIXI.Point(globalX, globalY)
+        const targetPosition = globalPosition
         const angle = Math.random()*Math.PI*2
         const cos = Math.cos(angle)
         const sin = Math.sin(angle)
@@ -148,8 +148,7 @@ export default class App {
             pod.alpha = progress
             pod.rotation = progress * progress * Math.PI * 2
             // blur.blur = (1 - alpha) * 20
-            pod.scale.x = scale
-            pod.scale.y = scale
+            pod.scale.set(scale)
             if (progress >= 1) {
                 PIXI.ticker.shared.remove(tick)
                 that.stage.removeChild(pod)
@@ -159,8 +158,66 @@ export default class App {
         PIXI.ticker.shared.add(tick)
         this.stage.addChild(pod)
     }
+    animatePodDeletion(originalPod, globalPosition) {
+        const pod = new Pod(originalPod.pod, null, this.tooltip)
+        pod.draw()
+        const globalCenter = new PIXI.Point(globalPosition.x + pod.width/2, globalPosition.y + pod.height/2)
+        const blur = new PIXI.filters.BlurFilter(4)
+        pod.filters = [blur]
+        pod.position = globalPosition.clone()
+        pod.alpha = 1
+        pod._progress = 1
+        originalPod.visible = false
+        const that = this
+        const tick = function(t) {
+            // progress goes from 1 to 0
+            const progress = Math.max(0, pod._progress - (0.02 * t))
+            const scale = 1 + ((1 - progress) * 8)
+            pod._progress = progress
+            pod.alpha = progress
+            pod.scale.set(scale)
+            pod.position.set(globalCenter.x - pod.width/2, globalCenter.y - pod.height/2)
+
+            if (progress <= 0) {
+                PIXI.ticker.shared.remove(tick)
+                that.stage.removeChild(pod)
+            }
+        }
+        PIXI.ticker.shared.add(tick)
+        this.stage.addChild(pod)
+    }
     update(clusters) {
+        const that = this
+        let changes = 0
+        const firstTime = this.seenPods.size == 0
         const podKeys = new Set()
+        for (const cluster of clusters) {
+            for (const node of cluster.nodes) {
+                for (const pod of node.pods) {
+                    podKeys.add(cluster.api_server_url + '/' + pod.namespace + '/' + pod.name)
+                }
+            }
+            for (const pod of cluster.unassigned_pods) {
+                podKeys.add(cluster.api_server_url + '/' + pod.namespace + '/' + pod.name)
+            }
+        }
+        for (const key of Object.keys(ALL_PODS)) {
+            const pod = ALL_PODS[key]
+            if (!podKeys.has(key)) {
+                // pod was deleted
+                delete ALL_PODS[key]
+                this.seenPods.delete(key)
+                if (changes < 10) {
+                    // NOTE: we need to do this BEFORE removeChildren()
+                    // to get correct global coordinates
+                    const globalPos = pod.toGlobal({x: 0, y: 0})
+                    window.setTimeout(function() {
+                        that.animatePodDeletion(pod, globalPos)
+                    }, 100 * changes)
+                }
+                changes++
+            }
+        }
         this.viewContainer.removeChildren()
         let y = 0
         for (const cluster of clusters) {
@@ -181,25 +238,18 @@ export default class App {
         }
         this.filter()
 
-        let i = 0
-        const that = this
-        const firstTime = this.seenPods.size == 0
         for (const key of Object.keys(ALL_PODS)) {
-            if (!podKeys.has(key)) {
-                // pod was deleted
-                delete ALL_PODS[key]
-                this.seenPods.delete(key)
-            } else if (!this.seenPods.has(key)) {
+            const pod = ALL_PODS[key]
+            if (!this.seenPods.has(key)) {
                 // pod was created
                 this.seenPods.add(key)
-                const pod = ALL_PODS[key]
-                const globalPos = pod.toGlobal({x: 0, y: 0})
-                if (!firstTime && i < 10) {
+                if (!firstTime && changes < 10) {
+                    const globalPos = pod.toGlobal({x: 0, y: 0})
                     window.setTimeout(function() {
-                        that.animatePodCreation(pod, globalPos.x, globalPos.y)
-                    }, 100 * i)
+                        that.animatePodCreation(pod, globalPos)
+                    }, 100 * changes)
                 }
-                i++
+                changes++
             }
         }
     }
