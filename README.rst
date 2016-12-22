@@ -61,6 +61,18 @@ Afterwards you can open "kube-ops-view" via the kubectl proxy:
 Now direct your browser to http://localhost:8001/api/v1/proxy/namespaces/default/services/kube-ops-view/
 
 
+Mock Mode
+=========
+
+You can start the app in "mock mode" to see all UI features without running any Kubernetes cluster:
+
+.. code-block:: bash
+
+    $ pip3 install -r requirements.txt
+    $ (cd app && npm start &)
+    $ MOCK=true ./app.py
+
+
 Configuration
 =============
 
@@ -71,7 +83,9 @@ The following environment variables are supported:
 ``CREDENTIALS_DIR``
     Directory to read (OAuth) credentials from --- these credentials are only used for non-localhost cluster URLs.
 ``DEBUG``
-    Set to a non-empty value for local development to reload code changes.
+    Set to "true" for local development to reload code changes.
+``MOCK``
+    Set to "true" to mock Kubernetes cluster data.
 
 
 Supported Browsers

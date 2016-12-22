@@ -4,9 +4,10 @@ import {parseResource} from './utils.js'
 const PIXI = require('pixi.js')
 
 export default class Node extends PIXI.Graphics {
-    constructor(node, tooltip) {
+    constructor(node, cluster, tooltip) {
         super()
         this.node = node
+        this.cluster = cluster
         this.tooltip = tooltip
     }
 
@@ -82,7 +83,7 @@ export default class Node extends PIXI.Graphics {
         var py = 20
         for (const pod of this.node.pods) {
             if (pod.namespace != 'kube-system') {
-                const podBox = Pod.getOrCreate(pod, this.tooltip) //new Pod(pod, this.tooltip)
+                const podBox = Pod.getOrCreate(pod, this.cluster, this.tooltip) //new Pod(pod, this.tooltip)
                 podBox.x = px
                 podBox.y = py
                 nodeBox.addChild(podBox.draw())
@@ -98,7 +99,7 @@ export default class Node extends PIXI.Graphics {
         py = 100
         for (const pod of this.node.pods) {
             if (pod.namespace == 'kube-system') {
-                const podBox = Pod.getOrCreate(pod, this.tooltip) //new Pod(pod, this.tooltip)
+                const podBox = Pod.getOrCreate(pod, this.cluster, this.tooltip) //new Pod(pod, this.tooltip)
                 podBox.x = px
                 podBox.y = py
                 nodeBox.addChild(podBox.draw())
