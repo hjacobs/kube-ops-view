@@ -254,5 +254,5 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     port = 8080
     http_server = gevent.wsgi.WSGIServer(('0.0.0.0', port), app)
-    logging.info('Listening on {}..'.format(port))
+    logging.info('Listening on :{}..'.format(port))
     http_server.serve_forever()
