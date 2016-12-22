@@ -122,8 +122,10 @@ def generate_mock_cluster_data(index: int):
                 containers.append({'name': 'myapp', 'image': 'foo/bar/{}'.format(j), 'resources': {'requests': {'cpu': '100m', 'memory': '100Mi'}}})
             status = {'phase': phase}
             if phase == 'Running':
-                if j % 10 == 0:
+                if j % 13 == 0:
                     status['containerStatuses'] = [{'ready': False, 'state': {'waiting': {'reason': 'CrashLoopBackOff'}}}]
+                elif j % 7 == 0:
+                    status['containerStatuses'] = [{'ready': True, 'state': {'running': {}}, 'restartCount': 3}]
             pods.append({'name': 'my-pod-{}'.format(j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels, 'status': status, 'containers': containers})
         nodes.append({'name': 'node-{}'.format(i), 'labels': labels, 'status': {'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'}}, 'pods': pods})
     unassigned_pods = []
