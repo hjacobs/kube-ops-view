@@ -7,13 +7,23 @@ const PIXI = require('pixi.js')
 export default class App {
 
     constructor() {
-        this.filterString = ''
+        const hash = document.location.hash
+        if (hash.startsWith('#q=')) {
+            this.filterString = hash.substring(3)
+        } else {
+            this.filterString = ''
+        }
         this.seenPods = {}
     }
 
     filter() {
         const searchString = this.filterString
         this.searchText.text = searchString
+        if (searchString) {
+            document.location.hash = '#q=' + searchString
+        } else {
+            document.location.hash = ''
+        }
         const filter = new PIXI.filters.ColorMatrixFilter()
         filter.desaturate()
         for (const cluster of this.viewContainer.children) {

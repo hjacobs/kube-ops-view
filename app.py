@@ -109,6 +109,16 @@ def hash_int(x: int):
 def generate_mock_cluster_data(index: int):
     '''Generate deterministic (no randomness!) mock data'''
     nodes = []
+    names = [
+        'agent-cooper',
+        'log-lady',
+        'sheriff-truman',
+        'laura-palmer',
+        'black-lodge',
+        'bob',
+        'leland-palmer',
+        'bobby-briggs'
+    ]
     pod_phases = ['Pending', 'Running', 'Running']
     for i in range(10):
         labels = {}
@@ -126,7 +136,7 @@ def generate_mock_cluster_data(index: int):
                     status['containerStatuses'] = [{'ready': False, 'state': {'waiting': {'reason': 'CrashLoopBackOff'}}}]
                 elif j % 7 == 0:
                     status['containerStatuses'] = [{'ready': True, 'state': {'running': {}}, 'restartCount': 3}]
-            pods.append({'name': 'my-pod-{}'.format(j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels, 'status': status, 'containers': containers})
+            pods.append({'name': '{}-{}'.format(names[hash_int((i + 1) * (j + 1)) % len(names)], j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels, 'status': status, 'containers': containers})
         nodes.append({'name': 'node-{}'.format(i), 'labels': labels, 'status': {'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'}}, 'pods': pods})
     unassigned_pods = []
     return {
