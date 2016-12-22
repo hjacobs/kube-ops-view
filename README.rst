@@ -72,6 +72,12 @@ You can start the app in "mock mode" to see all UI features without running any 
     $ (cd app && npm start &)
     $ MOCK=true ./app.py
 
+You can also run the latest Docker image directly:
+
+.. code-block:: bash
+
+    $ docker run -it -p 8080:8080 -e MOCK=true hjacobs/kube-ops-view
+
 
 Configuration
 =============
