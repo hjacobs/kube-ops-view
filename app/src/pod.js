@@ -5,15 +5,15 @@ export const ALL_PODS = {}
 
 export class Pod extends PIXI.Graphics {
 
-    constructor(pod, tooltip, register=true) {
+    constructor(pod, tooltip, cluster) {
         super()
         this.pod = pod
         this.tooltip = tooltip
         this.tick = null
         this._progress = 1
 
-        if (register) {
-            ALL_PODS[pod.namespace + '/' + pod.name] = this
+        if (cluster) {
+            ALL_PODS[cluster.cluster.api_server_url + '/' + pod.namespace + '/' + pod.name] = this
         }
     }
 
@@ -51,8 +51,8 @@ export class Pod extends PIXI.Graphics {
         }
     }
 
-    static getOrCreate(pod, tooltip) {
-        const existingPod = ALL_PODS[pod.namespace + '/' + pod.name]
+    static getOrCreate(pod, cluster, tooltip) {
+        const existingPod = ALL_PODS[cluster.cluster.api_server_url + '/' + pod.namespace + '/' + pod.name]
         if (existingPod) {
             existingPod.pod = pod
             existingPod.clear()
@@ -84,6 +84,7 @@ export class Pod extends PIXI.Graphics {
         const containerStatuses = this.pod.status.containerStatuses || []
         var ready = 0
         var running = 0
+        var restarts = 0
         for (const containerStatus of containerStatuses) {
             if (containerStatus.ready) {
                 ready++
@@ -91,6 +92,7 @@ export class Pod extends PIXI.Graphics {
             if (containerStatus.state.running) {
                 running++
             }
+            restarts += containerStatus.restartCount || 0
         }
         const allReady = ready >= containerStatuses.length
         const allRunning = running >= containerStatuses.length
@@ -119,6 +121,9 @@ export class Pod extends PIXI.Graphics {
                 if (containerStatus.state[key].reason) {
                     // "CrashLoopBackOff"
                     s += ': ' + containerStatus.state[key].reason
+                }
+                if (containerStatus.restartCount) {
+                    s += ' (' + containerStatus.restartCount + ' restarts)'
                 }
             }
             s += '\nCPU:'
@@ -181,6 +186,16 @@ export class Pod extends PIXI.Graphics {
             }
             newTick = this.terminating
         }
+
+
+        if (restarts) {
+            this.lineStyle(2, 0xff9999, 1)
+            for (let i=0; i<Math.min(restarts, 4); i++) {
+                this.moveTo(10, i*3 - 1)
+                this.lineTo(10, i*3 + 1)
+            }
+        }
+
         if (newTick) {
             this.tick = newTick
             PIXI.ticker.shared.add(this.tick, this)

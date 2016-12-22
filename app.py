@@ -22,9 +22,10 @@ DEFAULT_CLUSTERS = 'http://localhost:8001/'
 CREDENTIALS_DIR = os.getenv('CREDENTIALS_DIR', '')
 AUTHORIZE_URL = os.getenv('AUTHORIZE_URL')
 APP_URL = os.getenv('APP_URL')
+MOCK = os.getenv('MOCK', '').lower() == 'true'
 
 app = Flask(__name__)
-app.debug = os.getenv('DEBUG') == 'true'
+app.debug = os.getenv('DEBUG', '').lower() == 'true'
 app.secret_key = os.getenv('SECRET_KEY', 'development')
 
 oauth = OAuth(app)
@@ -98,9 +99,51 @@ def index():
     return flask.render_template('index.html', app_js=app_js)
 
 
-@app.route('/kubernetes-clusters')
-@authorize
-def get_clusters():
+def hash_int(x: int):
+    x = ((x >> 16) ^ x) * 0x45d9f3b
+    x = ((x >> 16) ^ x) * 0x45d9f3b
+    x = (x >> 16) ^ x
+    return x
+
+
+def generate_mock_cluster_data(index: int):
+    '''Generate deterministic (no randomness!) mock data'''
+    nodes = []
+    pod_phases = ['Pending', 'Running', 'Running']
+    for i in range(10):
+        labels = {}
+        if i < 2:
+            labels['master'] = 'true'
+        pods = []
+        for j in range(hash_int((index + 1) * (i + 1)) % 32):
+            phase = pod_phases[hash_int((index + 1) * (i + 1) * (j + 1)) % len(pod_phases)]
+            containers = []
+            for k in range(1):
+                containers.append({'name': 'myapp', 'image': 'foo/bar/{}'.format(j), 'resources': {'requests': {'cpu': '100m', 'memory': '100Mi'}}})
+            status = {'phase': phase}
+            if phase == 'Running':
+                if j % 13 == 0:
+                    status['containerStatuses'] = [{'ready': False, 'state': {'waiting': {'reason': 'CrashLoopBackOff'}}}]
+                elif j % 7 == 0:
+                    status['containerStatuses'] = [{'ready': True, 'state': {'running': {}}, 'restartCount': 3}]
+            pods.append({'name': 'my-pod-{}'.format(j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels, 'status': status, 'containers': containers})
+        nodes.append({'name': 'node-{}'.format(i), 'labels': labels, 'status': {'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'}}, 'pods': pods})
+    unassigned_pods = []
+    return {
+        'api_server_url': 'https://kube-{}.example.org'.format(index),
+        'nodes': nodes,
+        'unassigned_pods': unassigned_pods
+    }
+
+
+def get_mock_clusters():
+    clusters = []
+    for i in range(3):
+        clusters.append(generate_mock_cluster_data(i))
+    return clusters
+
+
+def get_kubernetes_clusters():
     clusters = []
     for api_server_url in (os.getenv('CLUSTERS') or DEFAULT_CLUSTERS).split(','):
         if 'localhost' not in api_server_url:
@@ -152,6 +195,16 @@ def get_clusters():
         except:
             logging.exception('Failed to get metrics')
         clusters.append({'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods})
+    return clusters
+
+
+@app.route('/kubernetes-clusters')
+@authorize
+def get_clusters():
+    if MOCK:
+        clusters = get_mock_clusters()
+    else:
+        clusters = get_kubernetes_clusters()
 
     return json.dumps({'kubernetes_clusters': clusters}, separators=(',', ':'))
 

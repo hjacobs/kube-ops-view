@@ -2,6 +2,7 @@ import Tooltip from './tooltip.js'
 import Cluster from './cluster.js'
 import {Pod, ALL_PODS} from './pod.js'
 import SelectBox from './selectbox'
+import { PRIMARY_VIOLET } from './colors.js'
 import 'pixi-display'
 const PIXI = require('pixi.js')
 
@@ -51,7 +52,13 @@ export default class App {
 
         stage.displayList = new PIXI.DisplayList()
 
-        const searchPrompt = new PIXI.Text('>', {fontFamily: 'ShareTechMono', fontSize: 18, fill: 0xaaaaff})
+        const menuBar = new PIXI.Graphics()
+        menuBar.beginFill(PRIMARY_VIOLET, 1)
+        menuBar.drawRect(0, 0, window.innerWidth, 25)
+        menuBar.endFill()
+        stage.addChild(menuBar)
+
+        const searchPrompt = new PIXI.Text('>', {fontFamily: 'ShareTechMono', fontSize: 18})
         searchPrompt.x = 20
         searchPrompt.y = 5
         PIXI.ticker.shared.add(function (_) {
@@ -60,7 +67,7 @@ export default class App {
         })
         stage.addChild(searchPrompt)
 
-        const searchText = new PIXI.Text('', {fontFamily: 'ShareTechMono', fontSize: 18, fill: 0xaaaaff})
+        const searchText = new PIXI.Text('', {fontFamily: 'ShareTechMono', fontSize: 18})
         searchText.x = 40
         searchText.y = 5
         stage.addChild(searchText)
@@ -92,7 +99,6 @@ export default class App {
         viewContainer.y = 40
         stage.addChild(viewContainer)
 
-
         const tooltip = new Tooltip()
         tooltip.draw()
         stage.addChild(tooltip)
@@ -122,7 +128,7 @@ export default class App {
     }
 
     animatePodCreation(originalPod, globalX, globalY) {
-        const pod = new Pod(originalPod.pod, this.tooltip, false)
+        const pod = new Pod(originalPod.pod, this.tooltip, null)
         pod.draw()
         const targetPosition = new PIXI.Point(globalX, globalY)
         const angle = Math.random() * Math.PI * 2
