@@ -1,7 +1,36 @@
 const PIXI = require('pixi.js')
-import {FACTORS, parseResource, getBarColor} from './utils.js'
+import {FACTORS, getBarColor, podResource} from './utils.js'
 
-export const ALL_PODS = {}
+const ALL_PODS = {}
+
+const sortByName = (a, b) => {
+    return a.name.localeCompare(b.name)
+}
+
+const sortByAge = (a, b) => {
+    const dateA = new Date(a.status.startTime)
+    const dateB = new Date(b.status.startTime)
+    if (dateA.getTime() < dateB.getTime()) {
+        return -1
+    } else if (dateA.getTime() === dateB.getTime())
+        return 0
+    else
+        return 1
+}
+
+const sortByMemory = (a, b) => {
+    const aMem = podResource('memory')(a.containers, 'usage')
+    const bMem = podResource('memory')(b.containers, 'usage')
+    return bMem - aMem
+}
+
+const sortByCPU = (a, b) => {
+    const aCpu = podResource('cpu')(a.containers, 'usage')
+    const bCpu = podResource('cpu')(b.containers, 'usage')
+    return bCpu - aCpu
+}
+
+export {ALL_PODS, sortByAge, sortByCPU, sortByMemory, sortByName}
 
 export class Pod extends PIXI.Graphics {
 
@@ -54,13 +83,6 @@ export class Pod extends PIXI.Graphics {
     }
 
     getResourceUsage() {
-        const metric = (metric, type) =>
-            metric ? (metric[type] ? parseResource(metric[type]) : 0) : 0
-
-        const podResource = type => (containers, resource) =>
-            containers
-                .map(({resources}) => metric(resources[resource], type))
-                .reduce((a, b) => a + b, 0)
 
         const podCpu = podResource('cpu')
         const podMem = podResource('memory')
@@ -99,7 +121,7 @@ export class Pod extends PIXI.Graphics {
     }
 
     pulsate(time) {
-        const v = Math.sin((PIXI.ticker.shared.lastTime % 1000)/1000.* Math.PI)
+        const v = Math.sin((PIXI.ticker.shared.lastTime % 1000) / 1000. * Math.PI)
         this.alpha = v * this._progress
     }
 
@@ -117,9 +139,9 @@ export class Pod extends PIXI.Graphics {
 
         // pod.status.containerStatuses might be undefined!
         const containerStatuses = this.pod.status.containerStatuses || []
-        var ready = 0
-        var running = 0
-        var restarts = 0
+        let ready = 0
+        let running = 0
+        let restarts = 0
         for (const containerStatus of containerStatuses) {
             if (containerStatus.ready) {
                 ready++
@@ -133,17 +155,18 @@ export class Pod extends PIXI.Graphics {
         const allRunning = running >= containerStatuses.length
         const resources = this.getResourceUsage()
 
-        var newTick = null
+        let newTick = null
 
         const podBox = this
         podBox.interactive = true
-        podBox.on('mouseover', function() {
+        podBox.on('mouseover', function () {
             const filter = new PIXI.filters.ColorMatrixFilter()
             filter.brightness(1.3)
             podBox.filters = [filter]
             let s = this.pod.name
-            s += '\nStatus: ' + this.pod.status.phase + ' (' + ready + '/' + containerStatuses.length + ' ready)'
-            s += '\nLabels:'
+            s += '\nStatus    : ' + this.pod.status.phase + ' (' + ready + '/' + containerStatuses.length + ' ready)'
+            s += '\nStart Time: ' + this.pod.status.startTime
+            s += '\nLabels    :'
             for (var key of Object.keys(this.pod.labels)) {
                 if (key !== 'pod-template-hash') {
                     s += '\n  ' + key + ': ' + this.pod.labels[key]
@@ -179,8 +202,8 @@ export class Pod extends PIXI.Graphics {
             this.tooltip.visible = false
         })
         podBox.lineStyle(2, 0xaaaaaa, 1)
-        var i = 0
-        var w = 10 / this.pod.containers.length
+        let i = 0
+        const w = 10 / this.pod.containers.length
         for (const container of this.pod.containers) {
             podBox.drawRect(i * w, 0, w, 10)
             i++
@@ -225,9 +248,9 @@ export class Pod extends PIXI.Graphics {
 
         if (restarts) {
             this.lineStyle(2, 0xff9999, 1)
-            for (let i=0; i<Math.min(restarts, 4); i++) {
-                this.moveTo(10, i*3 - 1)
-                this.lineTo(10, i*3 + 1)
+            for (let i = 0; i < Math.min(restarts, 4); i++) {
+                this.moveTo(10, i * 3 - 1)
+                this.lineTo(10, i * 3 + 1)
             }
         }
 

@@ -1,6 +1,8 @@
 import {Pod} from './pod.js'
 import Bars from './bars.js'
 import {parseResource} from './utils.js'
+import {PRIMARY_VIOLET} from './colors.js'
+import App from './app'
 const PIXI = require('pixi.js')
 
 export default class Node extends PIXI.Graphics {
@@ -43,10 +45,10 @@ export default class Node extends PIXI.Graphics {
         return resources
     }
 
-    draw () {
-        var nodeBox = this
-        var topHandle = new PIXI.Graphics()
-        topHandle.beginFill(0xaaaaff, 1)
+    draw() {
+        const nodeBox = this
+        const topHandle = new PIXI.Graphics()
+        topHandle.beginFill(PRIMARY_VIOLET, 1)
         topHandle.drawRect(0, 0, 105, 15)
         topHandle.endFill()
         const ellipsizedNodeName = this.node.name.substring(0, 18).concat('...')
@@ -55,15 +57,15 @@ export default class Node extends PIXI.Graphics {
         text.y = 2
         topHandle.addChild(text)
         nodeBox.addChild(topHandle)
-        nodeBox.lineStyle(2, 0xaaaaff, 1)
-        nodeBox.beginFill(0x999999, 0.5)
+        nodeBox.lineStyle(2, PRIMARY_VIOLET, 1)
+        nodeBox.beginFill(PRIMARY_VIOLET, 0.2)
         nodeBox.drawRect(0, 0, 105, 115)
         nodeBox.endFill()
         nodeBox.lineStyle(2, 0xaaaaaa, 1)
         topHandle.interactive = true
         topHandle.on('mouseover', function () {
-            var s = nodeBox.node.name
-            for (var key of Object.keys(nodeBox.node.labels)) {
+            let s = nodeBox.node.name
+            for (const key of Object.keys(nodeBox.node.labels)) {
                 s += '\n' + key + ': ' + nodeBox.node.labels[key]
             }
             nodeBox.tooltip.setText(s)
@@ -79,9 +81,16 @@ export default class Node extends PIXI.Graphics {
         bars.y = 1
         nodeBox.addChild(bars.draw())
 
-        var px = 24
-        var py = 20
-        for (const pod of this.node.pods) {
+        nodeBox.addPods(App.sorterFn)
+        return nodeBox
+    }
+
+    addPods(sorterFn) {
+        const nodeBox = this
+        let px = 24
+        let py = 20
+        const pods = sorterFn !== 'undefined' ? this.node.pods.sort(sorterFn) : this.node.pods
+        for (const pod of pods) {
             if (pod.namespace != 'kube-system') {
                 const podBox = Pod.getOrCreate(pod, this.cluster, this.tooltip)
                 podBox.movePodTo(new PIXI.Point(px, py))
@@ -92,11 +101,10 @@ export default class Node extends PIXI.Graphics {
                     py += 13
                 }
             }
-
         }
         px = 24
         py = 100
-        for (const pod of this.node.pods) {
+        for (const pod of pods) {
             if (pod.namespace == 'kube-system') {
                 const podBox = Pod.getOrCreate(pod, this.cluster, this.tooltip)
                 podBox.movePodTo(new PIXI.Point(px, py))
@@ -107,9 +115,6 @@ export default class Node extends PIXI.Graphics {
                     py -= 13
                 }
             }
-
         }
-        return nodeBox
     }
-
 }

@@ -1,8 +1,11 @@
 import Tooltip from './tooltip.js'
 import Cluster from './cluster.js'
-import { Pod, ALL_PODS } from './pod.js'
+import {Pod, ALL_PODS, sortByName, sortByMemory, sortByCPU, sortByAge} from './pod.js'
+import SelectBox from './selectbox'
 import { PRIMARY_VIOLET } from './colors.js'
+
 const PIXI = require('pixi.js')
+
 
 export default class App {
 
@@ -16,6 +19,7 @@ export default class App {
         this.seenPods = new Set()
         this.desaturationFilter = new PIXI.filters.ColorMatrixFilter()
         this.desaturationFilter.desaturate()
+        this.sorterFn = ''
     }
 
     filter() {
@@ -42,7 +46,7 @@ export default class App {
                 for (const pod of node.children) {
                     const name = pod.pod && pod.pod.name
                     if (name) {
-                        if (!name.includes(searchString)){
+                        if (!name.includes(searchString)) {
                             pod.filters = [filter]
                         } else {
                             // TODO: pod might have other filters set..
@@ -70,23 +74,45 @@ export default class App {
 
         const menuBar = new PIXI.Graphics()
         menuBar.beginFill(PRIMARY_VIOLET, 1)
-        menuBar.drawRect(0, 0, window.innerWidth, 25)
-        menuBar.endFill()
+        menuBar.drawRect(0, 0, window.innerWidth, 28)
+        menuBar.lineStyle(1.5, 0x000000, 1)
+        menuBar.drawRect(20, 3, 200, 22)
         stage.addChild(menuBar)
 
-        const searchPrompt = new PIXI.Text('>', {fontFamily: 'ShareTechMono', fontSize: 18})
-        searchPrompt.x = 20
-        searchPrompt.y = 5
-        PIXI.ticker.shared.add(function(_) {
-            var v = Math.sin((PIXI.ticker.shared.lastTime % 2000)/2000.* Math.PI)
+        const searchPrompt = new PIXI.Text('>', {fontFamily: 'ShareTechMono', fontSize: 14})
+        searchPrompt.x = 26
+        searchPrompt.y = 8
+        PIXI.ticker.shared.add(function (_) {
+            var v = Math.sin((PIXI.ticker.shared.lastTime % 2000) / 2000. * Math.PI)
             searchPrompt.alpha = v
         })
         stage.addChild(searchPrompt)
 
-        const searchText = new PIXI.Text('', {fontFamily: 'ShareTechMono', fontSize: 18})
+        const searchText = new PIXI.Text('', {fontFamily: 'ShareTechMono', fontSize: 14})
         searchText.x = 40
-        searchText.y = 5
+        searchText.y = 8
         stage.addChild(searchText)
+
+        const items = [
+            {
+                text: 'SORT: NAME', sorterFn: sortByName
+            },
+            {
+                text: 'SORT: AGE', sorterFn: sortByAge
+            },
+            {
+                text: 'SORT: MEMORY', sorterFn: sortByMemory
+            },
+            {
+                text: 'SORT: CPU', sorterFn: sortByCPU
+            }
+        ]
+        //setting default sort
+        App.sorterFn = items[0].sorterFn
+        const selectBox = new SelectBox(items)
+        selectBox.x = 265
+        selectBox.y = 3
+        menuBar.addChild(selectBox.draw())
 
         const viewContainer = new PIXI.Container()
         viewContainer.x = 20
@@ -104,7 +130,7 @@ export default class App {
                 event.preventDefault()
             }
             else if (event.key == 'Backspace') {
-                this.filterString = this.filterString.slice(0, Math.max(0, this.filterString.length-1))
+                this.filterString = this.filterString.slice(0, Math.max(0, this.filterString.length - 1))
                 this.filter()
                 event.preventDefault()
             }
@@ -138,7 +164,7 @@ export default class App {
         pod._progress = 0
         originalPod.visible = false
         const that = this
-        const tick = function(t) {
+        const tick = function (t) {
             // progress goes from 0 to 1
             const progress = Math.min(1, pod._progress + (0.01 * t))
             const scale = 1 + ((1 - progress) * 140)
@@ -269,13 +295,13 @@ export default class App {
 
         function fetchData() {
             fetch('kubernetes-clusters', {credentials: 'include'})
-            .then(function(response) {
-                return response.json()
-            })
-            .then(function(json) {
-                const clusters = json.kubernetes_clusters
-                that.update(clusters)
-            })
+                .then(function (response) {
+                    return response.json()
+                })
+                .then(function (json) {
+                    const clusters = json.kubernetes_clusters
+                    that.update(clusters)
+                })
             window.setTimeout(fetchData, 5000)
         }
 
