@@ -1,5 +1,5 @@
 const PIXI = require('pixi.js')
-import {PRIMARY_VIOLET} from './colors.js'
+import {PRIMARY_COLOR} from './colors.js'
 import {FACTORS, getBarColor, podResource} from './utils.js'
 import {BRIGHTNESS_FILTER} from './filters.js'
 
@@ -167,7 +167,7 @@ export class Pod extends PIXI.Graphics {
             s += '\nStatus    : ' + this.pod.status.phase + ' (' + ready + '/' + containerStatuses.length + ' ready)'
             s += '\nStart Time: ' + this.pod.status.startTime
             s += '\nLabels    :'
-            for (var key of Object.keys(this.pod.labels)) {
+            for (var key of Object.keys(this.pod.labels).sort()) {
                 if (key !== 'pod-template-hash') {
                     s += '\n  ' + key + ': ' + this.pod.labels[key]
                 }
@@ -201,7 +201,7 @@ export class Pod extends PIXI.Graphics {
             podBox.filters = []
             this.tooltip.visible = false
         })
-        podBox.lineStyle(1, PRIMARY_VIOLET, 1)
+        podBox.lineStyle(1, PRIMARY_COLOR, 1)
         let i = 0
         const w = 10 / this.pod.containers.length
         for (const container of this.pod.containers) {

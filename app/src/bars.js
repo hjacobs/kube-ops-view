@@ -1,5 +1,5 @@
 import {FACTORS, getBarColor} from './utils'
-import {PRIMARY_VIOLET} from './colors'
+import {PRIMARY_COLOR} from './colors'
 
 const PIXI = require('pixi.js')
 
@@ -16,7 +16,7 @@ export default class Bars extends PIXI.Graphics {
 
         const barHeight = 92
 
-        bars.beginFill(PRIMARY_VIOLET, 0.1)
+        bars.beginFill(PRIMARY_COLOR, 0.1)
         bars.drawRect(5, 110 - barHeight, 15, barHeight)
         bars.endFill()
 
@@ -39,7 +39,7 @@ export default class Bars extends PIXI.Graphics {
         bars.drawRect(16.5, 110 - bars.resources.memory.used / scale, 2.5, bars.resources.memory.used / scale)
         bars.endFill()
 
-        bars.lineStyle(1, PRIMARY_VIOLET, 1)
+        bars.lineStyle(1, PRIMARY_COLOR, 1)
         for (var i = 0; i < bars.resources.cpu.capacity; i++) {
             bars.drawRect(5, 110 - (i + 1) * cpuHeight, 5, cpuHeight)
         }

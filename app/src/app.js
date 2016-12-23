@@ -2,7 +2,7 @@ import Tooltip from './tooltip.js'
 import Cluster from './cluster.js'
 import {Pod, ALL_PODS, sortByName, sortByMemory, sortByCPU, sortByAge} from './pod.js'
 import SelectBox from './selectbox'
-import { PRIMARY_VIOLET, SECONDARY_COLOR } from './colors.js'
+import { PRIMARY_COLOR, SECONDARY_COLOR } from './colors.js'
 import { DESATURATION_FILTER } from './filters.js'
 
 const PIXI = require('pixi.js')
@@ -77,11 +77,11 @@ export default class App {
         menuBar.lineStyle(2, SECONDARY_COLOR, 0.8)
         menuBar.moveTo(0, 28)
         menuBar.lineTo(window.innerWidth, 28)
-        menuBar.lineStyle(1, PRIMARY_VIOLET, 1)
+        menuBar.lineStyle(1, PRIMARY_COLOR, 1)
         menuBar.drawRect(20, 3, 200, 22)
         stage.addChild(menuBar)
 
-        const searchPrompt = new PIXI.Text('>', {fontFamily: 'ShareTechMono', fontSize: 14, fill: PRIMARY_VIOLET})
+        const searchPrompt = new PIXI.Text('>', {fontFamily: 'ShareTechMono', fontSize: 14, fill: PRIMARY_COLOR})
         searchPrompt.x = 26
         searchPrompt.y = 8
         PIXI.ticker.shared.add(function (_) {
@@ -90,7 +90,7 @@ export default class App {
         })
         stage.addChild(searchPrompt)
 
-        const searchText = new PIXI.Text('', {fontFamily: 'ShareTechMono', fontSize: 14, fill: PRIMARY_VIOLET})
+        const searchText = new PIXI.Text('', {fontFamily: 'ShareTechMono', fontSize: 14, fill: PRIMARY_COLOR})
         searchText.x = 40
         searchText.y = 8
         stage.addChild(searchText)
