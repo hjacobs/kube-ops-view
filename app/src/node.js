@@ -1,6 +1,7 @@
 import {Pod} from './pod.js'
 import Bars from './bars.js'
 import {parseResource} from './utils.js'
+import {PRIMARY_VIOLET} from './colors.js'
 import App from './app'
 const PIXI = require('pixi.js')
 
@@ -47,7 +48,7 @@ export default class Node extends PIXI.Graphics {
     draw() {
         const nodeBox = this
         const topHandle = new PIXI.Graphics()
-        topHandle.beginFill(0xaaaaff, 1)
+        topHandle.beginFill(PRIMARY_VIOLET, 1)
         topHandle.drawRect(0, 0, 105, 15)
         topHandle.endFill()
         const ellipsizedNodeName = this.node.name.substring(0, 18).concat('...')
@@ -56,7 +57,7 @@ export default class Node extends PIXI.Graphics {
         text.y = 2
         topHandle.addChild(text)
         nodeBox.addChild(topHandle)
-        nodeBox.lineStyle(2, 0xaaaaff, 1)
+        nodeBox.lineStyle(2, PRIMARY_VIOLET, 1)
         nodeBox.beginFill(0x999999, 0.5)
         nodeBox.drawRect(0, 0, 105, 115)
         nodeBox.endFill()
