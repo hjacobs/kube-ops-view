@@ -130,8 +130,8 @@ def generate_mock_pod(index, i, j):
     labels = {}
     phase = pod_phases[hash_int((index + 1) * (i + 1) * (j + 1)) % len(pod_phases)]
     containers = []
-    for k in range(1):
-        containers.append({'name': 'myapp', 'image': 'foo/bar/{}'.format(j), 'resources': {'requests': {'cpu': '100m', 'memory': '100Mi'}}})
+    for k in range(1 + j % 2):
+        containers.append({'name': 'myapp', 'image': 'foo/bar/{}'.format(j), 'resources': {'requests': {'cpu': '100m', 'memory': '100Mi'}, 'limits': {}}})
     status = {'phase': phase}
     if phase == 'Running':
         if j % 13 == 0:
@@ -139,6 +139,9 @@ def generate_mock_pod(index, i, j):
         elif j % 7 == 0:
             status['containerStatuses'] = [{'ready': True, 'state': {'running': {}}, 'restartCount': 3}]
     pod = {'name': '{}-{}-{}'.format(names[hash_int((i + 1) * (j + 1)) % len(names)], i, j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels, 'status': status, 'containers': containers}
+    if phase == 'Running' and j % 17 == 0:
+        pod['deleted'] = 123
+
     return pod
 
 

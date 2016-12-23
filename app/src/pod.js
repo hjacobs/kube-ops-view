@@ -1,5 +1,7 @@
 const PIXI = require('pixi.js')
+import {PRIMARY_VIOLET} from './colors.js'
 import {FACTORS, getBarColor, podResource} from './utils.js'
+import {BRIGHTNESS_FILTER} from './filters.js'
 
 const ALL_PODS = {}
 
@@ -160,9 +162,7 @@ export class Pod extends PIXI.Graphics {
         const podBox = this
         podBox.interactive = true
         podBox.on('mouseover', function () {
-            const filter = new PIXI.filters.ColorMatrixFilter()
-            filter.brightness(1.3)
-            podBox.filters = [filter]
+            podBox.filters = [BRIGHTNESS_FILTER]
             let s = this.pod.name
             s += '\nStatus    : ' + this.pod.status.phase + ' (' + ready + '/' + containerStatuses.length + ' ready)'
             s += '\nStart Time: ' + this.pod.status.startTime
@@ -201,31 +201,33 @@ export class Pod extends PIXI.Graphics {
             podBox.filters = []
             this.tooltip.visible = false
         })
-        podBox.lineStyle(2, 0xaaaaaa, 1)
+        podBox.lineStyle(1, PRIMARY_VIOLET, 1)
         let i = 0
         const w = 10 / this.pod.containers.length
         for (const container of this.pod.containers) {
             podBox.drawRect(i * w, 0, w, 10)
             i++
         }
+        let color
         if (this.pod.status.phase == 'Succeeded') {
             // completed Job
-            podBox.lineStyle(2, 0xaaaaff, 1)
+            color = 0xaaaaff
         } else if (this.pod.status.phase == 'Running' && allReady) {
-            podBox.lineStyle(2, 0xaaffaa, 1)
+            color = 0xaaffaa
         } else if (this.pod.status.phase == 'Running' && allRunning && !allReady) {
             // all containers running, but some not ready (readinessProbe)
             newTick = this.pulsate
-            podBox.lineStyle(2, 0xaaffaa, 1)
+            color = 0xaaffaa
         } else if (this.pod.status.phase == 'Pending') {
             newTick = this.pulsate
-            podBox.lineStyle(2, 0xffffaa, 1)
+            color = 0xffffaa
         } else {
             // CrashLoopBackOff, ImagePullBackOff or other unknown state
             newTick = this.crashing
-            podBox.lineStyle(2, 0xff9999, 1)
+            color = 0xffaaaa
         }
-        podBox.beginFill(0x999999, 0.5)
+        podBox.lineStyle(2, color, 1)
+        podBox.beginFill(color, 0.2)
         podBox.drawRect(0, 0, 10, 10)
         if (this.pod.deleted) {
             if (!this.cross) {
@@ -244,7 +246,6 @@ export class Pod extends PIXI.Graphics {
             }
             newTick = this.terminating
         }
-
 
         if (restarts) {
             this.lineStyle(2, 0xff9999, 1)
@@ -266,19 +267,20 @@ export class Pod extends PIXI.Graphics {
             this.tint = 0xffffff
         }
 
+        // CPU
         const cpuHeight = resources.cpu.limit !== 0 ? 8 / resources.cpu.limit : 0
-        podBox.lineStyle(0, 0xaaffaa, 1)
+        podBox.lineStyle()
         podBox.beginFill(getBarColor(resources.cpu.requested, resources.cpu.limit), 1)
         podBox.drawRect(1, 9 - resources.cpu.requested * cpuHeight, 1, resources.cpu.requested * cpuHeight)
         podBox.beginFill(getBarColor(resources.cpu.used, resources.cpu.limit), 1)
         podBox.drawRect(2, 9 - resources.cpu.used * cpuHeight, 1, resources.cpu.used * cpuHeight)
         podBox.endFill()
-        podBox.lineStyle(1, 0xaaaaaa, 1)
 
+        // Memory
         const scale = resources.memory.limit / 8
         const scaledMemReq = resources.memory.requested !== 0 && scale !== 0 ? resources.memory.requested / scale : 0
         const scaledMemUsed = resources.memory.used !== 0 && scale !== 0 ? resources.memory.used / scale : 0
-        podBox.lineStyle(0, 0xaaffaa, 1)
+        podBox.lineStyle()
         podBox.beginFill(getBarColor(resources.memory.requested, resources.memory.limit), 1)
         podBox.drawRect(3, 9 - scaledMemReq, 1, scaledMemReq)
         podBox.beginFill(getBarColor(resources.memory.used, resources.memory.limit), 1)

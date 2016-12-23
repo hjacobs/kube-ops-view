@@ -2,7 +2,8 @@ import Tooltip from './tooltip.js'
 import Cluster from './cluster.js'
 import {Pod, ALL_PODS, sortByName, sortByMemory, sortByCPU, sortByAge} from './pod.js'
 import SelectBox from './selectbox'
-import { PRIMARY_VIOLET } from './colors.js'
+import { PRIMARY_VIOLET, SECONDARY_COLOR } from './colors.js'
+import { DESATURATION_FILTER } from './filters.js'
 
 const PIXI = require('pixi.js')
 
@@ -17,8 +18,6 @@ export default class App {
             this.filterString = ''
         }
         this.seenPods = new Set()
-        this.desaturationFilter = new PIXI.filters.ColorMatrixFilter()
-        this.desaturationFilter.desaturate()
         this.sorterFn = ''
     }
 
@@ -30,7 +29,7 @@ export default class App {
         } else {
             document.location.hash = ''
         }
-        const filter = this.desaturationFilter
+        const filter = DESATURATION_FILTER
         for (const cluster of this.viewContainer.children) {
             for (const node of cluster.children) {
                 const name = node.pod && node.pod.name
@@ -73,13 +72,16 @@ export default class App {
         const stage = new PIXI.Container()
 
         const menuBar = new PIXI.Graphics()
-        menuBar.beginFill(PRIMARY_VIOLET, 1)
+        menuBar.beginFill(SECONDARY_COLOR, 0.8)
         menuBar.drawRect(0, 0, window.innerWidth, 28)
-        menuBar.lineStyle(1.5, 0x000000, 1)
+        menuBar.lineStyle(2, SECONDARY_COLOR, 0.8)
+        menuBar.moveTo(0, 28)
+        menuBar.lineTo(window.innerWidth, 28)
+        menuBar.lineStyle(1, PRIMARY_VIOLET, 1)
         menuBar.drawRect(20, 3, 200, 22)
         stage.addChild(menuBar)
 
-        const searchPrompt = new PIXI.Text('>', {fontFamily: 'ShareTechMono', fontSize: 14})
+        const searchPrompt = new PIXI.Text('>', {fontFamily: 'ShareTechMono', fontSize: 14, fill: PRIMARY_VIOLET})
         searchPrompt.x = 26
         searchPrompt.y = 8
         PIXI.ticker.shared.add(function (_) {
@@ -88,7 +90,7 @@ export default class App {
         })
         stage.addChild(searchPrompt)
 
-        const searchText = new PIXI.Text('', {fontFamily: 'ShareTechMono', fontSize: 14})
+        const searchText = new PIXI.Text('', {fontFamily: 'ShareTechMono', fontSize: 14, fill: PRIMARY_VIOLET})
         searchText.x = 40
         searchText.y = 8
         stage.addChild(searchText)
@@ -150,6 +152,7 @@ export default class App {
     animatePodCreation(originalPod, globalPosition) {
         const pod = new Pod(originalPod.pod, null, this.tooltip)
         pod.draw()
+        pod.interactive = false
         const targetPosition = globalPosition
         const angle = Math.random()*Math.PI*2
         const cos = Math.cos(angle)

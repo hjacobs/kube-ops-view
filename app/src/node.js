@@ -1,7 +1,7 @@
 import {Pod} from './pod.js'
 import Bars from './bars.js'
 import {parseResource} from './utils.js'
-import {PRIMARY_VIOLET} from './colors.js'
+import {PRIMARY_VIOLET, SECONDARY_COLOR} from './colors.js'
 import App from './app'
 const PIXI = require('pixi.js')
 
@@ -58,7 +58,7 @@ export default class Node extends PIXI.Graphics {
         topHandle.addChild(text)
         nodeBox.addChild(topHandle)
         nodeBox.lineStyle(2, PRIMARY_VIOLET, 1)
-        nodeBox.beginFill(PRIMARY_VIOLET, 0.2)
+        nodeBox.beginFill(SECONDARY_COLOR, 1)
         nodeBox.drawRect(0, 0, 105, 115)
         nodeBox.endFill()
         nodeBox.lineStyle(2, 0xaaaaaa, 1)
