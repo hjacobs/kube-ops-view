@@ -15,15 +15,14 @@ export default class SelectBox extends PIXI.Graphics {
             align: 'center'
         })
         this.text.x = 10
-        this.text.y = 8
+        this.text.y = 5
         this.addChild(this.text)
     }
 
     onForwardPressed() {
         const selectBox = this
-        if (selectBox.count + 1 < this.items.length) {
-            selectBox.count++
-        } else {
+        selectBox.count++
+        if (selectBox.count >= this.items.length) {
             selectBox.count = 0
         }
         selectBox.text.text = selectBox.items[selectBox.count].text
@@ -32,9 +31,8 @@ export default class SelectBox extends PIXI.Graphics {
 
     onBackPressed() {
         const selectBox = this
-        if (selectBox.count - 1 > 0) {
-            selectBox.count--
-        } else {
+        selectBox.count--
+        if (selectBox.count < 0) {
             selectBox.count = selectBox.items.length - 1
         }
         selectBox.text.text = selectBox.items[selectBox.count].text
@@ -51,26 +49,28 @@ export default class SelectBox extends PIXI.Graphics {
         selectBox.interactive = true
 
         // draw a triangle
-        backArrow.lineStyle(2, 0x000000, 1)
-        backArrow.beginFill(PRIMARY_VIOLET, 0.5)
-        backArrow.moveTo(0, 2)
-        backArrow.lineTo(-20, 14)
-        backArrow.lineTo(0, 26)
-        backArrow.lineTo(0, 2)
+        backArrow.lineStyle(1.5, 0x000000, 1)
+        backArrow.beginFill(PRIMARY_VIOLET, 0.9)
+        backArrow.drawRect(-22, 0, 22, 22)
+        backArrow.moveTo(-7, 6)
+        backArrow.lineTo(-16, 11)
+        backArrow.lineTo(-7, 16)
+        backArrow.lineTo(-7, 6)
         backArrow.endFill()
         selectBox.addChild(backArrow)
 
-        selectBox.lineStyle(2, 0x000000, 1)
+        selectBox.lineStyle(1.5, 0x000000, 1)
         selectBox.beginFill(PRIMARY_VIOLET, 0.5)
-        selectBox.drawRoundedRect(4, 0, 100, 28, 5)
+        selectBox.drawRect(4, 0, 100, 22)
         selectBox.endFill()
 
-        forwardArrow.lineStyle(2, 0x000000, 1)
-        forwardArrow.beginFill(PRIMARY_VIOLET, 0.5)
-        forwardArrow.moveTo(108, 2)
-        forwardArrow.lineTo(128, 14)
-        forwardArrow.lineTo(108, 26)
-        forwardArrow.lineTo(108, 2)
+        forwardArrow.lineStyle(1.5, 0x000000, 1)
+        forwardArrow.beginFill(PRIMARY_VIOLET, 0.9)
+        forwardArrow.drawRect(108, 0, 22, 22)
+        forwardArrow.moveTo(115, 6)
+        forwardArrow.lineTo(124, 11)
+        forwardArrow.lineTo(115, 16)
+        forwardArrow.lineTo(115, 6)
         forwardArrow.endFill()
         selectBox.addChild(forwardArrow)
 

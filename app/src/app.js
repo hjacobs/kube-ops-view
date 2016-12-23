@@ -77,13 +77,13 @@ export default class App {
 
         const menuBar = new PIXI.Graphics()
         menuBar.beginFill(PRIMARY_VIOLET, 1)
-        menuBar.drawRect(0, 0, window.innerWidth, 35)
+        menuBar.drawRect(0, 0, window.innerWidth, 28)
         menuBar.endFill()
         stage.addChild(menuBar)
 
         const searchPrompt = new PIXI.Text('>', {fontFamily: 'ShareTechMono', fontSize: 18})
         searchPrompt.x = 20
-        searchPrompt.y = 10
+        searchPrompt.y = 7
         PIXI.ticker.shared.add(function (_) {
             var v = Math.sin((PIXI.ticker.shared.lastTime % 2000) / 2000. * Math.PI)
             searchPrompt.alpha = v
@@ -92,21 +92,21 @@ export default class App {
 
         const searchText = new PIXI.Text('', {fontFamily: 'ShareTechMono', fontSize: 18})
         searchText.x = 40
-        searchText.y = 5
+        searchText.y = 7
         stage.addChild(searchText)
 
         const items = [
             {
-                text: 'Name', sorterFn: sortByName
+                text: 'SORT: NAME', sorterFn: sortByName
             },
             {
-                text: 'Age', sorterFn: sortByAge
+                text: 'SORT: AGE', sorterFn: sortByAge
             },
             {
-                text: 'Memory', sorterFn: sortByMemory
+                text: 'SORT: MEMORY', sorterFn: sortByMemory
             },
             {
-                text: 'CPU', sorterFn: sortByCPU
+                text: 'SORT: CPU', sorterFn: sortByCPU
             }
         ]
         //setting default sort
