@@ -152,6 +152,7 @@ export default class App {
     animatePodCreation(originalPod, globalPosition) {
         const pod = new Pod(originalPod.pod, null, this.tooltip)
         pod.draw()
+        pod.blendMode = PIXI.BLEND_MODES.ADD
         pod.interactive = false
         const targetPosition = globalPosition
         const angle = Math.random()*Math.PI*2
@@ -191,6 +192,7 @@ export default class App {
     animatePodDeletion(originalPod, globalPosition) {
         const pod = new Pod(originalPod.pod, null, this.tooltip)
         pod.draw()
+        pod.blendMode = PIXI.BLEND_MODES.ADD
         const globalCenter = new PIXI.Point(globalPosition.x + pod.width/2, globalPosition.y + pod.height/2)
         const blur = new PIXI.filters.BlurFilter(4)
         pod.filters = [blur]

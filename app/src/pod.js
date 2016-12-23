@@ -232,7 +232,7 @@ export class Pod extends PIXI.Graphics {
         if (this.pod.deleted) {
             if (!this.cross) {
                 const cross = new PIXI.Graphics()
-                cross.lineStyle(3, 0xff6666, 1)
+                cross.lineStyle(3, 0xff0000, 1)
                 cross.moveTo(0, 0)
                 cross.lineTo(10, 10)
                 cross.moveTo(10, 0)
@@ -241,6 +241,7 @@ export class Pod extends PIXI.Graphics {
                 cross.pivot.y = 5
                 cross.x = 5
                 cross.y = 5
+                cross.blendMode = PIXI.BLEND_MODES.ADD
                 this.addChild(cross)
                 this.cross = cross
             }
