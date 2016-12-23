@@ -58,7 +58,7 @@ export default class Node extends PIXI.Graphics {
         topHandle.addChild(text)
         nodeBox.addChild(topHandle)
         nodeBox.lineStyle(2, PRIMARY_VIOLET, 1)
-        nodeBox.beginFill(0x999999, 0.5)
+        nodeBox.beginFill(PRIMARY_VIOLET, 0.2)
         nodeBox.drawRect(0, 0, 105, 115)
         nodeBox.endFill()
         nodeBox.lineStyle(2, 0xaaaaaa, 1)

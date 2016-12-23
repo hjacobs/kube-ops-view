@@ -1,4 +1,5 @@
 import {FACTORS, getBarColor} from './utils'
+import {PRIMARY_VIOLET} from './colors'
 
 const PIXI = require('pixi.js')
 
@@ -15,10 +16,11 @@ export default class Bars extends PIXI.Graphics {
 
         const barHeight = 92
 
-        bars.lineStyle(0, 0xaaffaa, 1)
-        bars.beginFill(0x999999, 0.1)
+        bars.beginFill(PRIMARY_VIOLET, 0.1)
         bars.drawRect(5, 110 - barHeight, 15, barHeight)
         bars.endFill()
+
+        // CPU
         const cpuHeight = barHeight / bars.resources.cpu.capacity
         bars.interactive = true
         bars.lineStyle(0, 0xaaffaa, 1)
@@ -27,19 +29,23 @@ export default class Bars extends PIXI.Graphics {
         bars.beginFill(getBarColor(bars.resources.cpu.used, bars.resources.cpu.capacity), 1)
         bars.drawRect(7.5, 110 - bars.resources.cpu.used * cpuHeight, 2.5, bars.resources.cpu.used * cpuHeight)
         bars.endFill()
-        bars.lineStyle(1, 0xaaaaaa, 1)
-        for (var i = 0; i < bars.resources.cpu.capacity; i++) {
-            bars.drawRect(5, 110 - (i + 1) * cpuHeight, 5, cpuHeight)
-        }
 
+        // Memory
         const scale = bars.resources.memory.capacity / barHeight
-        bars.drawRect(14, 110 - bars.resources.memory.capacity / scale, 5, bars.resources.memory.capacity / scale)
         bars.lineStyle(0, 0xaaffaa, 1)
         bars.beginFill(getBarColor(bars.resources.memory.requested, bars.resources.memory.capacity), 1)
         bars.drawRect(14, 110 - bars.resources.memory.requested / scale, 2.5, bars.resources.memory.requested / scale)
         bars.beginFill(getBarColor(bars.resources.memory.used, bars.resources.memory.capacity), 1)
         bars.drawRect(16.5, 110 - bars.resources.memory.used / scale, 2.5, bars.resources.memory.used / scale)
         bars.endFill()
+
+        bars.lineStyle(1, PRIMARY_VIOLET, 1)
+        for (var i = 0; i < bars.resources.cpu.capacity; i++) {
+            bars.drawRect(5, 110 - (i + 1) * cpuHeight, 5, cpuHeight)
+        }
+
+        bars.drawRect(14, 110 - bars.resources.memory.capacity / scale, 5, bars.resources.memory.capacity / scale)
+
         bars.on('mouseover', function () {
             let s = 'CPU: \n'
             const {capacity: cpuCap, requested: cpuReq, used: cpuUsed} = bars.resources.cpu
