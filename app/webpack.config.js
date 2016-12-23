@@ -33,6 +33,7 @@ module.exports = {
             {test: /\.html$/, exclude: /node_modules/, loader: 'file-loader?name=[path][name].[ext]'},
             {test: /\.jpe?g$|\.svg$|\.png$/, exclude: /node_modules/, loader: 'file-loader?name=[path][name].[ext]'},
             {test: /\.json$/, exclude: /node_modules/, loader: 'json'},
+            {test: /\.(otf|eot|svg|ttf|woff|woff2)(\?v=\d+\.\d+\.\d+)?$/, loader: 'url?limit=8192&mimetype=application/font-woff'},
             {test: /\.json$/, include: path.join(__dirname, 'node_modules', 'pixi.js'), loader: 'json'}
         ],
         postLoaders: [{

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import gevent.monkey
+
 gevent.monkey.patch_all()
 
 import flask
@@ -16,7 +17,6 @@ import tokens
 from flask import Flask, redirect
 from flask_oauthlib.client import OAuth, OAuthRemoteApp
 from urllib.parse import urljoin
-
 
 DEFAULT_CLUSTERS = 'http://localhost:8001/'
 CREDENTIALS_DIR = os.getenv('CREDENTIALS_DIR', '')
@@ -119,15 +119,20 @@ def generate_mock_cluster_data(index: int):
             phase = pod_phases[hash_int((index + 1) * (i + 1) * (j + 1)) % len(pod_phases)]
             containers = []
             for k in range(1):
-                containers.append({'name': 'myapp', 'image': 'foo/bar/{}'.format(j), 'resources': {'requests': {'cpu': '100m', 'memory': '100Mi'}}})
+                containers.append({'name': 'myapp', 'image': 'foo/bar/{}'.format(j),
+                                   'resources': {'requests': {'cpu': '100m', 'memory': '100Mi'}}})
             status = {'phase': phase}
             if phase == 'Running':
                 if j % 13 == 0:
-                    status['containerStatuses'] = [{'ready': False, 'state': {'waiting': {'reason': 'CrashLoopBackOff'}}}]
+                    status['containerStatuses'] = [
+                        {'ready': False, 'state': {'waiting': {'reason': 'CrashLoopBackOff'}}}]
                 elif j % 7 == 0:
                     status['containerStatuses'] = [{'ready': True, 'state': {'running': {}}, 'restartCount': 3}]
-            pods.append({'name': 'my-pod-{}'.format(j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels, 'status': status, 'containers': containers})
-        nodes.append({'name': 'node-{}'.format(i), 'labels': labels, 'status': {'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'}}, 'pods': pods})
+            pods.append(
+                {'name': 'my-pod-{}'.format(j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels,
+                 'status': status, 'containers': containers})
+        nodes.append({'name': 'node-{}'.format(i), 'labels': labels,
+                      'status': {'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'}}, 'pods': pods})
     unassigned_pods = []
     return {
         'api_server_url': 'https://kube-{}.example.org'.format(index),
@@ -156,7 +161,8 @@ def get_kubernetes_clusters():
         pods_by_namespace_name = {}
         unassigned_pods = []
         for node in response.json()['items']:
-            obj = {'name': node['metadata']['name'], 'labels': node['metadata']['labels'], 'status': node['status'], 'pods': []}
+            obj = {'name': node['metadata']['name'], 'labels': node['metadata']['labels'], 'status': node['status'],
+                   'pods': []}
             nodes.append(obj)
             nodes_by_name[obj['name']] = obj
         response = session.get(urljoin(api_server_url, '/api/v1/pods'), timeout=5)
@@ -164,9 +170,15 @@ def get_kubernetes_clusters():
         for pod in response.json()['items']:
             obj = {'name': pod['metadata']['name'],
                    'namespace': pod['metadata']['namespace'],
-                   'labels': pod['metadata'].get('labels', {}), 'status': pod['status'], 'containers': []}
+                   'labels': pod['metadata'].get('labels', {}),
+                   'status': pod['status'],
+                   'startTime': pod['status']['startTime'] if 'startTime' in pod['status'] else '',
+                   'containers': []
+                   }
             if 'deletionTimestamp' in pod['metadata']:
-                obj['deleted'] = datetime.datetime.strptime(pod['metadata']['deletionTimestamp'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=datetime.timezone.utc).timestamp()
+                obj['deleted'] = datetime.datetime.strptime(pod['metadata']['deletionTimestamp'],
+                                                            '%Y-%m-%dT%H:%M:%SZ').replace(
+                    tzinfo=datetime.timezone.utc).timestamp()
             for cont in pod['spec']['containers']:
                 obj['containers'].append({'name': cont['name'], 'image': cont['image'], 'resources': cont['resources']})
             pods_by_namespace_name[(obj['namespace'], obj['name'])] = obj
@@ -183,7 +195,9 @@ def get_kubernetes_clusters():
         except:
             logging.exception('Failed to get metrics')
         try:
-            response = session.get(urljoin(api_server_url, '/api/v1/namespaces/kube-system/services/heapster/proxy/apis/metrics/v1alpha1/pods'), timeout=5)
+            response = session.get(urljoin(api_server_url,
+                                           '/api/v1/namespaces/kube-system/services/heapster/proxy/apis/metrics/v1alpha1/pods'),
+                                   timeout=5)
             response.raise_for_status()
             for metrics in response.json()['items']:
                 pod = pods_by_namespace_name.get((metrics['metadata']['namespace'], metrics['metadata']['name']))

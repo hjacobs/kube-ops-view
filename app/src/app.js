@@ -1,9 +1,10 @@
 import Tooltip from './tooltip.js'
 import Cluster from './cluster.js'
-import {Pod, ALL_PODS} from './pod.js'
+import {Pod, ALL_PODS, sortByName, sortByMemory, sortByCPU, sortByAge} from './pod.js'
 import SelectBox from './selectbox'
 import { PRIMARY_VIOLET } from './colors.js'
 import 'pixi-display'
+
 const PIXI = require('pixi.js')
 
 
@@ -12,6 +13,7 @@ export default class App {
     constructor() {
         this.filterString = ''
         this.seenPods = {}
+        this.sorterFn = ''
     }
 
     filter() {
@@ -54,13 +56,13 @@ export default class App {
 
         const menuBar = new PIXI.Graphics()
         menuBar.beginFill(PRIMARY_VIOLET, 1)
-        menuBar.drawRect(0, 0, window.innerWidth, 25)
+        menuBar.drawRect(0, 0, window.innerWidth, 35)
         menuBar.endFill()
         stage.addChild(menuBar)
 
         const searchPrompt = new PIXI.Text('>', {fontFamily: 'ShareTechMono', fontSize: 18})
         searchPrompt.x = 20
-        searchPrompt.y = 5
+        searchPrompt.y = 10
         PIXI.ticker.shared.add(function (_) {
             var v = Math.sin((PIXI.ticker.shared.lastTime % 2000) / 2000. * Math.PI)
             searchPrompt.alpha = v
@@ -74,22 +76,23 @@ export default class App {
 
         const items = [
             {
-                text: 'Name', sorterFn: () => {}
+                text: 'Name', sorterFn: sortByName
             },
             {
-                text: 'Age', sorterFn: () => {}
+                text: 'Age', sorterFn: sortByAge
             },
             {
-                text: 'Memory', sorterFn: () => {}
+                text: 'Memory', sorterFn: sortByMemory
             },
             {
-                text: 'CPU', sorterFn: () => {}
-            },
-
+                text: 'CPU', sorterFn: sortByCPU
+            }
         ]
+        //setting default sort
+        this.sorterFn = items[0].sorterFn
         const selectBox = new SelectBox(items)
         selectBox.x = 265
-        selectBox.y = 5
+        selectBox.y = 3
         const mainLayer = new PIXI.DisplayGroup(1, true)
         selectBox.displayGroup = mainLayer
         stage.addChild(selectBox.draw())

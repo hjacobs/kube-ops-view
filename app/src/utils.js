@@ -68,4 +68,12 @@ function parseResource(v) {
     return parseInt(match[1]) * factor
 }
 
-export {FACTORS, hsvToRgb, getBarColor, parseResource}
+const metric = (metric, type) =>
+    metric ? (metric[type] ? parseResource(metric[type]) : 0) : 0
+
+const podResource = type => (containers, resource) =>
+    containers
+        .map(({resources}) => metric(resources[resource], type))
+        .reduce((a, b) => a + b, 0)
+
+export {FACTORS, hsvToRgb, getBarColor, parseResource, metric, podResource}
