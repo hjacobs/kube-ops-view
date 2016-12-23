@@ -91,9 +91,8 @@ export default class Node extends PIXI.Graphics {
         const pods = sorterFn !== 'undefined' ? this.node.pods.sort(sorterFn) : this.node.pods
         for (const pod of pods) {
             if (pod.namespace != 'kube-system') {
-                const podBox = Pod.getOrCreate(pod, this.cluster, this.tooltip) //new Pod(pod, this.tooltip)
-                podBox.x = px
-                podBox.y = py
+                const podBox = Pod.getOrCreate(pod, this.cluster, this.tooltip)
+                podBox.movePodTo(new PIXI.Point(px, py))
                 nodeBox.addChild(podBox.draw())
                 px += 13
                 if (px > 90) {
@@ -106,9 +105,8 @@ export default class Node extends PIXI.Graphics {
         py = 100
         for (const pod of pods) {
             if (pod.namespace == 'kube-system') {
-                const podBox = Pod.getOrCreate(pod, this.cluster, this.tooltip) //new Pod(pod, this.tooltip)
-                podBox.x = px
-                podBox.y = py
+                const podBox = Pod.getOrCreate(pod, this.cluster, this.tooltip)
+                podBox.movePodTo(new PIXI.Point(px, py))
                 nodeBox.addChild(podBox.draw())
                 px += 13
                 if (px > 90) {

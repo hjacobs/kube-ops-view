@@ -72,12 +72,32 @@ You can start the app in "mock mode" to see all UI features without running any 
     $ (cd app && npm start &)
     $ MOCK=true ./app.py
 
+You can also run the latest Docker image directly:
+
+.. code-block:: bash
+
+    $ docker run -it -p 8080:8080 -e MOCK=true hjacobs/kube-ops-view
+
+
+Multiple Clusters
+=================
+
+Multiple clusters are supported by passing a list of API server URLs in the ``CLUSTERS`` environment variable.
+These can either be unprotected ``localhost`` URLs or OAuth 2 protected API endpoints.
+Note that authentication via client-certificates is currently not supported!
+
+The needed OAuth credentials (``Bearer`` access token) must be provided via a file ``${CREDENTIALS_DIR}/read-only-token``.
+
 
 Configuration
 =============
 
 The following environment variables are supported:
 
+``AUTHORIZE_URL``
+    Optional OAuth 2 authorization endpoint URL for protecting the UI.
+``ACCESS_TOKEN_URL``
+    Optional token endpoint URL for the OAuth 2 Authorization Code Grant flow.
 ``CLUSTERS``
     Comma separated list of Kubernetes API server URLs. It defaults to ``http://localhost:8001/`` (default endpoint of ``kubectl proxy``).
 ``CREDENTIALS_DIR``

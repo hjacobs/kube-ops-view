@@ -11,18 +11,39 @@ const PIXI = require('pixi.js')
 export default class App {
 
     constructor() {
-        this.filterString = ''
-        this.seenPods = {}
+        const hash = document.location.hash
+        if (hash.startsWith('#q=')) {
+            this.filterString = hash.substring(3)
+        } else {
+            this.filterString = ''
+        }
+        this.seenPods = new Set()
+        this.desaturationFilter = new PIXI.filters.ColorMatrixFilter()
+        this.desaturationFilter.desaturate()
         this.sorterFn = ''
     }
 
     filter() {
         const searchString = this.filterString
         this.searchText.text = searchString
-        const filter = new PIXI.filters.ColorMatrixFilter()
-        filter.desaturate()
+        if (searchString) {
+            document.location.hash = '#q=' + searchString
+        } else {
+            document.location.hash = ''
+        }
+        const filter = this.desaturationFilter
         for (const cluster of this.viewContainer.children) {
             for (const node of cluster.children) {
+                const name = node.pod && node.pod.name
+                if (name) {
+                    // node is actually unassigned pod
+                    if (!name.includes(searchString)){
+                        node.filters = [filter]
+                    } else {
+                        // TODO: pod might have other filters set..
+                        node.filters = []
+                    }
+                }
                 for (const pod of node.children) {
                     const name = pod.pod && pod.pod.name
                     if (name) {
@@ -130,11 +151,11 @@ export default class App {
         this.tooltip = tooltip
     }
 
-    animatePodCreation(originalPod, globalX, globalY) {
-        const pod = new Pod(originalPod.pod, this.tooltip, null)
+    animatePodCreation(originalPod, globalPosition) {
+        const pod = new Pod(originalPod.pod, null, this.tooltip)
         pod.draw()
-        const targetPosition = new PIXI.Point(globalX, globalY)
-        const angle = Math.random() * Math.PI * 2
+        const targetPosition = globalPosition
+        const angle = Math.random()*Math.PI*2
         const cos = Math.cos(angle)
         const sin = Math.sin(angle)
         const distance = Math.max(200, Math.random() * Math.min(window.innerWidth, window.innerHeight))
@@ -157,23 +178,92 @@ export default class App {
             pod.alpha = progress
             pod.rotation = progress * progress * Math.PI * 2
             // blur.blur = (1 - alpha) * 20
-            pod.scale.x = scale
-            pod.scale.y = scale
+            pod.scale.set(scale)
             if (progress >= 1) {
                 PIXI.ticker.shared.remove(tick)
                 that.stage.removeChild(pod)
+                pod.destroy()
                 originalPod.visible = true
             }
         }
         PIXI.ticker.shared.add(tick)
         this.stage.addChild(pod)
     }
+    animatePodDeletion(originalPod, globalPosition) {
+        const pod = new Pod(originalPod.pod, null, this.tooltip)
+        pod.draw()
+        const globalCenter = new PIXI.Point(globalPosition.x + pod.width/2, globalPosition.y + pod.height/2)
+        const blur = new PIXI.filters.BlurFilter(4)
+        pod.filters = [blur]
+        pod.position = globalPosition.clone()
+        pod.alpha = 1
+        pod._progress = 1
+        originalPod.destroy()
+        const that = this
+        const tick = function(t) {
+            // progress goes from 1 to 0
+            const progress = Math.max(0, pod._progress - (0.02 * t))
+            const scale = 1 + ((1 - progress) * 8)
+            pod._progress = progress
+            pod.alpha = progress
+            pod.scale.set(scale)
+            pod.position.set(globalCenter.x - pod.width/2, globalCenter.y - pod.height/2)
 
+            if (progress <= 0) {
+                PIXI.ticker.shared.remove(tick)
+                that.stage.removeChild(pod)
+                pod.destroy()
+            }
+        }
+        PIXI.ticker.shared.add(tick)
+        this.stage.addChild(pod)
+    }
     update(clusters) {
+        const that = this
+        let changes = 0
+        const firstTime = this.seenPods.size == 0
+        const podKeys = new Set()
+        for (const cluster of clusters) {
+            for (const node of cluster.nodes) {
+                for (const pod of node.pods) {
+                    podKeys.add(cluster.api_server_url + '/' + pod.namespace + '/' + pod.name)
+                }
+            }
+            for (const pod of cluster.unassigned_pods) {
+                podKeys.add(cluster.api_server_url + '/' + pod.namespace + '/' + pod.name)
+            }
+        }
+        for (const key of Object.keys(ALL_PODS)) {
+            const pod = ALL_PODS[key]
+            if (!podKeys.has(key)) {
+                // pod was deleted
+                delete ALL_PODS[key]
+                this.seenPods.delete(key)
+                if (changes < 10) {
+                    // NOTE: we need to do this BEFORE removeChildren()
+                    // to get correct global coordinates
+                    const globalPos = pod.toGlobal({x: 0, y: 0})
+                    window.setTimeout(function() {
+                        that.animatePodDeletion(pod, globalPos)
+                    }, 100 * changes)
+                } else {
+                    pod.destroy()
+                }
+                changes++
+            }
+        }
         this.viewContainer.removeChildren()
-        var y = 0
-        for (var cluster of clusters) {
-            var clusterBox = new Cluster(cluster, this.tooltip)
+        let y = 0
+        for (const cluster of clusters) {
+            for (const node of cluster.nodes) {
+                for (const pod of node.pods) {
+                    podKeys.add(cluster.api_server_url + '/' + pod.namespace + '/' + pod.name)
+                }
+            }
+            for (const pod of cluster.unassigned_pods) {
+                podKeys.add(cluster.api_server_url + '/' + pod.namespace + '/' + pod.name)
+            }
+            const clusterBox = new Cluster(cluster, this.tooltip)
             clusterBox.draw()
             clusterBox.x = 0
             clusterBox.y = y
@@ -182,20 +272,18 @@ export default class App {
         }
         this.filter()
 
-        let i = 0
-        const that = this
-        const firstTime = Object.keys(this.seenPods).length == 0
         for (const key of Object.keys(ALL_PODS)) {
-            if (!this.seenPods[key]) {
-                const pod = ALL_PODS[key]
-                this.seenPods[key] = pod
-                const globalPos = pod.toGlobal({x: 0, y: 0})
-                if (!firstTime && i < 10) {
-                    window.setTimeout(function () {
-                        that.animatePodCreation(pod, globalPos.x, globalPos.y)
-                    }, 100 * i)
+            const pod = ALL_PODS[key]
+            if (!this.seenPods.has(key)) {
+                // pod was created
+                this.seenPods.add(key)
+                if (!firstTime && changes < 10) {
+                    const globalPos = pod.toGlobal({x: 0, y: 0})
+                    window.setTimeout(function() {
+                        that.animatePodCreation(pod, globalPos)
+                    }, 100 * changes)
                 }
-                i++
+                changes++
             }
         }
     }
