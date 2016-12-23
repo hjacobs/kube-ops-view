@@ -3,7 +3,6 @@ import Cluster from './cluster.js'
 import {Pod, ALL_PODS, sortByName, sortByMemory, sortByCPU, sortByAge} from './pod.js'
 import SelectBox from './selectbox'
 import { PRIMARY_VIOLET } from './colors.js'
-import 'pixi-display'
 
 const PIXI = require('pixi.js')
 
@@ -73,8 +72,6 @@ export default class App {
         //Create a container object called the `stage`
         const stage = new PIXI.Container()
 
-        stage.displayList = new PIXI.DisplayList()
-
         const menuBar = new PIXI.Graphics()
         menuBar.beginFill(PRIMARY_VIOLET, 1)
         menuBar.drawRect(0, 0, window.innerWidth, 28)
@@ -110,13 +107,11 @@ export default class App {
             }
         ]
         //setting default sort
-        this.sorterFn = items[0].sorterFn
+        App.sorterFn = items[0].sorterFn
         const selectBox = new SelectBox(items)
         selectBox.x = 265
         selectBox.y = 3
-        const mainLayer = new PIXI.DisplayGroup(1, true)
-        selectBox.displayGroup = mainLayer
-        stage.addChild(selectBox.draw())
+        menuBar.addChild(selectBox.draw())
 
         const viewContainer = new PIXI.Container()
         viewContainer.x = 20
