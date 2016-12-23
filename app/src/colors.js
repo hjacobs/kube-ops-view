@@ -1,3 +1,4 @@
-const PRIMARY_VIOLET = 0xaaaaff
+const PRIMARY_COLOR = 0xaaaaff
+const SECONDARY_COLOR = 0x222233
 
-export { PRIMARY_VIOLET }
+export { PRIMARY_COLOR, SECONDARY_COLOR }

@@ -1,3 +1,5 @@
+import {SECONDARY_COLOR} from './colors.js'
+
 const PIXI = require('pixi.js')
 
 export default class Tooltip extends PIXI.Graphics {
@@ -17,8 +19,8 @@ export default class Tooltip extends PIXI.Graphics {
 
     draw () {
         this.clear()
-        this.lineStyle(2, 0x333333, 0.8)
-        this.beginFill(0x333333, 0.8)
+        this.lineStyle(2, SECONDARY_COLOR, 0.8)
+        this.beginFill(SECONDARY_COLOR, 0.8)
         this.drawRect(0, 0, this.text.width + 8, this.text.height + 8)
         this.endFill()
     }

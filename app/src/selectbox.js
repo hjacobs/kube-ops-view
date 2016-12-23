@@ -1,4 +1,4 @@
-import { PRIMARY_VIOLET } from './colors.js'
+import { PRIMARY_COLOR, SECONDARY_COLOR } from './colors.js'
 import App from './app'
 
 const PIXI = require('pixi.js')
@@ -11,7 +11,7 @@ export default class SelectBox extends PIXI.Graphics {
         this.text = new PIXI.Text(this.items[this.count].text, {
             fontFamily: 'ShareTechMono',
             fontSize: 14,
-            fill: 0x000000,
+            fill: PRIMARY_COLOR,
             align: 'center'
         })
         this.text.x = 10
@@ -48,29 +48,33 @@ export default class SelectBox extends PIXI.Graphics {
         forwardArrow.interactive = true
         selectBox.interactive = true
 
+        const arrowBoxWidth = 18
+
         // draw a triangle
-        backArrow.lineStyle(1.5, 0x000000, 1)
-        backArrow.beginFill(PRIMARY_VIOLET, 0.9)
-        backArrow.drawRect(-22, 0, 22, 22)
-        backArrow.moveTo(-7, 6)
-        backArrow.lineTo(-16, 11)
-        backArrow.lineTo(-7, 16)
-        backArrow.lineTo(-7, 6)
+        backArrow.beginFill(SECONDARY_COLOR, 1)
+        backArrow.drawRect(-18, 0, arrowBoxWidth, 22)
+        backArrow.lineStyle(1, PRIMARY_COLOR, 1)
+        backArrow.beginFill(SECONDARY_COLOR, 1)
+        backArrow.moveTo(-4, 5)
+        backArrow.lineTo(-15, 11)
+        backArrow.lineTo(-4, 17)
+        backArrow.lineTo(-4, 5)
         backArrow.endFill()
         selectBox.addChild(backArrow)
 
-        selectBox.lineStyle(1.5, 0x000000, 1)
-        selectBox.beginFill(PRIMARY_VIOLET, 0.5)
+        selectBox.lineStyle(1, PRIMARY_COLOR, 1)
+        selectBox.beginFill(SECONDARY_COLOR, 0.5)
         selectBox.drawRect(4, 0, 100, 22)
         selectBox.endFill()
 
-        forwardArrow.lineStyle(1.5, 0x000000, 1)
-        forwardArrow.beginFill(PRIMARY_VIOLET, 0.9)
-        forwardArrow.drawRect(108, 0, 22, 22)
-        forwardArrow.moveTo(115, 6)
-        forwardArrow.lineTo(124, 11)
-        forwardArrow.lineTo(115, 16)
-        forwardArrow.lineTo(115, 6)
+        forwardArrow.beginFill(SECONDARY_COLOR, 1)
+        forwardArrow.drawRect(108, 0, arrowBoxWidth, 22)
+        forwardArrow.lineStyle(1, PRIMARY_COLOR, 1)
+        forwardArrow.beginFill(SECONDARY_COLOR, 1)
+        forwardArrow.moveTo(111, 5)
+        forwardArrow.lineTo(122, 11)
+        forwardArrow.lineTo(111, 17)
+        forwardArrow.lineTo(111, 5)
         forwardArrow.endFill()
         selectBox.addChild(forwardArrow)
 

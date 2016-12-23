@@ -1,7 +1,7 @@
 import {Pod} from './pod.js'
 import Bars from './bars.js'
 import {parseResource} from './utils.js'
-import {PRIMARY_VIOLET} from './colors.js'
+import {PRIMARY_COLOR, SECONDARY_COLOR} from './colors.js'
 import App from './app'
 const PIXI = require('pixi.js')
 
@@ -48,25 +48,26 @@ export default class Node extends PIXI.Graphics {
     draw() {
         const nodeBox = this
         const topHandle = new PIXI.Graphics()
-        topHandle.beginFill(PRIMARY_VIOLET, 1)
+        topHandle.beginFill(PRIMARY_COLOR, 1)
         topHandle.drawRect(0, 0, 105, 15)
         topHandle.endFill()
-        const ellipsizedNodeName = this.node.name.substring(0, 18).concat('...')
+        const ellipsizedNodeName = this.node.name.length > 17 ? this.node.name.substring(0, 17).concat('…') : this.node.name
         const text = new PIXI.Text(ellipsizedNodeName, {fontFamily: 'ShareTechMono', fontSize: 10, fill: 0x000000})
         text.x = 2
         text.y = 2
         topHandle.addChild(text)
         nodeBox.addChild(topHandle)
-        nodeBox.lineStyle(2, PRIMARY_VIOLET, 1)
-        nodeBox.beginFill(PRIMARY_VIOLET, 0.2)
+        nodeBox.lineStyle(2, PRIMARY_COLOR, 1)
+        nodeBox.beginFill(SECONDARY_COLOR, 1)
         nodeBox.drawRect(0, 0, 105, 115)
         nodeBox.endFill()
         nodeBox.lineStyle(2, 0xaaaaaa, 1)
         topHandle.interactive = true
         topHandle.on('mouseover', function () {
             let s = nodeBox.node.name
-            for (const key of Object.keys(nodeBox.node.labels)) {
-                s += '\n' + key + ': ' + nodeBox.node.labels[key]
+            s += '\nLabels:'
+            for (const key of Object.keys(nodeBox.node.labels).sort()) {
+                s += '\n  ' + key + ': ' + nodeBox.node.labels[key]
             }
             nodeBox.tooltip.setText(s)
             nodeBox.tooltip.position = nodeBox.toGlobal(new PIXI.Point(0, 15))
