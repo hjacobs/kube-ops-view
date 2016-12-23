@@ -75,21 +75,22 @@ export default class App {
         const menuBar = new PIXI.Graphics()
         menuBar.beginFill(PRIMARY_VIOLET, 1)
         menuBar.drawRect(0, 0, window.innerWidth, 28)
-        menuBar.endFill()
+        menuBar.lineStyle(1.5, 0x000000, 1)
+        menuBar.drawRect(20, 3, 200, 22)
         stage.addChild(menuBar)
 
-        const searchPrompt = new PIXI.Text('>', {fontFamily: 'ShareTechMono', fontSize: 18})
-        searchPrompt.x = 20
-        searchPrompt.y = 7
+        const searchPrompt = new PIXI.Text('>', {fontFamily: 'ShareTechMono', fontSize: 14})
+        searchPrompt.x = 26
+        searchPrompt.y = 8
         PIXI.ticker.shared.add(function (_) {
             var v = Math.sin((PIXI.ticker.shared.lastTime % 2000) / 2000. * Math.PI)
             searchPrompt.alpha = v
         })
         stage.addChild(searchPrompt)
 
-        const searchText = new PIXI.Text('', {fontFamily: 'ShareTechMono', fontSize: 18})
+        const searchText = new PIXI.Text('', {fontFamily: 'ShareTechMono', fontSize: 14})
         searchText.x = 40
-        searchText.y = 7
+        searchText.y = 8
         stage.addChild(searchText)
 
         const items = [
