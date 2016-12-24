@@ -3,10 +3,20 @@ import App from './app'
 const PIXI = require('pixi.js')
 
 export default class SelectBox extends PIXI.Graphics {
-    constructor(items) {
+    constructor(items, value, onchange) {
         super()
         this.items = items
+        this.value = value
         this.count = 0
+        for (const item of items) {
+            if (item.value == value) {
+                break
+            }
+            this.count++
+        }
+        if (this.count >= items.length) {
+            this.count = 0
+        }
         this.text = new PIXI.Text(this.items[this.count].text, {
             fontFamily: 'ShareTechMono',
             fontSize: 14,
@@ -16,6 +26,7 @@ export default class SelectBox extends PIXI.Graphics {
         this.text.x = 10
         this.text.y = 5
         this.addChild(this.text)
+        this.onchange = onchange
     }
 
     onForwardPressed() {
@@ -25,7 +36,8 @@ export default class SelectBox extends PIXI.Graphics {
             selectBox.count = 0
         }
         selectBox.text.text = selectBox.items[selectBox.count].text
-        App.current.sorterFn = selectBox.items[selectBox.count].sorterFn
+        this.value = this.items[this.count].value
+        this.onchange(this.value)
     }
 
     onBackPressed() {
@@ -35,7 +47,8 @@ export default class SelectBox extends PIXI.Graphics {
             selectBox.count = selectBox.items.length - 1
         }
         selectBox.text.text = selectBox.items[selectBox.count].text
-        App.current.sorterFn = selectBox.items[selectBox.count].sorterFn
+        this.value = this.items[this.count].value
+        this.onchange(this.value)
     }
 
     draw() {

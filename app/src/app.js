@@ -2,7 +2,7 @@ import Tooltip from './tooltip.js'
 import Cluster from './cluster.js'
 import {Pod, ALL_PODS, sortByName, sortByMemory, sortByCPU, sortByAge} from './pod.js'
 import SelectBox from './selectbox'
-import { Theme} from './themes.js'
+import { Theme, ALL_THEMES} from './themes.js'
 import { DESATURATION_FILTER } from './filters.js'
 
 const PIXI = require('pixi.js')
@@ -123,24 +123,35 @@ export default class App {
 
         const items = [
             {
-                text: 'SORT: NAME', sorterFn: sortByName
+                text: 'SORT: NAME', value: sortByName
             },
             {
-                text: 'SORT: AGE', sorterFn: sortByAge
+                text: 'SORT: AGE', value: sortByAge
             },
             {
-                text: 'SORT: MEMORY', sorterFn: sortByMemory
+                text: 'SORT: MEMORY', value: sortByMemory
             },
             {
-                text: 'SORT: CPU', sorterFn: sortByCPU
+                text: 'SORT: CPU', value: sortByCPU
             }
         ]
         //setting default sort
-        this.sorterFn = items[0].sorterFn
-        const selectBox = new SelectBox(items)
+        this.sorterFn = items[0].value
+        const app = this
+        const selectBox = new SelectBox(items, this.sorterFn, function(value) {
+            app.sorterFn = value
+        })
         selectBox.x = 265
         selectBox.y = 3
         menuBar.addChild(selectBox.draw())
+
+        const themeOptions = Object.keys(ALL_THEMES).sort().map(name => { return {text: name.toUpperCase(), value: name}})
+        const themeSelector = new SelectBox(themeOptions, this.theme.name, function(value) {
+            app.switchTheme(value)
+        })
+        themeSelector.x = 420
+        themeSelector.y = 3
+        menuBar.addChild(themeSelector.draw())
 
         const viewContainer = new PIXI.Container()
         viewContainer.x = 20
