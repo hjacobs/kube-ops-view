@@ -7,57 +7,49 @@ export class Theme {
     }
 
     static get(name) {
-        const clazz = ALL_THEMES[name]
-        if (clazz) {
-            return new clazz()
-        } else {
-            return new DefaultTheme()
-        }
+        return ALL_THEMES[name] || ALL_THEMES['default']
     }
 }
 
 class DefaultTheme {
     constructor() {
+        this.name = 'default'
         this.primaryColor = 0xaaaaff
         this.secondaryColor = 0x222233
     }
     apply(stage) {
         stage.filters = []
     }
-    get name() {
-        return DefaultTheme.getThemeName(this.constructor.name)
-    }
-    static getThemeName(name) {
-        const className = name || this.name
-        return className.substring(0, className.length - 5).toLowerCase()
-    }
-    static register() {
-        ALL_THEMES[this.getThemeName()] = this
+    register() {
+        ALL_THEMES[this.name] = this
     }
 }
-DefaultTheme.register()
+new DefaultTheme().register()
 
 class GreenTheme extends DefaultTheme {
     constructor() {
         super()
+        this.name = 'green'
         this.primaryColor = 0xaaffaa
         this.secondaryColor = 0x223322
     }
 }
-GreenTheme.register()
+new GreenTheme().register()
 
 class GreyTheme extends DefaultTheme {
     constructor() {
         super()
+        this.name = 'grey'
         this.primaryColor = 0xeeeeee
         this.secondaryColor = 0x333333
     }
 }
-GreyTheme.register()
+new GreyTheme().register()
 
 class BlackAndWhiteTheme extends DefaultTheme {
     constructor() {
         super()
+        this.name = 'blackandwhite'
         this.primaryColor = 0xffffff
         this.secondaryColor = 0x000000
     }
@@ -67,11 +59,12 @@ class BlackAndWhiteTheme extends DefaultTheme {
         stage.filters = [filter]
     }
 }
-BlackAndWhiteTheme.register()
+new BlackAndWhiteTheme().register()
 
 class SepiaTheme extends DefaultTheme {
     constructor() {
         super()
+        this.name = 'sepia'
     }
     apply(stage) {
         const filter = new PIXI.filters.ColorMatrixFilter()
@@ -79,11 +72,12 @@ class SepiaTheme extends DefaultTheme {
         stage.filters = [filter]
     }
 }
-SepiaTheme.register()
+new SepiaTheme().register()
 
 class PolaroidTheme extends DefaultTheme {
     constructor() {
         super()
+        this.name = 'polaroid'
     }
     apply(stage) {
         const filter = new PIXI.filters.ColorMatrixFilter()
@@ -91,11 +85,12 @@ class PolaroidTheme extends DefaultTheme {
         stage.filters = [filter]
     }
 }
-PolaroidTheme.register()
+new PolaroidTheme().register()
 
 class HighContrastTheme extends DefaultTheme {
     constructor() {
         super()
+        this.name = 'highcontrast'
         this.primaryColor = 0xffffff
         this.secondaryColor = 0x000000
     }
@@ -105,4 +100,4 @@ class HighContrastTheme extends DefaultTheme {
         stage.filters = [filter]
     }
 }
-HighContrastTheme.register()
+new HighContrastTheme().register()
