@@ -11,7 +11,7 @@ export class Theme {
         if (clazz) {
             return new clazz()
         } else {
-            return DefaultTheme()
+            return new DefaultTheme()
         }
     }
 }
