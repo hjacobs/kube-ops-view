@@ -60,6 +60,8 @@ export default class SelectBox extends PIXI.Graphics {
         forwardArrow.interactive = true
         selectBox.interactive = true
 
+        // FIXME: hardcoded value for average char width..
+        const textBoxWidth = 10 + 8 * Math.max.apply(Math, this.items.map(item => item.text.length))
         const arrowBoxWidth = 18
 
         // draw a triangle
@@ -76,17 +78,17 @@ export default class SelectBox extends PIXI.Graphics {
 
         selectBox.lineStyle(1, App.current.theme.primaryColor, 1)
         selectBox.beginFill(App.current.theme.secondaryColor, 0.5)
-        selectBox.drawRect(4, 0, 100, 22)
+        selectBox.drawRect(4, 0, textBoxWidth, 22)
         selectBox.endFill()
 
         forwardArrow.beginFill(App.current.theme.secondaryColor, 1)
-        forwardArrow.drawRect(108, 0, arrowBoxWidth, 22)
+        forwardArrow.drawRect(textBoxWidth + 8, 0, arrowBoxWidth, 22)
         forwardArrow.lineStyle(1, App.current.theme.primaryColor, 1)
         forwardArrow.beginFill(App.current.theme.secondaryColor, 1)
-        forwardArrow.moveTo(111, 5)
-        forwardArrow.lineTo(122, 11)
-        forwardArrow.lineTo(111, 17)
-        forwardArrow.lineTo(111, 5)
+        forwardArrow.moveTo(textBoxWidth + 11, 5)
+        forwardArrow.lineTo(textBoxWidth + 22, 11)
+        forwardArrow.lineTo(textBoxWidth + 11, 17)
+        forwardArrow.lineTo(textBoxWidth + 11, 5)
         forwardArrow.endFill()
         selectBox.addChild(forwardArrow)
 
