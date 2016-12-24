@@ -2,7 +2,7 @@ import Tooltip from './tooltip.js'
 import Cluster from './cluster.js'
 import {Pod, ALL_PODS, sortByName, sortByMemory, sortByCPU, sortByAge} from './pod.js'
 import SelectBox from './selectbox'
-import { PRIMARY_COLOR, SECONDARY_COLOR } from './colors.js'
+import { Theme, ALL_THEMES} from './themes.js'
 import { DESATURATION_FILTER } from './filters.js'
 
 const PIXI = require('pixi.js')
@@ -19,6 +19,7 @@ export default class App {
         }
         this.seenPods = new Set()
         this.sorterFn = ''
+        this.theme = Theme.get(localStorage.getItem('theme'))
     }
 
     filter() {
@@ -58,6 +59,8 @@ export default class App {
     }
 
     initialize() {
+        App.current = this
+
         //Create the renderer
         const renderer = PIXI.autoDetectRenderer(256, 256, {resolution: 2})
         renderer.view.style.position = 'absolute'
@@ -67,63 +70,10 @@ export default class App {
 
         //Add the canvas to the HTML document
         document.body.appendChild(renderer.view)
+        this.renderer = renderer
 
         //Create a container object called the `stage`
-        const stage = new PIXI.Container()
-
-        const menuBar = new PIXI.Graphics()
-        menuBar.beginFill(SECONDARY_COLOR, 0.8)
-        menuBar.drawRect(0, 0, window.innerWidth, 28)
-        menuBar.lineStyle(2, SECONDARY_COLOR, 0.8)
-        menuBar.moveTo(0, 28)
-        menuBar.lineTo(window.innerWidth, 28)
-        menuBar.lineStyle(1, PRIMARY_COLOR, 1)
-        menuBar.drawRect(20, 3, 200, 22)
-        stage.addChild(menuBar)
-
-        const searchPrompt = new PIXI.Text('>', {fontFamily: 'ShareTechMono', fontSize: 14, fill: PRIMARY_COLOR})
-        searchPrompt.x = 26
-        searchPrompt.y = 8
-        PIXI.ticker.shared.add(function (_) {
-            var v = Math.sin((PIXI.ticker.shared.lastTime % 2000) / 2000. * Math.PI)
-            searchPrompt.alpha = v
-        })
-        stage.addChild(searchPrompt)
-
-        const searchText = new PIXI.Text('', {fontFamily: 'ShareTechMono', fontSize: 14, fill: PRIMARY_COLOR})
-        searchText.x = 40
-        searchText.y = 8
-        stage.addChild(searchText)
-
-        const items = [
-            {
-                text: 'SORT: NAME', sorterFn: sortByName
-            },
-            {
-                text: 'SORT: AGE', sorterFn: sortByAge
-            },
-            {
-                text: 'SORT: MEMORY', sorterFn: sortByMemory
-            },
-            {
-                text: 'SORT: CPU', sorterFn: sortByCPU
-            }
-        ]
-        //setting default sort
-        App.sorterFn = items[0].sorterFn
-        const selectBox = new SelectBox(items)
-        selectBox.x = 265
-        selectBox.y = 3
-        menuBar.addChild(selectBox.draw())
-
-        const viewContainer = new PIXI.Container()
-        viewContainer.x = 20
-        viewContainer.y = 40
-        stage.addChild(viewContainer)
-
-        const tooltip = new Tooltip()
-        tooltip.draw()
-        stage.addChild(tooltip)
+        this.stage = new PIXI.Container()
 
         function downHandler(event) {
             if (event.key && event.key.length == 1 && !event.ctrlKey && !event.metaKey) {
@@ -141,9 +91,77 @@ export default class App {
         addEventListener(
             'keydown', downHandler.bind(this), false
         )
+    }
 
-        this.renderer = renderer
-        this.stage = stage
+    draw() {
+        this.stage.removeChildren()
+        this.theme.apply(this.stage)
+
+        const menuBar = new PIXI.Graphics()
+        menuBar.beginFill(this.theme.secondaryColor, 0.8)
+        menuBar.drawRect(0, 0, window.innerWidth, 28)
+        menuBar.lineStyle(2, this.theme.secondaryColor, 0.8)
+        menuBar.moveTo(0, 28)
+        menuBar.lineTo(window.innerWidth, 28)
+        menuBar.lineStyle(1, this.theme.primaryColor, 1)
+        menuBar.drawRect(20, 3, 200, 22)
+        this.stage.addChild(menuBar)
+
+        const searchPrompt = new PIXI.Text('>', {fontFamily: 'ShareTechMono', fontSize: 14, fill: this.theme.primaryColor})
+        searchPrompt.x = 26
+        searchPrompt.y = 8
+        PIXI.ticker.shared.add(function (_) {
+            var v = Math.sin((PIXI.ticker.shared.lastTime % 2000) / 2000. * Math.PI)
+            searchPrompt.alpha = v
+        })
+        this.stage.addChild(searchPrompt)
+
+        const searchText = new PIXI.Text('', {fontFamily: 'ShareTechMono', fontSize: 14, fill: this.theme.primaryColor})
+        searchText.x = 40
+        searchText.y = 8
+        this.stage.addChild(searchText)
+
+        const items = [
+            {
+                text: 'SORT: NAME', value: sortByName
+            },
+            {
+                text: 'SORT: AGE', value: sortByAge
+            },
+            {
+                text: 'SORT: MEMORY', value: sortByMemory
+            },
+            {
+                text: 'SORT: CPU', value: sortByCPU
+            }
+        ]
+        //setting default sort
+        this.sorterFn = items[0].value
+        const app = this
+        const selectBox = new SelectBox(items, this.sorterFn, function(value) {
+            app.sorterFn = value
+        })
+        selectBox.x = 265
+        selectBox.y = 3
+        menuBar.addChild(selectBox.draw())
+
+        const themeOptions = Object.keys(ALL_THEMES).sort().map(name => { return {text: name.toUpperCase(), value: name}})
+        const themeSelector = new SelectBox(themeOptions, this.theme.name, function(value) {
+            app.switchTheme(value)
+        })
+        themeSelector.x = 420
+        themeSelector.y = 3
+        menuBar.addChild(themeSelector.draw())
+
+        const viewContainer = new PIXI.Container()
+        viewContainer.x = 20
+        viewContainer.y = 40
+        this.stage.addChild(viewContainer)
+
+        const tooltip = new Tooltip()
+        tooltip.draw()
+        this.stage.addChild(tooltip)
+
         this.searchText = searchText
         this.viewContainer = viewContainer
         this.tooltip = tooltip
@@ -293,8 +311,15 @@ export default class App {
         this.renderer.render(this.stage)
     }
 
+    switchTheme(newTheme) {
+        this.theme = Theme.get(newTheme)
+        this.draw()
+        localStorage.setItem('theme', newTheme)
+    }
+
     run() {
         this.initialize()
+        this.draw()
 
         const that = this
 
