@@ -1,5 +1,5 @@
 const PIXI = require('pixi.js')
-import {PRIMARY_COLOR} from './colors.js'
+import App from './app.js'
 import {FACTORS, getBarColor, podResource} from './utils.js'
 import {BRIGHTNESS_FILTER} from './filters.js'
 
@@ -201,7 +201,7 @@ export class Pod extends PIXI.Graphics {
             podBox.filters = []
             this.tooltip.visible = false
         })
-        podBox.lineStyle(1, PRIMARY_COLOR, 1)
+        podBox.lineStyle(1, App.current.theme.primaryColor, 1)
         let i = 0
         const w = 10 / this.pod.containers.length
         for (const container of this.pod.containers) {

@@ -1,4 +1,3 @@
-import { PRIMARY_COLOR, SECONDARY_COLOR } from './colors.js'
 import App from './app'
 
 const PIXI = require('pixi.js')
@@ -11,7 +10,7 @@ export default class SelectBox extends PIXI.Graphics {
         this.text = new PIXI.Text(this.items[this.count].text, {
             fontFamily: 'ShareTechMono',
             fontSize: 14,
-            fill: PRIMARY_COLOR,
+            fill: App.current.theme.primaryColor,
             align: 'center'
         })
         this.text.x = 10
@@ -26,7 +25,7 @@ export default class SelectBox extends PIXI.Graphics {
             selectBox.count = 0
         }
         selectBox.text.text = selectBox.items[selectBox.count].text
-        App.sorterFn = selectBox.items[selectBox.count].sorterFn
+        App.current.sorterFn = selectBox.items[selectBox.count].sorterFn
     }
 
     onBackPressed() {
@@ -36,7 +35,7 @@ export default class SelectBox extends PIXI.Graphics {
             selectBox.count = selectBox.items.length - 1
         }
         selectBox.text.text = selectBox.items[selectBox.count].text
-        App.sorterFn = selectBox.items[selectBox.count].sorterFn
+        App.current.sorterFn = selectBox.items[selectBox.count].sorterFn
     }
 
     draw() {
@@ -51,10 +50,10 @@ export default class SelectBox extends PIXI.Graphics {
         const arrowBoxWidth = 18
 
         // draw a triangle
-        backArrow.beginFill(SECONDARY_COLOR, 1)
+        backArrow.beginFill(App.current.theme.secondaryColor, 1)
         backArrow.drawRect(-18, 0, arrowBoxWidth, 22)
-        backArrow.lineStyle(1, PRIMARY_COLOR, 1)
-        backArrow.beginFill(SECONDARY_COLOR, 1)
+        backArrow.lineStyle(1, App.current.theme.primaryColor, 1)
+        backArrow.beginFill(App.current.theme.secondaryColor, 1)
         backArrow.moveTo(-4, 5)
         backArrow.lineTo(-15, 11)
         backArrow.lineTo(-4, 17)
@@ -62,15 +61,15 @@ export default class SelectBox extends PIXI.Graphics {
         backArrow.endFill()
         selectBox.addChild(backArrow)
 
-        selectBox.lineStyle(1, PRIMARY_COLOR, 1)
-        selectBox.beginFill(SECONDARY_COLOR, 0.5)
+        selectBox.lineStyle(1, App.current.theme.primaryColor, 1)
+        selectBox.beginFill(App.current.theme.secondaryColor, 0.5)
         selectBox.drawRect(4, 0, 100, 22)
         selectBox.endFill()
 
-        forwardArrow.beginFill(SECONDARY_COLOR, 1)
+        forwardArrow.beginFill(App.current.theme.secondaryColor, 1)
         forwardArrow.drawRect(108, 0, arrowBoxWidth, 22)
-        forwardArrow.lineStyle(1, PRIMARY_COLOR, 1)
-        forwardArrow.beginFill(SECONDARY_COLOR, 1)
+        forwardArrow.lineStyle(1, App.current.theme.primaryColor, 1)
+        forwardArrow.beginFill(App.current.theme.secondaryColor, 1)
         forwardArrow.moveTo(111, 5)
         forwardArrow.lineTo(122, 11)
         forwardArrow.lineTo(111, 17)
