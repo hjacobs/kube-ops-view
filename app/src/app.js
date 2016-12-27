@@ -347,6 +347,7 @@ export default class App {
     switchTheme(newTheme) {
         this.theme = Theme.get(newTheme)
         this.draw()
+        this.update(this.clusters)
         localStorage.setItem('theme', newTheme)
     }
 
