@@ -10,6 +10,7 @@ import gevent.wsgi
 import json
 import logging
 import os
+import re
 import requests
 import datetime
 import time
@@ -18,6 +19,8 @@ import tokens
 from flask import Flask, redirect
 from flask_oauthlib.client import OAuth, OAuthRemoteApp
 from urllib.parse import urljoin
+
+CLUSTER_ID_INVALID_CHARS = re.compile('[^a-z0-9:-]')
 
 
 def get_bool(name: str):
@@ -115,7 +118,7 @@ def hash_int(x: int):
     return x
 
 
-def generate_mock_pod(index, i, j):
+def generate_mock_pod(index: int, i: int, j: int):
     names = [
         'agent-cooper',
         'black-lodge',
@@ -145,6 +148,14 @@ def generate_mock_pod(index, i, j):
     return pod
 
 
+def generate_cluster_id(url: str):
+    '''Generate some "cluster ID" from given API server URL'''
+    for prefix in ('https://', 'http://'):
+        if url.startswith(prefix):
+            url = url[len(prefix):]
+    return CLUSTER_ID_INVALID_CHARS.sub('-', url.lower()).strip('-')
+
+
 def generate_mock_cluster_data(index: int):
     '''Generate deterministic (no randomness!) mock data'''
     nodes = []
@@ -161,22 +172,28 @@ def generate_mock_cluster_data(index: int):
         nodes.append({'name': 'node-{}'.format(i), 'labels': labels, 'status': {'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'}}, 'pods': pods})
     unassigned_pods = [generate_mock_pod(index, 11, index)]
     return {
+        'id': 'mock-cluster-{}'.format(index),
         'api_server_url': 'https://kube-{}.example.org'.format(index),
         'nodes': nodes,
         'unassigned_pods': unassigned_pods
     }
 
 
-def get_mock_clusters():
+def get_mock_clusters(cluster_ids: set):
     clusters = []
     for i in range(3):
-        clusters.append(generate_mock_cluster_data(i))
+        data = generate_mock_cluster_data(i)
+        if not cluster_ids or data['id'] in cluster_ids:
+            clusters.append(data)
     return clusters
 
 
-def get_kubernetes_clusters():
+def get_kubernetes_clusters(cluster_ids: set):
     clusters = []
     for api_server_url in (os.getenv('CLUSTERS') or DEFAULT_CLUSTERS).split(','):
+        cluster_id = generate_cluster_id(api_server_url)
+        if cluster_ids and cluster_id not in cluster_ids:
+            continue
         if 'localhost' not in api_server_url:
             # TODO: hacky way of detecting whether we need a token or not
             session.headers['Authorization'] = 'Bearer {}'.format(tokens.get('read-only'))
@@ -234,17 +251,21 @@ def get_kubernetes_clusters():
                                 container['resources']['usage'] = container_metrics['usage']
         except:
             logging.exception('Failed to get metrics')
-        clusters.append({'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods})
+        clusters.append({'id': cluster_id, 'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods})
     return clusters
 
 
 @app.route('/kubernetes-clusters')
 @authorize
 def get_clusters():
+    cluster_ids = set()
+    for _id in flask.request.args.get('id', '').split():
+        if _id:
+            cluster_ids.add(_id)
     if MOCK:
-        clusters = get_mock_clusters()
+        clusters = get_mock_clusters(cluster_ids)
     else:
-        clusters = get_kubernetes_clusters()
+        clusters = get_kubernetes_clusters(cluster_ids)
 
     return json.dumps({'kubernetes_clusters': clusters}, separators=(',', ':'))
 

@@ -11,25 +11,51 @@ const PIXI = require('pixi.js')
 export default class App {
 
     constructor() {
-        const hash = document.location.hash
-        if (hash.startsWith('#q=')) {
-            this.filterString = hash.substring(3)
-        } else {
-            this.filterString = ''
-        }
+        const params = this.parseLocationHash()
+        this.filterString = params.q || ''
+        this.selectedClusters = new Set((params.clusters || '').split(',').filter(x => x))
         this.seenPods = new Set()
         this.sorterFn = ''
         this.theme = Theme.get(localStorage.getItem('theme'))
     }
 
+    parseLocationHash() {
+        // hash startswith #
+        const hash = document.location.hash.substring(1)
+        const params = {}
+        for (const pair of hash.split(';')) {
+            const keyValue = pair.split('=', 2)
+            if (keyValue.length == 2) {
+                params[keyValue[0]] = keyValue[1]
+            }
+        }
+        return params
+    }
+
+    changeLocationHash(key, value) {
+        const hash = document.location.hash.substring(1)
+        const params = {}
+        for (const pair of hash.split(';')) {
+            const keyValue = pair.split('=', 2)
+            if (keyValue.length == 2) {
+                params[keyValue[0]] = keyValue[1]
+            }
+        }
+        params[key] = value
+        const pairs = []
+        for (const key of Object.keys(params).sort()) {
+            if (params[key]) {
+                pairs.push(key + '=' + params[key])
+            }
+        }
+
+        document.location.hash = '#' + pairs.join(';')
+    }
+
     filter() {
         const searchString = this.filterString
         this.searchText.text = searchString
-        if (searchString) {
-            document.location.hash = '#q=' + searchString
-        } else {
-            document.location.hash = ''
-        }
+        this.changeLocationHash('q', searchString)
         const filter = DESATURATION_FILTER
         for (const cluster of this.viewContainer.children) {
             for (const node of cluster.children) {
@@ -67,6 +93,10 @@ export default class App {
         renderer.view.style.display = 'block'
         renderer.autoResize = true
         renderer.resize(window.innerWidth, window.innerHeight)
+
+        window.onresize = function() {
+            renderer.resize(window.innerWidth, window.innerHeight)
+        }
 
         //Add the canvas to the HTML document
         document.body.appendChild(renderer.view)
@@ -238,6 +268,7 @@ export default class App {
         this.stage.addChild(pod)
     }
     update(clusters) {
+        this.clusters = clusters
         const that = this
         let changes = 0
         const firstTime = this.seenPods.size == 0
@@ -245,11 +276,11 @@ export default class App {
         for (const cluster of clusters) {
             for (const node of cluster.nodes) {
                 for (const pod of node.pods) {
-                    podKeys.add(cluster.api_server_url + '/' + pod.namespace + '/' + pod.name)
+                    podKeys.add(cluster.id + '/' + pod.namespace + '/' + pod.name)
                 }
             }
             for (const pod of cluster.unassigned_pods) {
-                podKeys.add(cluster.api_server_url + '/' + pod.namespace + '/' + pod.name)
+                podKeys.add(cluster.id + '/' + pod.namespace + '/' + pod.name)
             }
         }
         for (const key of Object.keys(ALL_PODS)) {
@@ -274,20 +305,22 @@ export default class App {
         this.viewContainer.removeChildren()
         let y = 0
         for (const cluster of clusters) {
-            for (const node of cluster.nodes) {
-                for (const pod of node.pods) {
-                    podKeys.add(cluster.api_server_url + '/' + pod.namespace + '/' + pod.name)
+            if (!this.selectedClusters.size || this.selectedClusters.has(cluster.id)) {
+                for (const node of cluster.nodes) {
+                    for (const pod of node.pods) {
+                        podKeys.add(cluster.id + '/' + pod.namespace + '/' + pod.name)
+                    }
                 }
+                for (const pod of cluster.unassigned_pods) {
+                    podKeys.add(cluster.id + '/' + pod.namespace + '/' + pod.name)
+                }
+                const clusterBox = new Cluster(cluster, this.tooltip)
+                clusterBox.draw()
+                clusterBox.x = 0
+                clusterBox.y = y
+                this.viewContainer.addChild(clusterBox)
+                y += 270
             }
-            for (const pod of cluster.unassigned_pods) {
-                podKeys.add(cluster.api_server_url + '/' + pod.namespace + '/' + pod.name)
-            }
-            const clusterBox = new Cluster(cluster, this.tooltip)
-            clusterBox.draw()
-            clusterBox.x = 0
-            clusterBox.y = y
-            this.viewContainer.addChild(clusterBox)
-            y += 270
         }
         this.filter()
 
@@ -314,7 +347,18 @@ export default class App {
     switchTheme(newTheme) {
         this.theme = Theme.get(newTheme)
         this.draw()
+        this.update(this.clusters)
         localStorage.setItem('theme', newTheme)
+    }
+
+    toggleCluster(clusterId) {
+        if (this.selectedClusters.has(clusterId)) {
+            this.selectedClusters.delete(clusterId)
+        } else {
+            this.selectedClusters.add(clusterId)
+        }
+        this.changeLocationHash('clusters', Array.from(this.selectedClusters).join(','))
+        this.update(this.clusters)
     }
 
     run() {
@@ -324,7 +368,8 @@ export default class App {
         const that = this
 
         function fetchData() {
-            fetch('kubernetes-clusters', {credentials: 'include'})
+            const clusterIds = Array.from(that.selectedClusters).join(',')
+            fetch('kubernetes-clusters?id=' + clusterIds, {credentials: 'include'})
                 .then(function (response) {
                     return response.json()
                 })

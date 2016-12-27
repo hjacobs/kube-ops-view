@@ -46,7 +46,7 @@ export class Pod extends PIXI.Graphics {
         this._targetPosition = null
 
         if (cluster) {
-            ALL_PODS[cluster.cluster.api_server_url + '/' + pod.namespace + '/' + pod.name] = this
+            ALL_PODS[cluster.cluster.id + '/' + pod.namespace + '/' + pod.name] = this
         }
     }
 
@@ -112,7 +112,7 @@ export class Pod extends PIXI.Graphics {
     }
 
     static getOrCreate(pod, cluster, tooltip) {
-        const existingPod = ALL_PODS[cluster.cluster.api_server_url + '/' + pod.namespace + '/' + pod.name]
+        const existingPod = ALL_PODS[cluster.cluster.id + '/' + pod.namespace + '/' + pod.name]
         if (existingPod) {
             existingPod.pod = pod
             existingPod.clear()
@@ -162,7 +162,7 @@ export class Pod extends PIXI.Graphics {
         const podBox = this
         podBox.interactive = true
         podBox.on('mouseover', function () {
-            podBox.filters = [BRIGHTNESS_FILTER]
+            podBox.filters = podBox.filters.filter(x => x != BRIGHTNESS_FILTER).concat([BRIGHTNESS_FILTER])
             let s = this.pod.name
             s += '\nStatus    : ' + this.pod.status.phase + ' (' + ready + '/' + containerStatuses.length + ' ready)'
             s += '\nStart Time: ' + this.pod.status.startTime
@@ -198,7 +198,7 @@ export class Pod extends PIXI.Graphics {
             this.tooltip.visible = true
         })
         podBox.on('mouseout', function () {
-            podBox.filters = []
+            podBox.filters = podBox.filters.filter(x => x != BRIGHTNESS_FILTER)
             this.tooltip.visible = false
         })
         podBox.lineStyle(1, App.current.theme.primaryColor, 1)
