@@ -179,16 +179,21 @@ def generate_mock_cluster_data(index: int):
     }
 
 
-def get_mock_clusters():
+def get_mock_clusters(cluster_ids):
     clusters = []
     for i in range(3):
-        clusters.append(generate_mock_cluster_data(i))
+        data = generate_mock_cluster_data(i)
+        if not cluster_ids or data['id'] in cluster_ids:
+            clusters.append(data)
     return clusters
 
 
-def get_kubernetes_clusters():
+def get_kubernetes_clusters(cluster_ids):
     clusters = []
     for api_server_url in (os.getenv('CLUSTERS') or DEFAULT_CLUSTERS).split(','):
+        cluster_id = generate_cluster_id(api_server_url)
+        if cluster_ids and cluster_id not in cluster_ids:
+            continue
         if 'localhost' not in api_server_url:
             # TODO: hacky way of detecting whether we need a token or not
             session.headers['Authorization'] = 'Bearer {}'.format(tokens.get('read-only'))
@@ -246,17 +251,21 @@ def get_kubernetes_clusters():
                                 container['resources']['usage'] = container_metrics['usage']
         except:
             logging.exception('Failed to get metrics')
-        clusters.append({'id': generate_cluster_id(api_server_url), 'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods})
+        clusters.append({'id': cluster_id, 'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods})
     return clusters
 
 
 @app.route('/kubernetes-clusters')
 @authorize
 def get_clusters():
+    cluster_ids = set()
+    for _id in flask.request.args.get('id', '').split():
+        if _id:
+            cluster_ids.add(_id)
     if MOCK:
-        clusters = get_mock_clusters()
+        clusters = get_mock_clusters(cluster_ids)
     else:
-        clusters = get_kubernetes_clusters()
+        clusters = get_kubernetes_clusters(cluster_ids)
 
     return json.dumps({'kubernetes_clusters': clusters}, separators=(',', ':'))
 

@@ -363,7 +363,8 @@ export default class App {
         const that = this
 
         function fetchData() {
-            fetch('kubernetes-clusters', {credentials: 'include'})
+            const clusterIds = Array.from(that.selectedClusters).join(',')
+            fetch('kubernetes-clusters?id=' + clusterIds, {credentials: 'include'})
                 .then(function (response) {
                     return response.json()
                 })
