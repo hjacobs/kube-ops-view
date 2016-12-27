@@ -118,7 +118,7 @@ def hash_int(x: int):
     return x
 
 
-def generate_mock_pod(index, i, j):
+def generate_mock_pod(index: int, i: int, j: int):
     names = [
         'agent-cooper',
         'black-lodge',
@@ -179,7 +179,7 @@ def generate_mock_cluster_data(index: int):
     }
 
 
-def get_mock_clusters(cluster_ids):
+def get_mock_clusters(cluster_ids: set):
     clusters = []
     for i in range(3):
         data = generate_mock_cluster_data(i)
@@ -188,7 +188,7 @@ def get_mock_clusters(cluster_ids):
     return clusters
 
 
-def get_kubernetes_clusters(cluster_ids):
+def get_kubernetes_clusters(cluster_ids: set):
     clusters = []
     for api_server_url in (os.getenv('CLUSTERS') or DEFAULT_CLUSTERS).split(','):
         cluster_id = generate_cluster_id(api_server_url)
