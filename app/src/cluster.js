@@ -46,6 +46,12 @@ export default class Cluster extends PIXI.Graphics {
         topHandle.beginFill(App.current.theme.primaryColor, 1)
         topHandle.drawRect(0, 0, width, 15)
         topHandle.endFill()
+        topHandle.interactive = true
+        topHandle.buttonMode = true
+        const that = this
+        topHandle.on('click', function(event) {
+            App.current.toggleCluster(that.cluster.id)
+        })
         var text = new PIXI.Text(this.cluster.api_server_url, {fontFamily: 'ShareTechMono', fontSize: 10, fill: 0x000000})
         text.x = 2
         text.y = 2

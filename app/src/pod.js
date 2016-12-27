@@ -46,7 +46,7 @@ export class Pod extends PIXI.Graphics {
         this._targetPosition = null
 
         if (cluster) {
-            ALL_PODS[cluster.cluster.api_server_url + '/' + pod.namespace + '/' + pod.name] = this
+            ALL_PODS[cluster.cluster.id + '/' + pod.namespace + '/' + pod.name] = this
         }
     }
 
@@ -112,7 +112,7 @@ export class Pod extends PIXI.Graphics {
     }
 
     static getOrCreate(pod, cluster, tooltip) {
-        const existingPod = ALL_PODS[cluster.cluster.api_server_url + '/' + pod.namespace + '/' + pod.name]
+        const existingPod = ALL_PODS[cluster.cluster.id + '/' + pod.namespace + '/' + pod.name]
         if (existingPod) {
             existingPod.pod = pod
             existingPod.clear()
