@@ -94,6 +94,10 @@ export default class App {
         renderer.autoResize = true
         renderer.resize(window.innerWidth, window.innerHeight)
 
+        window.onresize = function() {
+            renderer.resize(window.innerWidth, window.innerHeight)
+        }
+
         //Add the canvas to the HTML document
         document.body.appendChild(renderer.view)
         this.renderer = renderer
