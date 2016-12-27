@@ -81,7 +81,7 @@ export default class Node extends PIXI.Graphics {
         bars.y = 1
         nodeBox.addChild(bars.draw())
 
-        nodeBox.addPods(App.sorterFn)
+        nodeBox.addPods(App.current.sorterFn)
         return nodeBox
     }
 
@@ -89,7 +89,7 @@ export default class Node extends PIXI.Graphics {
         const nodeBox = this
         let px = 24
         let py = 20
-        const pods = sorterFn !== 'undefined' ? this.node.pods.sort(sorterFn) : this.node.pods
+        const pods = this.node.pods.sort(sorterFn)
         for (const pod of pods) {
             if (pod.namespace != 'kube-system') {
                 const podBox = Pod.getOrCreate(pod, this.cluster, this.tooltip)

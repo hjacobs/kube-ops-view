@@ -169,7 +169,7 @@ export default class App {
         this.sorterFn = items[0].value
         const app = this
         const selectBox = new SelectBox(items, this.sorterFn, function(value) {
-            app.sorterFn = value
+            app.changeSorting(value)
         })
         selectBox.x = 265
         selectBox.y = 3
@@ -342,6 +342,11 @@ export default class App {
 
     tick(time) {
         this.renderer.render(this.stage)
+    }
+
+    changeSorting(newSortFunction) {
+        this.sorterFn = newSortFunction
+        this.update(this.clusters)
     }
 
     switchTheme(newTheme) {
