@@ -89,7 +89,6 @@ export default class App {
 
         //Create the renderer
         const renderer = PIXI.autoDetectRenderer(256, 256, {resolution: 2})
-        renderer.view.style.position = 'absolute'
         renderer.view.style.display = 'block'
         renderer.autoResize = true
         renderer.resize(window.innerWidth, window.innerHeight)
@@ -319,7 +318,7 @@ export default class App {
                 clusterBox.x = 0
                 clusterBox.y = y
                 this.viewContainer.addChild(clusterBox)
-                y += 270
+                y += clusterBox.height + 10
             }
         }
         this.filter()
