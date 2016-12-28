@@ -89,7 +89,6 @@ export default class App {
 
         //Create the renderer
         const renderer = PIXI.autoDetectRenderer(256, 256, {resolution: 2})
-        renderer.view.style.position = 'absolute'
         renderer.view.style.display = 'block'
         renderer.autoResize = true
         renderer.resize(window.innerWidth, window.innerHeight)
@@ -129,10 +128,10 @@ export default class App {
 
         const menuBar = new PIXI.Graphics()
         menuBar.beginFill(this.theme.secondaryColor, 0.8)
-        menuBar.drawRect(0, 0, window.innerWidth, 28)
+        menuBar.drawRect(0, 0, this.renderer.width, 28)
         menuBar.lineStyle(2, this.theme.secondaryColor, 0.8)
         menuBar.moveTo(0, 28)
-        menuBar.lineTo(window.innerWidth, 28)
+        menuBar.lineTo(this.renderer.width, 28)
         menuBar.lineStyle(1, this.theme.primaryColor, 1)
         menuBar.drawRect(20, 3, 200, 22)
         this.stage.addChild(menuBar)
@@ -206,7 +205,7 @@ export default class App {
         const angle = Math.random()*Math.PI*2
         const cos = Math.cos(angle)
         const sin = Math.sin(angle)
-        const distance = Math.max(200, Math.random() * Math.min(window.innerWidth, window.innerHeight))
+        const distance = Math.max(200, Math.random() * Math.min(this.renderer.width, this.renderer.height))
         // blur filter looks cool, but has huge performance penalty
         // const blur = new PIXI.filters.BlurFilter(20, 2)
         // pod.filters = [blur]
@@ -319,7 +318,7 @@ export default class App {
                 clusterBox.x = 0
                 clusterBox.y = y
                 this.viewContainer.addChild(clusterBox)
-                y += 270
+                y += clusterBox.height + 10
             }
         }
         this.filter()
