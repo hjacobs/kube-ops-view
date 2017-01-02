@@ -21,6 +21,21 @@ from flask import Flask, redirect
 from flask_oauthlib.client import OAuth, OAuthRemoteApp
 from urllib.parse import urljoin
 
+
+class Store:
+    def __init__(self):
+        self._data = {}
+
+    def get(self, key):
+        return self._data.get(key)
+
+    def set(self, key, value):
+        self._data[key] = value
+
+
+STORE = Store()
+
+
 CLUSTER_ID_INVALID_CHARS = re.compile('[^a-z0-9:-]')
 
 
@@ -254,11 +269,7 @@ def get_kubernetes_clusters(cluster_ids: set):
 
 def event(cluster_ids: set):
     while True:
-        if MOCK:
-            clusters = get_mock_clusters(cluster_ids)
-        else:
-            clusters = get_kubernetes_clusters(cluster_ids)
-        for cluster in clusters:
+        for cluster in STORE._data.values():
             yield 'event: clusterupdate\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
         gevent.sleep(5)
 
@@ -305,9 +316,25 @@ def get_auth_oauth_token():
     return flask.session.get('auth_token')
 
 
+def update():
+    while True:
+        try:
+            cluster_ids = set()
+            if MOCK:
+                clusters = get_mock_clusters(cluster_ids)
+            else:
+                clusters = get_kubernetes_clusters(cluster_ids)
+            for cluster in clusters:
+                STORE.set(cluster['id'], cluster)
+        except:
+            logging.exception('Failed to update')
+        gevent.sleep(5)
+
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     port = 8080
     http_server = gevent.wsgi.WSGIServer(('0.0.0.0', port), app)
+    gevent.spawn(update)
     logging.info('Listening on :{}..'.format(port))
     http_server.serve_forever()
