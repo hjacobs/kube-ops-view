@@ -17,6 +17,8 @@ export default class App {
         this.seenPods = new Set()
         this.sorterFn = ''
         this.theme = Theme.get(localStorage.getItem('theme'))
+        this.eventSource = null
+        this.clusters = []
     }
 
     parseLocationHash() {
@@ -365,26 +367,37 @@ export default class App {
         this.update(this.clusters)
     }
 
+    listen() {
+        if (this.eventSource != null) {
+            this.eventSource.close()
+            this.eventSource = null
+        }
+        const that = this
+        const clusterIds = Array.from(this.selectedClusters).join(',')
+        const eventSource = this.eventSource = new EventSource('/events?cluster_ids=' + clusterIds, {credentials: 'include'})
+        eventSource.onerror = function(event) {
+            that.listen()
+        }
+        eventSource.addEventListener('kubernetes-cluster', function(event) {
+            const cluster = JSON.parse(event.data)
+            let found = false
+            for (let i=0; i<that.clusters.length; i++) {
+                if (that.clusters[i]['id'] == cluster['id']) {
+                    that.clusters[i] = cluster
+                    found = true
+                }
+            }
+            if (!found) {
+                that.clusters.push(cluster)
+            }
+            that.update(that.clusters)
+        })
+    }
+
     run() {
         this.initialize()
         this.draw()
-
-        const that = this
-
-        function fetchData() {
-            const clusterIds = Array.from(that.selectedClusters).join(',')
-            fetch('kubernetes-clusters?id=' + clusterIds, {credentials: 'include'})
-                .then(function (response) {
-                    return response.json()
-                })
-                .then(function (json) {
-                    const clusters = json.kubernetes_clusters
-                    that.update(clusters)
-                })
-            window.setTimeout(fetchData, 5000)
-        }
-
-        fetchData()
+        this.listen()
 
         PIXI.ticker.shared.add(this.tick, this)
     }

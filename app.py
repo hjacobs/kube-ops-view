@@ -6,6 +6,7 @@ gevent.monkey.patch_all()
 
 import flask
 import functools
+import gevent
 import gevent.wsgi
 import json
 import logging
@@ -180,16 +181,13 @@ def generate_mock_cluster_data(index: int):
 
 
 def get_mock_clusters(cluster_ids: set):
-    clusters = []
     for i in range(3):
         data = generate_mock_cluster_data(i)
         if not cluster_ids or data['id'] in cluster_ids:
-            clusters.append(data)
-    return clusters
+            yield data
 
 
 def get_kubernetes_clusters(cluster_ids: set):
-    clusters = []
     for api_server_url in (os.getenv('CLUSTERS') or DEFAULT_CLUSTERS).split(','):
         cluster_id = generate_cluster_id(api_server_url)
         if cluster_ids and cluster_id not in cluster_ids:
@@ -251,23 +249,29 @@ def get_kubernetes_clusters(cluster_ids: set):
                                 container['resources']['usage'] = container_metrics['usage']
         except:
             logging.exception('Failed to get metrics')
-        clusters.append({'id': cluster_id, 'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods})
-    return clusters
+        yield {'id': cluster_id, 'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods}
 
 
-@app.route('/kubernetes-clusters')
+def event(cluster_ids: set):
+    while True:
+        if MOCK:
+            clusters = get_mock_clusters(cluster_ids)
+        else:
+            clusters = get_kubernetes_clusters(cluster_ids)
+        for cluster in clusters:
+            yield 'event: kubernetes-cluster\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
+        gevent.sleep(5)
+
+
+@app.route('/events')
 @authorize
-def get_clusters():
+def get_events():
+    '''SSE (Server Side Events), for an EventSource'''
     cluster_ids = set()
-    for _id in flask.request.args.get('id', '').split():
+    for _id in flask.request.args.get('cluster_ids', '').split():
         if _id:
             cluster_ids.add(_id)
-    if MOCK:
-        clusters = get_mock_clusters(cluster_ids)
-    else:
-        clusters = get_kubernetes_clusters(cluster_ids)
-
-    return json.dumps({'kubernetes_clusters': clusters}, separators=(',', ':'))
+    return flask.Response(event(cluster_ids), mimetype='text/event-stream')
 
 
 @app.route('/login')
