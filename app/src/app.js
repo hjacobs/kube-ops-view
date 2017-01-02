@@ -378,7 +378,7 @@ export default class App {
         eventSource.onerror = function(event) {
             that.listen()
         }
-        eventSource.addEventListener('kubernetes-cluster', function(event) {
+        eventSource.addEventListener('clusterupdate', function(event) {
             const cluster = JSON.parse(event.data)
             let found = false
             for (let i=0; i<that.clusters.length; i++) {

@@ -259,7 +259,7 @@ def event(cluster_ids: set):
         else:
             clusters = get_kubernetes_clusters(cluster_ids)
         for cluster in clusters:
-            yield 'event: kubernetes-cluster\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
+            yield 'event: clusterupdate\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
         gevent.sleep(5)
 
 
