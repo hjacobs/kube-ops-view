@@ -308,6 +308,8 @@ export default class App {
                 if (!clusterBox) {
                     clusterBox = new Cluster(cluster, this.tooltip)
                     this.viewContainer.addChild(clusterBox)
+                } else {
+                    clusterBox.cluster = cluster
                 }
                 clusterBox.draw()
                 clusterBox.x = 0
