@@ -195,18 +195,15 @@ def generate_mock_cluster_data(index: int):
     }
 
 
-def get_mock_clusters(cluster_ids: set):
+def get_mock_clusters():
     for i in range(3):
         data = generate_mock_cluster_data(i)
-        if not cluster_ids or data['id'] in cluster_ids:
-            yield data
+        yield data
 
 
-def get_kubernetes_clusters(cluster_ids: set):
+def get_kubernetes_clusters():
     for api_server_url in (os.getenv('CLUSTERS') or DEFAULT_CLUSTERS).split(','):
         cluster_id = generate_cluster_id(api_server_url)
-        if cluster_ids and cluster_id not in cluster_ids:
-            continue
         if 'localhost' not in api_server_url:
             # TODO: hacky way of detecting whether we need a token or not
             session.headers['Authorization'] = 'Bearer {}'.format(tokens.get('read-only'))
@@ -270,7 +267,8 @@ def get_kubernetes_clusters(cluster_ids: set):
 def event(cluster_ids: set):
     while True:
         for cluster in STORE._data.values():
-            yield 'event: clusterupdate\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
+            if not cluster_ids or cluster['id'] in cluster_ids:
+                yield 'event: clusterupdate\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
         gevent.sleep(5)
 
 
@@ -319,11 +317,10 @@ def get_auth_oauth_token():
 def update():
     while True:
         try:
-            cluster_ids = set()
             if MOCK:
-                clusters = get_mock_clusters(cluster_ids)
+                clusters = get_mock_clusters()
             else:
-                clusters = get_kubernetes_clusters(cluster_ids)
+                clusters = get_kubernetes_clusters()
             for cluster in clusters:
                 STORE.set(cluster['id'], cluster)
         except:

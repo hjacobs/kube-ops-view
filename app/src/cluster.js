@@ -11,6 +11,7 @@ export default class Cluster extends PIXI.Graphics {
     }
 
     draw () {
+        this.removeChildren()
         const left = 10
         const top = 20
         const padding = 5
