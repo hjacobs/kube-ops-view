@@ -301,10 +301,10 @@ export default class App {
         }
         let y = 0
         const clusterIds = new Set()
-        for (const cluster of this.clusters.values()) {
-            if (!this.selectedClusters.size || this.selectedClusters.has(cluster.id)) {
-                clusterIds.add(cluster.id)
-                let clusterBox = clusterComponentById[cluster.id]
+        for (const [clusterId, cluster] of Array.from(this.clusters.entries()).sort()) {
+            if (!this.selectedClusters.size || this.selectedClusters.has(clusterId)) {
+                clusterIds.add(clusterId)
+                let clusterBox = clusterComponentById[clusterId]
                 if (!clusterBox) {
                     clusterBox = new Cluster(cluster, this.tooltip)
                     this.viewContainer.addChild(clusterBox)
