@@ -2,4 +2,4 @@ Flask
 Flask-OAuthlib
 gevent
 requests
-stups-tokens>=1.0.19
+stups-tokens>=1.1.19
