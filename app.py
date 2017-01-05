@@ -24,13 +24,19 @@ from urllib.parse import urljoin
 
 class Store:
     def __init__(self):
-        self._data = {}
+        self._events = []
 
-    def get(self, key):
-        return self._data.get(key)
+    def publish(self, event_type, event_data):
+        self._events.append((event_type, event_data))
 
-    def set(self, key, value):
-        self._data[key] = value
+    def listen(self):
+        i = 0
+        while True:
+            if i < len(self._events):
+                yield self._events[i]
+                i += 1
+            else:
+                gevent.sleep(0.2)
 
 
 STORE = Store()
@@ -266,10 +272,9 @@ def get_kubernetes_clusters():
 
 def event(cluster_ids: set):
     while True:
-        for cluster in STORE._data.values():
+        for event_type, cluster in STORE.listen():
             if not cluster_ids or cluster['id'] in cluster_ids:
-                yield 'event: clusterupdate\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
-        gevent.sleep(5)
+                yield 'event: ' + event_type + '\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
 
 
 @app.route('/events')
@@ -322,7 +327,7 @@ def update():
             else:
                 clusters = get_kubernetes_clusters()
             for cluster in clusters:
-                STORE.set(cluster['id'], cluster)
+                STORE.publish('clusterupdate', cluster)
         except:
             logging.exception('Failed to update')
         gevent.sleep(5)
