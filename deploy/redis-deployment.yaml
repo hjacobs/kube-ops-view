@@ -1,0 +1,34 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    application: kube-ops-view-redis
+    version: v0.0.1
+  name: kube-ops-view-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      application: kube-ops-view-redis
+  template:
+    metadata:
+      labels:
+        application: kube-ops-view-redis
+        version: v0.0.1
+    spec:
+      containers:
+      - name: redis
+        image: redis:3.2-alpine
+        ports:
+        - containerPort: 6379
+          protocol: TCP
+        readinessProbe:
+          tcpSocket:
+            port: 6379
+        resources:
+          limits:
+            cpu: 200m
+            memory: 100Mi
+          requests:
+            cpu: 50m
+            memory: 50Mi
