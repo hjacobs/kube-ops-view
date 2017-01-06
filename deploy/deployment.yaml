@@ -30,7 +30,7 @@ spec:
           timeoutSeconds: 1
         env:
         - name: REDIS_URL
-          value: kube-ops-view-redis:6379
+          value: "redis://kube-ops-view-redis:6379"
         resources:
           limits:
             cpu: 200m

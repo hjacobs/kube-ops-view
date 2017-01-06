@@ -374,7 +374,8 @@ export default class App {
             this.eventSource = null
         }
         const that = this
-        let url = '/events'
+        // NOTE: path must be relative to work with kubectl proxy out of the box
+        let url = 'events'
         const clusterIds = Array.from(this.selectedClusters).join(',')
         if (clusterIds) {
             url += '?cluster_ids=' + clusterIds

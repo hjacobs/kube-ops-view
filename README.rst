@@ -107,7 +107,7 @@ The following environment variables are supported:
 ``MOCK``
     Set to "true" to mock Kubernetes cluster data.
 ``REDIS_URL``
-    Optional Redis server to use for pub/sub events and job locking when running more than one replica.
+    Optional Redis server to use for pub/sub events and job locking when running more than one replica. Example: ``redis://my-redis:6379``
 
 
 Supported Browsers
