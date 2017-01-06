@@ -108,6 +108,8 @@ The following environment variables are supported:
     Set to "true" to mock Kubernetes cluster data.
 ``REDIS_URL``
     Optional Redis server to use for pub/sub events and job locking when running more than one replica. Example: ``redis://my-redis:6379``
+``SERVER_PORT``
+    HTTP port to listen on. It defaults to ``8080``.
 
 
 Supported Browsers
