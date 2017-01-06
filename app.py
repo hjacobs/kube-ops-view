@@ -24,6 +24,7 @@ from flask import Flask, redirect
 from flask_oauthlib.client import OAuth, OAuthRemoteApp
 from urllib.parse import urljoin
 
+logging.basicConfig(level=logging.INFO)
 
 class MemoryStore:
     def __init__(self):
@@ -54,7 +55,7 @@ class MemoryStore:
 
 class RedisStore:
     def __init__(self, url):
-        self._url = url
+        logging.info('Connecting to Redis on {}..'.format(url))
         self._redis = redis.StrictRedis.from_url(url)
         self._redlock = Redlock([url])
 
@@ -375,7 +376,6 @@ def update():
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
     http_server = gevent.wsgi.WSGIServer(('0.0.0.0', SERVER_PORT), app)
     gevent.spawn(update)
     logging.info('Listening on :{}..'.format(SERVER_PORT))
