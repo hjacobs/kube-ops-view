@@ -16,6 +16,7 @@ import requests
 import datetime
 import time
 import tokens
+from queue import Queue
 
 from flask import Flask, redirect
 from flask_oauthlib.client import OAuth, OAuthRemoteApp
@@ -24,19 +25,18 @@ from urllib.parse import urljoin
 
 class Store:
     def __init__(self):
-        self._events = []
+        self._queues = []
 
     def publish(self, event_type, event_data):
-        self._events.append((event_type, event_data))
+        for queue in self._queues:
+            queue.put((event_type, event_data))
 
     def listen(self):
-        i = 0
+        queue = Queue()
+        self._queues.append(queue)
         while True:
-            if i < len(self._events):
-                yield self._events[i]
-                i += 1
-            else:
-                gevent.sleep(0.2)
+            item = queue.get()
+            yield item
 
 
 STORE = Store()
