@@ -23,9 +23,17 @@ from flask_oauthlib.client import OAuth, OAuthRemoteApp
 from urllib.parse import urljoin
 
 
-class Store:
+class MemoryStore:
     def __init__(self):
         self._queues = []
+
+    def acquire_lock(self):
+        # no-op for memory store
+        pass
+
+    def release_lock(self):
+        # no op for memory store
+        pass
 
     def publish(self, event_type, event_data):
         for queue in self._queues:
@@ -34,12 +42,15 @@ class Store:
     def listen(self):
         queue = Queue()
         self._queues.append(queue)
-        while True:
-            item = queue.get()
-            yield item
+        try:
+            while True:
+                item = queue.get()
+                yield item
+        finally:
+            self._queues.remove(queue)
 
 
-STORE = Store()
+STORE = MemoryStore()
 
 
 CLUSTER_ID_INVALID_CHARS = re.compile('[^a-z0-9:-]')
@@ -322,6 +333,7 @@ def get_auth_oauth_token():
 def update():
     while True:
         try:
+            STORE.acquire_lock()
             if MOCK:
                 clusters = get_mock_clusters()
             else:
@@ -330,6 +342,8 @@ def update():
                 STORE.publish('clusterupdate', cluster)
         except:
             logging.exception('Failed to update')
+        finally:
+            STORE.release_lock()
         gevent.sleep(5)
 
 
