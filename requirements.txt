@@ -3,3 +3,4 @@ Flask-OAuthlib
 gevent
 requests
 stups-tokens>=1.1.19
+redlock-py

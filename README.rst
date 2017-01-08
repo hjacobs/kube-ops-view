@@ -106,12 +106,16 @@ The following environment variables are supported:
     Set to "true" for local development to reload code changes.
 ``MOCK``
     Set to "true" to mock Kubernetes cluster data.
+``REDIS_URL``
+    Optional Redis server to use for pub/sub events and job locking when running more than one replica. Example: ``redis://my-redis:6379``
+``SERVER_PORT``
+    HTTP port to listen on. It defaults to ``8080``.
 
 
 Supported Browsers
 ==================
 
-The UI uses WebGL and ECMAScript 6 features.
+The UI uses WebGL, ECMAScript 6, and EventSource features.
 The following browsers are known to work:
 
 * Chrome/Chromium 53.0+

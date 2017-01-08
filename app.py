@@ -6,6 +6,7 @@ gevent.monkey.patch_all()
 
 import flask
 import functools
+import gevent
 import gevent.wsgi
 import json
 import logging
@@ -13,12 +14,68 @@ import os
 import re
 import requests
 import datetime
+import redis
 import time
 import tokens
+from queue import Queue
+from redlock import Redlock
 
 from flask import Flask, redirect
 from flask_oauthlib.client import OAuth, OAuthRemoteApp
 from urllib.parse import urljoin
+
+logging.basicConfig(level=logging.INFO)
+
+class MemoryStore:
+    def __init__(self):
+        self._queues = []
+
+    def acquire_lock(self):
+        # no-op for memory store
+        return 'fake-lock'
+
+    def release_lock(self, lock):
+        # no op for memory store
+        pass
+
+    def publish(self, event_type, event_data):
+        for queue in self._queues:
+            queue.put((event_type, event_data))
+
+    def listen(self):
+        queue = Queue()
+        self._queues.append(queue)
+        try:
+            while True:
+                item = queue.get()
+                yield item
+        finally:
+            self._queues.remove(queue)
+
+
+class RedisStore:
+    def __init__(self, url):
+        logging.info('Connecting to Redis on {}..'.format(url))
+        self._redis = redis.StrictRedis.from_url(url)
+        self._redlock = Redlock([url])
+
+    def acquire_lock(self):
+        return self._redlock.lock('update', 10000)
+
+    def release_lock(self, lock):
+        self._redlock.unlock(lock)
+
+    def publish(self, event_type, event_data):
+        self._redis.publish('default', '{}:{}'.format(event_type, json.dumps(event_data, separators=(',', ':'))))
+
+    def listen(self):
+        p = self._redis.pubsub()
+        p.subscribe('default')
+        for message in p.listen():
+            if message['type'] == 'message':
+                event_type, data = message['data'].decode('utf-8').split(':', 1)
+                yield (event_type, json.loads(data))
+
 
 CLUSTER_ID_INVALID_CHARS = re.compile('[^a-z0-9:-]')
 
@@ -27,11 +84,14 @@ def get_bool(name: str):
     return os.getenv(name, '').lower() in ('1', 'true')
 
 
+SERVER_PORT = int(os.getenv('SERVER_PORT', 8080))
 DEFAULT_CLUSTERS = 'http://localhost:8001/'
 CREDENTIALS_DIR = os.getenv('CREDENTIALS_DIR', '')
 AUTHORIZE_URL = os.getenv('AUTHORIZE_URL')
 APP_URL = os.getenv('APP_URL')
 MOCK = get_bool('MOCK')
+REDIS_URL = os.getenv('REDIS_URL')
+STORE = RedisStore(REDIS_URL) if REDIS_URL else MemoryStore()
 
 app = Flask(__name__)
 app.debug = get_bool('DEBUG')
@@ -179,21 +239,15 @@ def generate_mock_cluster_data(index: int):
     }
 
 
-def get_mock_clusters(cluster_ids: set):
-    clusters = []
+def get_mock_clusters():
     for i in range(3):
         data = generate_mock_cluster_data(i)
-        if not cluster_ids or data['id'] in cluster_ids:
-            clusters.append(data)
-    return clusters
+        yield data
 
 
-def get_kubernetes_clusters(cluster_ids: set):
-    clusters = []
+def get_kubernetes_clusters():
     for api_server_url in (os.getenv('CLUSTERS') or DEFAULT_CLUSTERS).split(','):
         cluster_id = generate_cluster_id(api_server_url)
-        if cluster_ids and cluster_id not in cluster_ids:
-            continue
         if 'localhost' not in api_server_url:
             # TODO: hacky way of detecting whether we need a token or not
             session.headers['Authorization'] = 'Bearer {}'.format(tokens.get('read-only'))
@@ -251,23 +305,25 @@ def get_kubernetes_clusters(cluster_ids: set):
                                 container['resources']['usage'] = container_metrics['usage']
         except:
             logging.exception('Failed to get metrics')
-        clusters.append({'id': cluster_id, 'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods})
-    return clusters
+        yield {'id': cluster_id, 'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods}
 
 
-@app.route('/kubernetes-clusters')
+def event(cluster_ids: set):
+    while True:
+        for event_type, cluster in STORE.listen():
+            if not cluster_ids or cluster['id'] in cluster_ids:
+                yield 'event: ' + event_type + '\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
+
+
+@app.route('/events')
 @authorize
-def get_clusters():
+def get_events():
+    '''SSE (Server Side Events), for an EventSource'''
     cluster_ids = set()
-    for _id in flask.request.args.get('id', '').split():
+    for _id in flask.request.args.get('cluster_ids', '').split():
         if _id:
             cluster_ids.add(_id)
-    if MOCK:
-        clusters = get_mock_clusters(cluster_ids)
-    else:
-        clusters = get_kubernetes_clusters(cluster_ids)
-
-    return json.dumps({'kubernetes_clusters': clusters}, separators=(',', ':'))
+    return flask.Response(event(cluster_ids), mimetype='text/event-stream')
 
 
 @app.route('/login')
@@ -301,9 +357,26 @@ def get_auth_oauth_token():
     return flask.session.get('auth_token')
 
 
+def update():
+    while True:
+        lock = STORE.acquire_lock()
+        if lock:
+            try:
+                if MOCK:
+                    clusters = get_mock_clusters()
+                else:
+                    clusters = get_kubernetes_clusters()
+                for cluster in clusters:
+                    STORE.publish('clusterupdate', cluster)
+            except:
+                logging.exception('Failed to update')
+            finally:
+                STORE.release_lock(lock)
+        gevent.sleep(5)
+
+
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    port = 8080
-    http_server = gevent.wsgi.WSGIServer(('0.0.0.0', port), app)
-    logging.info('Listening on :{}..'.format(port))
+    http_server = gevent.wsgi.WSGIServer(('0.0.0.0', SERVER_PORT), app)
+    gevent.spawn(update)
+    logging.info('Listening on :{}..'.format(SERVER_PORT))
     http_server.serve_forever()

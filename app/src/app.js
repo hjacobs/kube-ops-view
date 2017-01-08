@@ -12,44 +12,39 @@ export default class App {
 
     constructor() {
         const params = this.parseLocationHash()
-        this.filterString = params.q || ''
-        this.selectedClusters = new Set((params.clusters || '').split(',').filter(x => x))
+        this.filterString = params.get('q') || ''
+        this.selectedClusters = new Set((params.get('clusters') || '').split(',').filter(x => x))
         this.seenPods = new Set()
         this.sorterFn = ''
         this.theme = Theme.get(localStorage.getItem('theme'))
+        this.eventSource = null
+        this.clusters = new Map()
     }
 
     parseLocationHash() {
         // hash startswith #
         const hash = document.location.hash.substring(1)
-        const params = {}
+        const params = new Map()
         for (const pair of hash.split(';')) {
             const keyValue = pair.split('=', 2)
             if (keyValue.length == 2) {
-                params[keyValue[0]] = keyValue[1]
+                params.set(keyValue[0], keyValue[1])
             }
         }
         return params
     }
 
     changeLocationHash(key, value) {
-        const hash = document.location.hash.substring(1)
-        const params = {}
-        for (const pair of hash.split(';')) {
-            const keyValue = pair.split('=', 2)
-            if (keyValue.length == 2) {
-                params[keyValue[0]] = keyValue[1]
-            }
-        }
-        params[key] = value
+        const params = this.parseLocationHash()
+        params.set(key, value)
         const pairs = []
-        for (const key of Object.keys(params).sort()) {
-            if (params[key]) {
-                pairs.push(key + '=' + params[key])
+        for (const [key, value] of params) {
+            if (value) {
+                pairs.push(key + '=' + value)
             }
         }
 
-        document.location.hash = '#' + pairs.join(';')
+        document.location.hash = '#' + pairs.sort().join(';')
     }
 
     filter() {
@@ -266,13 +261,12 @@ export default class App {
         PIXI.ticker.shared.add(tick)
         this.stage.addChild(pod)
     }
-    update(clusters) {
-        this.clusters = clusters
+    update() {
         const that = this
         let changes = 0
         const firstTime = this.seenPods.size == 0
         const podKeys = new Set()
-        for (const cluster of clusters) {
+        for (const cluster of this.clusters.values()) {
             for (const node of cluster.nodes) {
                 for (const pod of node.pods) {
                     podKeys.add(cluster.id + '/' + pod.namespace + '/' + pod.name)
@@ -301,24 +295,31 @@ export default class App {
                 changes++
             }
         }
-        this.viewContainer.removeChildren()
+        const clusterComponentById = {}
+        for (const component of this.viewContainer.children) {
+            clusterComponentById[component.cluster.id] = component
+        }
         let y = 0
-        for (const cluster of clusters) {
-            if (!this.selectedClusters.size || this.selectedClusters.has(cluster.id)) {
-                for (const node of cluster.nodes) {
-                    for (const pod of node.pods) {
-                        podKeys.add(cluster.id + '/' + pod.namespace + '/' + pod.name)
-                    }
+        const clusterIds = new Set()
+        for (const [clusterId, cluster] of Array.from(this.clusters.entries()).sort()) {
+            if (!this.selectedClusters.size || this.selectedClusters.has(clusterId)) {
+                clusterIds.add(clusterId)
+                let clusterBox = clusterComponentById[clusterId]
+                if (!clusterBox) {
+                    clusterBox = new Cluster(cluster, this.tooltip)
+                    this.viewContainer.addChild(clusterBox)
+                } else {
+                    clusterBox.cluster = cluster
                 }
-                for (const pod of cluster.unassigned_pods) {
-                    podKeys.add(cluster.id + '/' + pod.namespace + '/' + pod.name)
-                }
-                const clusterBox = new Cluster(cluster, this.tooltip)
                 clusterBox.draw()
                 clusterBox.x = 0
                 clusterBox.y = y
-                this.viewContainer.addChild(clusterBox)
                 y += clusterBox.height + 10
+            }
+        }
+        for (const component of this.viewContainer.children) {
+            if (!clusterIds.has(component.cluster.id)) {
+                this.viewContainer.removeChild(component)
             }
         }
         this.filter()
@@ -345,13 +346,13 @@ export default class App {
 
     changeSorting(newSortFunction) {
         this.sorterFn = newSortFunction
-        this.update(this.clusters)
+        this.update()
     }
 
     switchTheme(newTheme) {
         this.theme = Theme.get(newTheme)
         this.draw()
-        this.update(this.clusters)
+        this.update()
         localStorage.setItem('theme', newTheme)
     }
 
@@ -362,29 +363,38 @@ export default class App {
             this.selectedClusters.add(clusterId)
         }
         this.changeLocationHash('clusters', Array.from(this.selectedClusters).join(','))
-        this.update(this.clusters)
+        // make sure we are updating our EventSource filter
+        this.listen()
+        this.update()
+    }
+
+    listen() {
+        if (this.eventSource != null) {
+            this.eventSource.close()
+            this.eventSource = null
+        }
+        const that = this
+        // NOTE: path must be relative to work with kubectl proxy out of the box
+        let url = 'events'
+        const clusterIds = Array.from(this.selectedClusters).join(',')
+        if (clusterIds) {
+            url += '?cluster_ids=' + clusterIds
+        }
+        const eventSource = this.eventSource = new EventSource(url, {credentials: 'include'})
+        eventSource.onerror = function(event) {
+            that.listen()
+        }
+        eventSource.addEventListener('clusterupdate', function(event) {
+            const cluster = JSON.parse(event.data)
+            that.clusters.set(cluster.id, cluster)
+            that.update()
+        })
     }
 
     run() {
         this.initialize()
         this.draw()
-
-        const that = this
-
-        function fetchData() {
-            const clusterIds = Array.from(that.selectedClusters).join(',')
-            fetch('kubernetes-clusters?id=' + clusterIds, {credentials: 'include'})
-                .then(function (response) {
-                    return response.json()
-                })
-                .then(function (json) {
-                    const clusters = json.kubernetes_clusters
-                    that.update(clusters)
-                })
-            window.setTimeout(fetchData, 5000)
-        }
-
-        fetchData()
+        this.listen()
 
         PIXI.ticker.shared.add(this.tick, this)
     }

@@ -28,6 +28,9 @@ spec:
             port: 8080
           initialDelaySeconds: 5
           timeoutSeconds: 1
+        env:
+        - name: REDIS_URL
+          value: "redis://kube-ops-view-redis:6379"
         resources:
           limits:
             cpu: 200m

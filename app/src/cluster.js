@@ -11,6 +11,7 @@ export default class Cluster extends PIXI.Graphics {
     }
 
     draw () {
+        this.removeChildren()
         const left = 10
         const top = 20
         const padding = 5
@@ -28,19 +29,25 @@ export default class Cluster extends PIXI.Graphics {
             var nodeBox = new Node(node, this, this.tooltip)
             nodeBox.draw()
             if (nodeBox.isMaster()) {
-                if (masterHeight == 0) {
-                    masterHeight = nodeBox.height + padding
-                }
-                nodeBox.x = masterX
-                nodeBox.y = masterY
-                masterX += nodeBox.width + padding
                 if (masterX > maxWidth) {
                     masterWidth = masterX
                     masterX = left
                     masterY += nodeBox.height + padding
                     masterHeight += nodeBox.height + padding
                 }
+                if (masterHeight == 0) {
+                    masterHeight = nodeBox.height + padding
+                }
+                nodeBox.x = masterX
+                nodeBox.y = masterY
+                masterX += nodeBox.width + padding
             } else {
+                if (workerX > maxWidth) {
+                    workerWidth = workerX
+                    workerX = left
+                    workerY += nodeBox.height + padding
+                    workerHeight += nodeBox.height + padding
+                }
                 workerNodes.push(nodeBox)
                 if (workerHeight == 0) {
                     workerHeight = nodeBox.height + padding
@@ -48,12 +55,6 @@ export default class Cluster extends PIXI.Graphics {
                 nodeBox.x = workerX
                 nodeBox.y = workerY
                 workerX += nodeBox.width + padding
-                if (workerX > maxWidth) {
-                    workerWidth = workerX
-                    workerX = left
-                    workerY += nodeBox.height + padding
-                    workerHeight += nodeBox.height + padding
-                }
             }
             this.addChild(nodeBox)
         }
