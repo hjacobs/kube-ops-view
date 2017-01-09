@@ -123,6 +123,14 @@ The following browsers are known to work:
 
 See the `ECMAScript 6 Compatibility Table`_ for details on supported browser versions.
 
+Contributing
+============
+
+Easiest way to contribute is to provide feedback! We would love to hear what you like and what you think is missing.
+Create an issue or `ping try_except_ on Twitter`_.
+
+PRs are welcome. Please also have a look at `issues labeled with "help wanted"`_.
+
 
 License
 =======
@@ -142,3 +150,5 @@ along with this program.  If not, see http://www.gnu.org/licenses/.
 
 .. _Kubernetes Dashboard: https://github.com/kubernetes/dashboard
 .. _ECMAScript 6 Compatibility Table: https://kangax.github.io/compat-table/es6/
+.. _ping try_except_ on Twitter: https://twitter.com/try_except_
+.. _issues labeled with "help wanted": https://github.com/hjacobs/kube-ops-view/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22
