@@ -2,6 +2,10 @@
 Kubernetes Operational View
 ===========================
 
+.. image:: https://readthedocs.org/projects/kubernetes-operational-view/badge/?version=latest
+   :target: http://kubernetes-operational-view.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
+
 **This project is in pre-alpha, but it might already be useful.**
 
 .. image:: screenshot.png
