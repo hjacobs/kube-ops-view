@@ -43,7 +43,7 @@ def generate_token_data():
     return {'token': token, 'created': now, 'expires': now + ONE_YEAR}
 
 
-def check_token(token: str, remote_addr: str, data: str):
+def check_token(token: str, remote_addr: str, data: dict):
     now = time.time()
     if data and now < data['expires'] and data.get('remote_addr', remote_addr) == remote_addr:
         data['remote_addr'] = remote_addr
@@ -85,14 +85,14 @@ class MemoryStore:
         self._screen_tokens[token] = data
         return token
 
-    def redeem_screen_token(self, token, remote_addr):
+    def redeem_screen_token(self, token: str, remote_addr: str):
         data = self._screen_tokens.get(token)
         data = check_token(token, remote_addr, data)
         self._screen_tokens[token] = data
 
 
 class RedisStore:
-    def __init__(self, url):
+    def __init__(self, url: str):
         logging.info('Connecting to Redis on {}..'.format(url))
         self._redis = redis.StrictRedis.from_url(url)
         self._redlock = Redlock([url])
@@ -120,7 +120,7 @@ class RedisStore:
         self._redis.set('screen-tokens:{}'.format(token), json.dumps(data))
         return token
 
-    def redeem_screen_token(self, token, remote_addr: str):
+    def redeem_screen_token(self, token: str, remote_addr: str):
         redis_key = 'screen-tokens:{}'.format(token)
         data = self._redis.get(redis_key)
         if not data:
