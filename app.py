@@ -340,24 +340,32 @@ def get_kubernetes_clusters():
         try:
             response = session.get(urljoin(api_server_url, '/api/v1/namespaces/kube-system/services/heapster/proxy/apis/metrics/v1alpha1/nodes'), timeout=5)
             response.raise_for_status()
-            for metrics in response.json()['items']:
-                nodes_by_name[metrics['metadata']['name']]['usage'] = metrics['usage']
+            data = response.json()
+            if not data.get('items'):
+                logging.info('Heapster node metrics not available (yet)')
+            else:
+                for metrics in data['items']:
+                    nodes_by_name[metrics['metadata']['name']]['usage'] = metrics['usage']
         except:
-            logging.exception('Failed to get metrics')
+            logging.exception('Failed to get node metrics')
         try:
             response = session.get(urljoin(api_server_url,
                                            '/api/v1/namespaces/kube-system/services/heapster/proxy/apis/metrics/v1alpha1/pods'),
                                    timeout=5)
             response.raise_for_status()
-            for metrics in response.json()['items']:
-                pod = pods_by_namespace_name.get((metrics['metadata']['namespace'], metrics['metadata']['name']))
-                if pod:
-                    for container in pod['containers']:
-                        for container_metrics in metrics['containers']:
-                            if container['name'] == container_metrics['name']:
-                                container['resources']['usage'] = container_metrics['usage']
+            data = response.json()
+            if not data.get('items'):
+                logging.info('Heapster pod metrics not available (yet)')
+            else:
+                for metrics in data['items']:
+                    pod = pods_by_namespace_name.get((metrics['metadata']['namespace'], metrics['metadata']['name']))
+                    if pod:
+                        for container in pod['containers']:
+                            for container_metrics in metrics['containers']:
+                                if container['name'] == container_metrics['name']:
+                                    container['resources']['usage'] = container_metrics['usage']
         except:
-            logging.exception('Failed to get metrics')
+            logging.exception('Failed to get pod metrics')
         yield {'id': cluster_id, 'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods}
 
 
