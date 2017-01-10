@@ -16,6 +16,7 @@ import requests
 import datetime
 import random
 import redis
+import signal
 import string
 import time
 import tokens
@@ -147,6 +148,7 @@ def get_bool(name: str):
 
 
 SERVER_PORT = int(os.getenv('SERVER_PORT', 8080))
+SERVER_STATUS = {'shutdown': False}
 DEFAULT_CLUSTERS = 'http://localhost:8001/'
 CREDENTIALS_DIR = os.getenv('CREDENTIALS_DIR', '')
 AUTHORIZE_URL = os.getenv('AUTHORIZE_URL')
@@ -216,7 +218,10 @@ tokens.manage('read-only')
 
 @app.route('/health')
 def health():
-    return 'OK'
+    if SERVER_STATUS['shutdown']:
+        flask.abort(503)
+    else:
+        return 'OK'
 
 
 @app.route('/')
@@ -461,7 +466,23 @@ def update():
         gevent.sleep(5)
 
 
+def shutdown():
+    # just wait some time to give Kubernetes time to update endpoints
+    # this requires changing the readinessProbe's
+    # PeriodSeconds and FailureThreshold appropriately
+    # see https://godoc.org/k8s.io/kubernetes/pkg/api/v1#Probe
+    gevent.sleep(10)
+    exit(0)
+
+
+def exit_gracefully(signum, frame):
+    logging.info('Received TERM signal, shutting down..')
+    SERVER_STATUS['shutdown'] = True
+    gevent.spawn(shutdown)
+
+
 if __name__ == '__main__':
+    signal.signal(signal.SIGTERM, exit_gracefully)
     http_server = gevent.wsgi.WSGIServer(('0.0.0.0', SERVER_PORT), app)
     gevent.spawn(update)
     logging.info('Listening on :{}..'.format(SERVER_PORT))
