@@ -32,18 +32,21 @@ logging.basicConfig(level=logging.INFO)
 
 
 def generate_token(n: int):
+    '''Generate a random ASCII token of length n'''
     # uses os.urandom()
     rng = random.SystemRandom()
     return ''.join([rng.choice(string.ascii_letters + string.digits) for i in range(n)])
 
 
 def generate_token_data():
+    '''Generate screen token data for storing'''
     token = generate_token(10)
     now = time.time()
     return {'token': token, 'created': now, 'expires': now + ONE_YEAR}
 
 
 def check_token(token: str, remote_addr: str, data: dict):
+    '''Check whether the given screen token is valid, raises exception if not'''
     now = time.time()
     if data and now < data['expires'] and data.get('remote_addr', remote_addr) == remote_addr:
         data['remote_addr'] = remote_addr
@@ -53,6 +56,8 @@ def check_token(token: str, remote_addr: str, data: dict):
 
 
 class MemoryStore:
+    '''Memory-only backend, mostly useful for local debugging'''
+
     def __init__(self):
         self._queues = []
         self._screen_tokens = {}
@@ -92,6 +97,8 @@ class MemoryStore:
 
 
 class RedisStore:
+    '''Redis-based backend for deployments with replicas > 1'''
+
     def __init__(self, url: str):
         logging.info('Connecting to Redis on {}..'.format(url))
         self._redis = redis.StrictRedis.from_url(url)
@@ -115,12 +122,14 @@ class RedisStore:
                 yield (event_type, json.loads(data))
 
     def create_screen_token(self):
+        '''Generate a new screen token and store it in Redis'''
         data = generate_token_data()
         token = data['token']
         self._redis.set('screen-tokens:{}'.format(token), json.dumps(data))
         return token
 
     def redeem_screen_token(self, token: str, remote_addr: str):
+        '''Validate the given token and bind it to the IP'''
         redis_key = 'screen-tokens:{}'.format(token)
         data = self._redis.get(redis_key)
         if not data:
