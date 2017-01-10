@@ -14,7 +14,9 @@ import os
 import re
 import requests
 import datetime
+import random
 import redis
+import string
 import time
 import tokens
 from queue import Queue
@@ -24,11 +26,36 @@ from flask import Flask, redirect
 from flask_oauthlib.client import OAuth, OAuthRemoteApp
 from urllib.parse import urljoin
 
+ONE_YEAR = 3600 * 24 * 365
+
 logging.basicConfig(level=logging.INFO)
+
+
+def generate_token(n: int):
+    # uses os.urandom()
+    rng = random.SystemRandom()
+    return ''.join([rng.choice(string.ascii_letters + string.digits) for i in range(n)])
+
+
+def generate_token_data():
+    token = generate_token(10)
+    now = time.time()
+    return {'token': token, 'created': now, 'expires': now + ONE_YEAR}
+
+
+def check_token(token: str, remote_addr: str, data: str):
+    now = time.time()
+    if data and now < data['expires'] and data.get('remote_addr', remote_addr) == remote_addr:
+        data['remote_addr'] = remote_addr
+        return data
+    else:
+        raise ValueError('Invalid token')
+
 
 class MemoryStore:
     def __init__(self):
         self._queues = []
+        self._screen_tokens = {}
 
     def acquire_lock(self):
         # no-op for memory store
@@ -51,6 +78,17 @@ class MemoryStore:
                 yield item
         finally:
             self._queues.remove(queue)
+
+    def create_screen_token(self):
+        data = generate_token_data()
+        token = data['token']
+        self._screen_tokens[token] = data
+        return token
+
+    def redeem_screen_token(self, token, remote_addr):
+        data = self._screen_tokens.get(token)
+        data = check_token(token, remote_addr, data)
+        self._screen_tokens[token] = data
 
 
 class RedisStore:
@@ -75,6 +113,21 @@ class RedisStore:
             if message['type'] == 'message':
                 event_type, data = message['data'].decode('utf-8').split(':', 1)
                 yield (event_type, json.loads(data))
+
+    def create_screen_token(self):
+        data = generate_token_data()
+        token = data['token']
+        self._redis.set('screen-tokens:{}'.format(token), json.dumps(data))
+        return token
+
+    def redeem_screen_token(self, token, remote_addr: str):
+        redis_key = 'screen-tokens:{}'.format(token)
+        data = self._redis.get(redis_key)
+        if not data:
+            raise ValueError('Invalid token')
+        data = json.loads(data.decode('utf-8'))
+        data = check_token(token, remote_addr, data)
+        self._redis.set(redis_key, json.dumps(data))
 
 
 CLUSTER_ID_INVALID_CHARS = re.compile('[^a-z0-9:-]')
@@ -326,6 +379,27 @@ def get_events():
     return flask.Response(event(cluster_ids), mimetype='text/event-stream')
 
 
+@app.route('/screen-tokens', methods=['GET', 'POST'])
+@authorize
+def screen_tokens():
+    new_token = None
+    if flask.request.method == 'POST':
+        new_token = STORE.create_screen_token()
+    return flask.render_template('screen-tokens.html', new_token=new_token)
+
+
+@app.route('/screen/<token>')
+def redeem_screen_token(token: str):
+    remote_addr = flask.request.headers.get('X-Forwarded-For') or flask.request.remote_addr
+    logging.info('Trying to redeem screen token "{}" for IP {}..'.format(token, remote_addr))
+    try:
+        STORE.redeem_screen_token(token, remote_addr)
+    except:
+        flask.abort(401)
+    flask.session['auth_token'] = (token, '')
+    return redirect(urljoin(APP_URL, '/'))
+
+
 @app.route('/login')
 def login():
     redirect_uri = urljoin(APP_URL, '/login/authorized')
@@ -350,11 +424,6 @@ def authorized():
         return 'Invalid auth response'
     flask.session['auth_token'] = (resp['access_token'], '')
     return redirect(urljoin(APP_URL, '/'))
-
-
-@auth.tokengetter
-def get_auth_oauth_token():
-    return flask.session.get('auth_token')
 
 
 def update():
