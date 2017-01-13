@@ -369,7 +369,7 @@ export default class App {
         }
         this.changeLocationHash('clusters', Array.from(this.selectedClusters).join(','))
         // make sure we are updating our EventSource filter
-        this.listen()
+        this.connect()
         this.update()
     }
 
@@ -377,15 +377,19 @@ export default class App {
         if (this.keepAliveTimer != null) {
             clearTimeout(this.keepAliveTimer)
         }
-        this._errors = 0
-        this.keepAliveTimer = setTimeout(this.listen.bind(this), this.keepAliveSeconds * 1000)
+        this.keepAliveTimer = setTimeout(this.connect.bind(this), this.keepAliveSeconds * 1000)
     }
 
-    listen() {
+    disconnect() {
         if (this.eventSource != null) {
             this.eventSource.close()
             this.eventSource = null
         }
+    }
+
+    connect() {
+        // first close the old connection
+        this.disconnect()
         const that = this
         // NOTE: path must be relative to work with kubectl proxy out of the box
         let url = 'events'
@@ -397,16 +401,23 @@ export default class App {
         this.keepAlive()
         eventSource.onerror = function(event) {
             that._errors++
-            that.eventSource.close()
-            that.eventSource = null
+            if (that._errors <= 1) {
+                // immediately reconnect on first error
+                that.connect()
+            } else {
+                // rely on keep-alive timer to reconnect
+                that.disconnect()
+            }
         }
         eventSource.addEventListener('clusterupdate', function(event) {
+            that._errors = 0
             that.keepAlive()
             const cluster = JSON.parse(event.data)
             that.clusters.set(cluster.id, cluster)
             that.update()
         })
         eventSource.addEventListener('clusterdelta', function(event) {
+            that._errors = 0
             that.keepAlive()
             const data = JSON.parse(event.data)
             let cluster = that.clusters.get(data.cluster_id)
@@ -423,7 +434,7 @@ export default class App {
     run() {
         this.initialize()
         this.draw()
-        this.listen()
+        this.connect()
 
         PIXI.ticker.shared.add(this.tick, this)
     }
