@@ -65,7 +65,7 @@ export default class Cluster extends PIXI.Graphics {
         }
 
 
-        for (const pod of this.cluster.unassigned_pods) {
+        for (const pod of Object.values(this.cluster.unassigned_pods)) {
             var podBox = Pod.getOrCreate(pod, this, this.tooltip)
             podBox.x = masterX
             podBox.y = masterY

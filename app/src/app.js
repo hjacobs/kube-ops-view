@@ -273,11 +273,11 @@ export default class App {
         const podKeys = new Set()
         for (const cluster of clusters) {
             for (const node of Object.values(cluster.nodes)) {
-                for (const pod of node.pods) {
+                for (const pod of Object.values(node.pods)) {
                     podKeys.add(cluster.id + '/' + pod.namespace + '/' + pod.name)
                 }
             }
-            for (const pod of cluster.unassigned_pods) {
+            for (const pod of Object.values(cluster.unassigned_pods)) {
                 podKeys.add(cluster.id + '/' + pod.namespace + '/' + pod.name)
             }
         }

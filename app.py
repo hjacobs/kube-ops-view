@@ -310,16 +310,18 @@ def generate_mock_cluster_data(index: int):
         labels = {}
         if i < 2:
             labels['master'] = 'true'
-        pods = []
+        pods = {}
         for j in range(hash_int((index + 1) * (i + 1)) % 32):
             # add/remove some pods every 7 seconds
             if j % 17 == 0 and int(time.time() / 7) % 2 == 0:
                 pass
             else:
-                pods.append(generate_mock_pod(index, i, j))
+                pod = generate_mock_pod(index, i, j)
+                pods['{}/{}'.format(pod['namespace'], pod['name'])] = pod
         node = {'name': 'node-{}'.format(i), 'labels': labels, 'status': {'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'}}, 'pods': pods}
         nodes[node['name']] = node
-    unassigned_pods = [generate_mock_pod(index, 11, index)]
+    pod = generate_mock_pod(index, 11, index)
+    unassigned_pods = {'{}/{}'.format(pod['namespace'], pod['name']): pod}
     return {
         'id': 'mock-cluster-{}'.format(index),
         'api_server_url': 'https://kube-{}.example.org'.format(index),
@@ -346,7 +348,7 @@ def map_node(node: dict):
         'name': node['metadata']['name'],
         'labels': node['metadata']['labels'],
         'status': map_node_status(node['status']),
-        'pods': []
+        'pods': {}
     }
 
 
@@ -360,7 +362,7 @@ def get_kubernetes_clusters():
         response.raise_for_status()
         nodes = {}
         pods_by_namespace_name = {}
-        unassigned_pods = []
+        unassigned_pods = {}
         for node in response.json()['items']:
             obj = map_node(node)
             nodes[obj['name']] = obj
@@ -381,10 +383,11 @@ def get_kubernetes_clusters():
             for cont in pod['spec']['containers']:
                 obj['containers'].append({'name': cont['name'], 'image': cont['image'], 'resources': cont['resources']})
             pods_by_namespace_name[(obj['namespace'], obj['name'])] = obj
+            pod_key = '{}/{}'.format(obj['namespace'], obj['name'])
             if 'nodeName' in pod['spec'] and pod['spec']['nodeName'] in nodes:
-                nodes[pod['spec']['nodeName']]['pods'].append(obj)
+                nodes[pod['spec']['nodeName']]['pods'][pod_key] = obj
             else:
-                unassigned_pods.append(obj)
+                unassigned_pods[pod_key] = obj
 
         try:
             response = session.get(urljoin(api_server_url, '/api/v1/namespaces/kube-system/services/heapster/proxy/apis/metrics/v1alpha1/nodes'), timeout=5)
