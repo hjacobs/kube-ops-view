@@ -4,6 +4,7 @@ import {Pod, ALL_PODS, sortByName, sortByMemory, sortByCPU, sortByAge} from './p
 import SelectBox from './selectbox'
 import { Theme, ALL_THEMES} from './themes.js'
 import { DESATURATION_FILTER } from './filters.js'
+import { JSON_delta } from './vendor/json_delta.js'
 
 const PIXI = require('pixi.js')
 
@@ -18,6 +19,8 @@ export default class App {
         this.sorterFn = ''
         this.theme = Theme.get(localStorage.getItem('theme'))
         this.eventSource = null
+        this.keepAliveTimer = null
+        this.keepAliveSeconds = 20
         this.clusters = new Map()
     }
 
@@ -262,11 +265,13 @@ export default class App {
         this.stage.addChild(pod)
     }
     update() {
+        // make sure we create a copy (this.clusters might get modified)
+        const clusters = Array.from(this.clusters.entries()).sort().map(idCluster => idCluster[1])
         const that = this
         let changes = 0
         const firstTime = this.seenPods.size == 0
         const podKeys = new Set()
-        for (const cluster of this.clusters.values()) {
+        for (const cluster of clusters) {
             for (const node of cluster.nodes) {
                 for (const pod of node.pods) {
                     podKeys.add(cluster.id + '/' + pod.namespace + '/' + pod.name)
@@ -301,10 +306,10 @@ export default class App {
         }
         let y = 0
         const clusterIds = new Set()
-        for (const [clusterId, cluster] of Array.from(this.clusters.entries()).sort()) {
-            if (!this.selectedClusters.size || this.selectedClusters.has(clusterId)) {
-                clusterIds.add(clusterId)
-                let clusterBox = clusterComponentById[clusterId]
+        for (const cluster of clusters) {
+            if (!this.selectedClusters.size || this.selectedClusters.has(cluster.id)) {
+                clusterIds.add(cluster.id)
+                let clusterBox = clusterComponentById[cluster.id]
                 if (!clusterBox) {
                     clusterBox = new Cluster(cluster, this.tooltip)
                     this.viewContainer.addChild(clusterBox)
@@ -368,6 +373,14 @@ export default class App {
         this.update()
     }
 
+    keepAlive() {
+        if (this.keepAliveTimer != null) {
+            clearTimeout(this.keepAliveTimer)
+        }
+        this._errors = 0
+        this.keepAliveTimer = setTimeout(this.listen.bind(this), this.keepAliveSeconds * 1000)
+    }
+
     listen() {
         if (this.eventSource != null) {
             this.eventSource.close()
@@ -381,13 +394,29 @@ export default class App {
             url += '?cluster_ids=' + clusterIds
         }
         const eventSource = this.eventSource = new EventSource(url, {credentials: 'include'})
+        this.keepAlive()
         eventSource.onerror = function(event) {
-            that.listen()
+            that._errors++
+            that.eventSource.close()
+            that.eventSource = null
         }
         eventSource.addEventListener('clusterupdate', function(event) {
+            that.keepAlive()
             const cluster = JSON.parse(event.data)
             that.clusters.set(cluster.id, cluster)
             that.update()
+        })
+        eventSource.addEventListener('clusterdelta', function(event) {
+            that.keepAlive()
+            const data = JSON.parse(event.data)
+            let cluster = that.clusters.get(data.cluster_id)
+            if (cluster && data.delta) {
+                // deep copy cluster object (patch function mutates inplace!)
+                cluster = JSON.parse(JSON.stringify(cluster))
+                cluster = JSON_delta.patch(cluster, data.delta)
+                that.clusters.set(cluster.id, cluster)
+                that.update()
+            }
         })
     }
 

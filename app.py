@@ -9,6 +9,7 @@ import functools
 import gevent
 import gevent.wsgi
 import json
+import json_delta
 import logging
 import os
 import re
@@ -60,8 +61,15 @@ class MemoryStore:
     '''Memory-only backend, mostly useful for local debugging'''
 
     def __init__(self):
+        self._data = {}
         self._queues = []
         self._screen_tokens = {}
+
+    def set(self, key, value):
+        self._data[key] = value
+
+    def get(self, key):
+        return self._data.get(key)
 
     def acquire_lock(self):
         # no-op for memory store
@@ -105,6 +113,14 @@ class RedisStore:
         self._redis = redis.StrictRedis.from_url(url)
         self._redlock = Redlock([url])
 
+    def set(self, key, value):
+        self._redis.set(key, json.dumps(value, separators=(',', ':')))
+
+    def get(self, key):
+        value = self._redis.get(key)
+        if value:
+            return json.loads(value.decode('utf-8'))
+
     def acquire_lock(self):
         return self._redlock.lock('update', 10000)
 
@@ -147,6 +163,7 @@ def get_bool(name: str):
     return os.getenv(name, '').lower() in ('1', 'true')
 
 
+DEBUG = get_bool('DEBUG')
 SERVER_PORT = int(os.getenv('SERVER_PORT', 8080))
 SERVER_STATUS = {'shutdown': False}
 DEFAULT_CLUSTERS = 'http://localhost:8001/'
@@ -158,7 +175,7 @@ REDIS_URL = os.getenv('REDIS_URL')
 STORE = RedisStore(REDIS_URL) if REDIS_URL else MemoryStore()
 
 app = Flask(__name__)
-app.debug = get_bool('DEBUG')
+app.debug = DEBUG
 app.secret_key = os.getenv('SECRET_KEY', 'development')
 
 oauth = OAuth(app)
@@ -295,8 +312,8 @@ def generate_mock_cluster_data(index: int):
             labels['master'] = 'true'
         pods = []
         for j in range(hash_int((index + 1) * (i + 1)) % 32):
-            # add/remove some pods every 6 seconds
-            if j % 17 == 0 and int(time.time() / 6) % 2 == 0:
+            # add/remove some pods every 7 seconds
+            if j % 17 == 0 and int(time.time() / 7) % 2 == 0:
                 pass
             else:
                 pods.append(generate_mock_pod(index, i, j))
@@ -316,6 +333,22 @@ def get_mock_clusters():
         yield data
 
 
+def map_node_status(status: dict):
+    return {
+        'addresses': status.get('addresses'),
+        'capacity': status.get('capacity'),
+    }
+
+
+def map_node(node: dict):
+    return {
+        'name': node['metadata']['name'],
+        'labels': node['metadata']['labels'],
+        'status': map_node_status(node['status']),
+        'pods': []
+    }
+
+
 def get_kubernetes_clusters():
     for api_server_url in (os.getenv('CLUSTERS') or DEFAULT_CLUSTERS).split(','):
         cluster_id = generate_cluster_id(api_server_url)
@@ -329,8 +362,7 @@ def get_kubernetes_clusters():
         pods_by_namespace_name = {}
         unassigned_pods = []
         for node in response.json()['items']:
-            obj = {'name': node['metadata']['name'], 'labels': node['metadata']['labels'], 'status': node['status'],
-                   'pods': []}
+            obj = map_node(node)
             nodes.append(obj)
             nodes_by_name[obj['name']] = obj
         response = session.get(urljoin(api_server_url, '/api/v1/pods'), timeout=5)
@@ -388,6 +420,11 @@ def get_kubernetes_clusters():
 
 
 def event(cluster_ids: set):
+    # first sent full data once
+    for cluster_id in (STORE.get('cluster-ids') or []):
+        if not cluster_ids or cluster_id in cluster_ids:
+            cluster = STORE.get(cluster_id)
+            yield 'event: clusterupdate\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
     while True:
         for event_type, cluster in STORE.listen():
             if not cluster_ids or cluster['id'] in cluster_ids:
@@ -461,8 +498,19 @@ def update():
                     clusters = get_mock_clusters()
                 else:
                     clusters = get_kubernetes_clusters()
+                cluster_ids = []
                 for cluster in clusters:
-                    STORE.publish('clusterupdate', cluster)
+                    old_data = STORE.get(cluster['id'])
+                    if old_data:
+                        # https://pikacode.com/phijaro/json_delta/ticket/11/
+                        # diff is extremely slow without array_align=False
+                        delta = json_delta.diff(old_data, cluster, verbose=DEBUG, array_align=False)
+                        STORE.publish('clusterdelta', {'cluster_id': cluster['id'], 'delta': delta})
+                    else:
+                        STORE.publish('clusterupdate', cluster)
+                    STORE.set(cluster['id'], cluster)
+                    cluster_ids.append(cluster['id'])
+                STORE.set('cluster-ids', cluster_ids)
             except:
                 logging.exception('Failed to update')
             finally:

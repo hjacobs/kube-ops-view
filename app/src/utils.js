@@ -73,7 +73,7 @@ const metric = (metric, type) =>
 
 const podResource = type => (containers, resource) =>
     containers
-        .map(({resources}) => metric(resources[resource], type))
+        .map(({resources}) => resources ? metric(resources[resource], type) : 0)
         .reduce((a, b) => a + b, 0)
 
 export {FACTORS, hsvToRgb, getBarColor, parseResource, metric, podResource}
