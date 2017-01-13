@@ -287,11 +287,15 @@ def generate_mock_cluster_data(index: int):
     '''Generate deterministic (no randomness!) mock data'''
     nodes = []
     for i in range(10):
+        # add/remove the second to last node every 13 seconds
+        if i == 8 and int(time.time() / 13) % 2 == 0:
+            continue
         labels = {}
         if i < 2:
             labels['master'] = 'true'
         pods = []
         for j in range(hash_int((index + 1) * (i + 1)) % 32):
+            # add/remove some pods every 6 seconds
             if j % 17 == 0 and int(time.time() / 6) % 2 == 0:
                 pass
             else:
