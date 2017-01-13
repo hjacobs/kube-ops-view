@@ -272,7 +272,7 @@ export default class App {
         const firstTime = this.seenPods.size == 0
         const podKeys = new Set()
         for (const cluster of clusters) {
-            for (const node of cluster.nodes) {
+            for (const node of Object.values(cluster.nodes)) {
                 for (const pod of node.pods) {
                     podKeys.add(cluster.id + '/' + pod.namespace + '/' + pod.name)
                 }

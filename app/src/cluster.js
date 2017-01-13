@@ -26,7 +26,8 @@ export default class Cluster extends PIXI.Graphics {
         let workerHeight = 0
         const workerNodes = []
         const maxWidth = window.innerWidth - 130
-        for (const node of this.cluster.nodes) {
+        for (const nodeName of Object.keys(this.cluster.nodes).sort()) {
+            const node = this.cluster.nodes[nodeName]
             var nodeBox = new Node(node, this, this.tooltip)
             nodeBox.draw()
             if (nodeBox.isMaster()) {

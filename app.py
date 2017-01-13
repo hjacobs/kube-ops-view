@@ -302,7 +302,7 @@ def generate_cluster_id(url: str):
 
 def generate_mock_cluster_data(index: int):
     '''Generate deterministic (no randomness!) mock data'''
-    nodes = []
+    nodes = {}
     for i in range(10):
         # add/remove the second to last node every 13 seconds
         if i == 8 and int(time.time() / 13) % 2 == 0:
@@ -317,7 +317,8 @@ def generate_mock_cluster_data(index: int):
                 pass
             else:
                 pods.append(generate_mock_pod(index, i, j))
-        nodes.append({'name': 'node-{}'.format(i), 'labels': labels, 'status': {'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'}}, 'pods': pods})
+        node = {'name': 'node-{}'.format(i), 'labels': labels, 'status': {'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'}}, 'pods': pods}
+        nodes[node['name']] = node
     unassigned_pods = [generate_mock_pod(index, 11, index)]
     return {
         'id': 'mock-cluster-{}'.format(index),
@@ -357,14 +358,12 @@ def get_kubernetes_clusters():
             session.headers['Authorization'] = 'Bearer {}'.format(tokens.get('read-only'))
         response = session.get(urljoin(api_server_url, '/api/v1/nodes'), timeout=5)
         response.raise_for_status()
-        nodes = []
-        nodes_by_name = {}
+        nodes = {}
         pods_by_namespace_name = {}
         unassigned_pods = []
         for node in response.json()['items']:
             obj = map_node(node)
-            nodes.append(obj)
-            nodes_by_name[obj['name']] = obj
+            nodes[obj['name']] = obj
         response = session.get(urljoin(api_server_url, '/api/v1/pods'), timeout=5)
         response.raise_for_status()
         for pod in response.json()['items']:
@@ -382,8 +381,8 @@ def get_kubernetes_clusters():
             for cont in pod['spec']['containers']:
                 obj['containers'].append({'name': cont['name'], 'image': cont['image'], 'resources': cont['resources']})
             pods_by_namespace_name[(obj['namespace'], obj['name'])] = obj
-            if 'nodeName' in pod['spec'] and pod['spec']['nodeName'] in nodes_by_name:
-                nodes_by_name[pod['spec']['nodeName']]['pods'].append(obj)
+            if 'nodeName' in pod['spec'] and pod['spec']['nodeName'] in nodes:
+                nodes[pod['spec']['nodeName']]['pods'].append(obj)
             else:
                 unassigned_pods.append(obj)
 
@@ -395,7 +394,7 @@ def get_kubernetes_clusters():
                 logging.info('Heapster node metrics not available (yet)')
             else:
                 for metrics in data['items']:
-                    nodes_by_name[metrics['metadata']['name']]['usage'] = metrics['usage']
+                    nodes[metrics['metadata']['name']]['usage'] = metrics['usage']
         except:
             logging.exception('Failed to get node metrics')
         try:
