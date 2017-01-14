@@ -1,8 +1,6 @@
 FROM alpine:3.5
 MAINTAINER Henning Jacobs <henning@jacobs1.de>
 
-ARG VERSION=latest
-
 EXPOSE 8080
 
 RUN apk add --no-cache python3 python3-dev gcc musl-dev zlib-dev libffi-dev openssl-dev ca-certificates && \
@@ -18,6 +16,8 @@ COPY requirements.txt /
 RUN pip3 install -r /requirements.txt
 
 COPY kube_ops_view /kube_ops_view
+
+ARG VERSION=dev
 RUN sed -i "s/__version__ = .*/__version__ = '${VERSION}'/" /kube_ops_view/__init__.py
 
 WORKDIR /
