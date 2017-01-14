@@ -25,7 +25,7 @@ push: docker
 	docker push "$(IMAGE):$(TAG)"
 
 mock:
-	docker run -it -p 8080:8080 -e MOCK=true "$(IMAGE):$(TAG)"
+	docker run -it -p 8080:8080 "$(IMAGE):$(TAG)" --mock
 
 scm-source.json: .git
 	@echo '{"url": "$(GITURL)", "revision": "$(GITHEAD)", "author": "$(USER)", "status": "$(GITSTATUS)"}' > scm-source.json

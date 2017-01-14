@@ -78,13 +78,13 @@ You can start the app in "mock mode" to see all UI features without running any 
 
     $ pip3 install -r requirements.txt
     $ (cd app && npm start &)
-    $ MOCK=true python3 -m kube_ops_view
+    $ python3 -m kube_ops_view --mock --debug
 
 You can also run the latest Docker image directly:
 
 .. code-block:: bash
 
-    $ docker run -it -p 8080:8080 -e MOCK=true hjacobs/kube-ops-view
+    $ docker run -it -p 8080:8080 hjacobs/kube-ops-view --mock
 
 
 Building
