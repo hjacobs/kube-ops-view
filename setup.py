@@ -1,10 +1,40 @@
+import sys
 
 from setuptools import find_packages, setup
+from setuptools.command.test import test as TestCommand
+
+
+class PyTest(TestCommand):
+
+    user_options = [('cov-html=', None, 'Generate junit html report')]
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.cov = None
+        self.pytest_args = ['--cov', 'kube_ops_view', '--cov-report', 'term-missing', '-v']
+        self.cov_html = False
+
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        if self.cov_html:
+            self.pytest_args.extend(['--cov-report', 'html'])
+        self.pytest_args.extend(['tests'])
+
+    def run_tests(self):
+        import pytest
+
+        errno = pytest.main(self.pytest_args)
+        sys.exit(errno)
 
 
 def readme():
     return open('README.rst', encoding='utf-8').read()
 
+
+tests_require = [
+    'pytest',
+    'pytest-cov'
+]
 
 setup(
     name='kube-ops-view',
@@ -16,6 +46,10 @@ setup(
     url='https://github.com/hjacobs/kube-ops-view',
     keywords='kubernetes operations dashboard view k8s',
     license='GNU General Public License v3 (GPLv3)',
+    tests_require=tests_require,
+    extras_require={'tests': tests_require},
+    cmdclass={'test': PyTest},
+    test_suite='tests',
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',

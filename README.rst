@@ -83,6 +83,16 @@ You can also run the latest Docker image directly:
     $ docker run -it -p 8080:8080 -e MOCK=true hjacobs/kube-ops-view
 
 
+Building
+========
+
+The provided ``Makefile`` will generate a Docker image by default:
+
+.. code-block:: bash
+
+    $ make
+
+
 Multiple Clusters
 =================
 

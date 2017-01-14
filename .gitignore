@@ -9,3 +9,6 @@ npm-debug.log*
 .tox/
 *.egg*
 dist/
+scm-source.json
+.cache/
+.coverage
