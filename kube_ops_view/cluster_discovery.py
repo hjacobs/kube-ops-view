@@ -14,6 +14,7 @@ class StaticTokenAuth(AuthBase):
 
     def __call__(self, request):
         request.headers['Authorization'] = 'Bearer {}'.format(self.token)
+        return request
 
 
 class OAuthTokenAuth(AuthBase):
@@ -24,6 +25,7 @@ class OAuthTokenAuth(AuthBase):
     def __call__(self, request):
         token = tokens.get(self.token_name)
         request.headers['Authorization'] = 'Bearer {}'.format(token)
+        return request
 
 
 class Cluster:

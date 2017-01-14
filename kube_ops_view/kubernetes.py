@@ -53,11 +53,18 @@ def map_container(cont: dict, pod: dict):
     return obj
 
 
+def request(cluster, path, **kwargs):
+    if 'timeout' not in kwargs:
+        # sane default timeout
+        kwargs['time'] = 5
+    return session.get(urljoin(cluster.api_server_url, path), auth=cluster.auth, verify=cluster.ssl_ca_cert, **kwargs)
+
+
 def get_kubernetes_clusters(cluster_discoverer):
     for cluster in cluster_discoverer.get_clusters():
         api_server_url = cluster.api_server_url
         cluster_id = generate_cluster_id(api_server_url)
-        response = session.get(urljoin(api_server_url, '/api/v1/nodes'), timeout=5, auth=cluster.auth, verify=cluster.ssl_ca_cert)
+        response = request(cluster, '/api/v1/nodes')
         response.raise_for_status()
         nodes = {}
         pods_by_namespace_name = {}
@@ -65,7 +72,7 @@ def get_kubernetes_clusters(cluster_discoverer):
         for node in response.json()['items']:
             obj = map_node(node)
             nodes[obj['name']] = obj
-        response = session.get(urljoin(api_server_url, '/api/v1/pods'), timeout=5)
+        response = request(cluster, '/api/v1/pods')
         response.raise_for_status()
         for pod in response.json()['items']:
             obj = map_pod(pod)
@@ -83,7 +90,7 @@ def get_kubernetes_clusters(cluster_discoverer):
                 unassigned_pods[pod_key] = obj
 
         try:
-            response = session.get(urljoin(api_server_url, '/api/v1/namespaces/kube-system/services/heapster/proxy/apis/metrics/v1alpha1/nodes'), timeout=5)
+            response = request(cluster, '/api/v1/namespaces/kube-system/services/heapster/proxy/apis/metrics/v1alpha1/nodes')
             response.raise_for_status()
             data = response.json()
             if not data.get('items'):
@@ -94,9 +101,7 @@ def get_kubernetes_clusters(cluster_discoverer):
         except:
             logging.exception('Failed to get node metrics')
         try:
-            response = session.get(urljoin(api_server_url,
-                                           '/api/v1/namespaces/kube-system/services/heapster/proxy/apis/metrics/v1alpha1/pods'),
-                                   timeout=5)
+            response = request(cluster, '/api/v1/namespaces/kube-system/services/heapster/proxy/apis/metrics/v1alpha1/pods')
             response.raise_for_status()
             data = response.json()
             if not data.get('items'):
