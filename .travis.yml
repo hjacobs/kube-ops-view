@@ -3,7 +3,7 @@ python:
   - "3.5"
 install:
   - pip install tox tox-travis coveralls
-  - nvm install 6
+  - nvm install 7.4
   - npm install -g eslint
 script:
   - tox
