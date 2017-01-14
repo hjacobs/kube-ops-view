@@ -21,6 +21,7 @@ import signal
 import string
 import time
 import tokens
+from pathlib import Path
 from queue import Queue
 from redlock import Redlock
 
@@ -244,14 +245,16 @@ def health():
 @app.route('/')
 @authorize
 def index():
-    app_js = None
-    for entry in os.listdir('static/build'):
-        if entry.startswith('app'):
-            app_js = entry
-            if app.debug:
-                # cache busting for local development
-                app_js += '?_={}'.format(time.time())
-            break
+    static_build_path = Path(__file__).parent / 'static' / 'build'
+    candidates = sorted(static_build_path.glob('app*.js'))
+    if candidates:
+        app_js = candidates[0].name
+        if app.debug:
+            # cache busting for local development
+            app_js += '?_={}'.format(time.time())
+    else:
+        logging.error('Could not find JavaScript application bundle app*.js in {}'.format(static_build_path))
+        flask.abort(503, 'JavaScript application bundle not found (missing build)')
     return flask.render_template('index.html', app_js=app_js)
 
 
@@ -553,7 +556,7 @@ def exit_gracefully(signum, frame):
     gevent.spawn(shutdown)
 
 
-if __name__ == '__main__':
+def main():
     signal.signal(signal.SIGTERM, exit_gracefully)
     http_server = gevent.wsgi.WSGIServer(('0.0.0.0', SERVER_PORT), app)
     gevent.spawn(update)

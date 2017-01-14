@@ -12,13 +12,11 @@ EXPOSE 8080
 COPY requirements.txt /
 RUN pip3 install -r /requirements.txt
 
-COPY app.py /
-COPY templates /templates
+COPY kube_ops_view /
 COPY app /app
-COPY static /static
 
 WORKDIR /app
 RUN npm install && npm run build
 
 WORKDIR /
-CMD /app.py
+ENTRYPOINT ["/usr/bin/python3", "-m", "kube_ops_view"]

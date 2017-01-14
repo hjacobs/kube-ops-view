@@ -45,7 +45,7 @@ You can run the app locally:
     $ pip3 install -r requirements.txt
     $ kubectl proxy &
     $ (cd app && npm start &)
-    $ ./app.py
+    $ python3 -m kube_ops_view
 
 Now direct your browser to http://localhost:8080
 
@@ -74,7 +74,7 @@ You can start the app in "mock mode" to see all UI features without running any 
 
     $ pip3 install -r requirements.txt
     $ (cd app && npm start &)
-    $ MOCK=true ./app.py
+    $ MOCK=true python3 -m kube_ops_view
 
 You can also run the latest Docker image directly:
 
