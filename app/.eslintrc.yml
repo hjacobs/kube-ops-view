@@ -21,6 +21,7 @@ rules:
     - error
   no-unused-vars:
     - warn
+    - argsIgnorePattern: "^_"
   semi:
     - error
     - never

@@ -9,6 +9,7 @@ import functools
 import gevent
 import gevent.wsgi
 import json
+import json_delta
 import logging
 import os
 import re
@@ -60,8 +61,15 @@ class MemoryStore:
     '''Memory-only backend, mostly useful for local debugging'''
 
     def __init__(self):
+        self._data = {}
         self._queues = []
         self._screen_tokens = {}
+
+    def set(self, key, value):
+        self._data[key] = value
+
+    def get(self, key):
+        return self._data.get(key)
 
     def acquire_lock(self):
         # no-op for memory store
@@ -105,6 +113,14 @@ class RedisStore:
         self._redis = redis.StrictRedis.from_url(url)
         self._redlock = Redlock([url])
 
+    def set(self, key, value):
+        self._redis.set(key, json.dumps(value, separators=(',', ':')))
+
+    def get(self, key):
+        value = self._redis.get(key)
+        if value:
+            return json.loads(value.decode('utf-8'))
+
     def acquire_lock(self):
         return self._redlock.lock('update', 10000)
 
@@ -147,6 +163,7 @@ def get_bool(name: str):
     return os.getenv(name, '').lower() in ('1', 'true')
 
 
+DEBUG = get_bool('DEBUG')
 SERVER_PORT = int(os.getenv('SERVER_PORT', 8080))
 SERVER_STATUS = {'shutdown': False}
 DEFAULT_CLUSTERS = 'http://localhost:8001/'
@@ -158,7 +175,7 @@ REDIS_URL = os.getenv('REDIS_URL')
 STORE = RedisStore(REDIS_URL) if REDIS_URL else MemoryStore()
 
 app = Flask(__name__)
-app.debug = get_bool('DEBUG')
+app.debug = DEBUG
 app.secret_key = os.getenv('SECRET_KEY', 'development')
 
 oauth = OAuth(app)
@@ -250,7 +267,7 @@ def generate_mock_pod(index: int, i: int, j: int):
         'agent-cooper',
         'black-lodge',
         'bob',
-        'bobby-briggs'
+        'bobby-briggs',
         'laura-palmer',
         'leland-palmer',
         'log-lady',
@@ -261,14 +278,18 @@ def generate_mock_pod(index: int, i: int, j: int):
     phase = pod_phases[hash_int((index + 1) * (i + 1) * (j + 1)) % len(pod_phases)]
     containers = []
     for k in range(1 + j % 2):
-        containers.append({'name': 'myapp', 'image': 'foo/bar/{}'.format(j), 'resources': {'requests': {'cpu': '100m', 'memory': '100Mi'}, 'limits': {}}})
-    status = {'phase': phase}
-    if phase == 'Running':
-        if j % 13 == 0:
-            status['containerStatuses'] = [{'ready': False, 'state': {'waiting': {'reason': 'CrashLoopBackOff'}}}]
-        elif j % 7 == 0:
-            status['containerStatuses'] = [{'ready': True, 'state': {'running': {}}, 'restartCount': 3}]
-    pod = {'name': '{}-{}-{}'.format(names[hash_int((i + 1) * (j + 1)) % len(names)], i, j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels, 'status': status, 'containers': containers}
+        container = {
+            'name': 'myapp', 'image': 'foo/bar/{}'.format(j), 'resources': {'requests': {'cpu': '100m', 'memory': '100Mi'}, 'limits': {}},
+            'ready': True,
+            'state': {'running': {}}
+        }
+        if phase == 'Running':
+            if j % 13 == 0:
+                container.update(**{'ready': False, 'state': {'waiting': {'reason': 'CrashLoopBackOff'}}})
+            elif j % 7 == 0:
+                container.update(**{'ready': True, 'state': {'running': {}}, 'restartCount': 3})
+        containers.append(container)
+    pod = {'name': '{}-{}-{}'.format(names[hash_int((i + 1) * (j + 1)) % len(names)], i, j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels, 'phase': phase, 'containers': containers}
     if phase == 'Running' and j % 17 == 0:
         pod['deleted'] = 123
 
@@ -285,7 +306,7 @@ def generate_cluster_id(url: str):
 
 def generate_mock_cluster_data(index: int):
     '''Generate deterministic (no randomness!) mock data'''
-    nodes = []
+    nodes = {}
     for i in range(10):
         # add/remove the second to last node every 13 seconds
         if i == 8 and int(time.time() / 13) % 2 == 0:
@@ -293,15 +314,18 @@ def generate_mock_cluster_data(index: int):
         labels = {}
         if i < 2:
             labels['master'] = 'true'
-        pods = []
+        pods = {}
         for j in range(hash_int((index + 1) * (i + 1)) % 32):
-            # add/remove some pods every 6 seconds
-            if j % 17 == 0 and int(time.time() / 6) % 2 == 0:
+            # add/remove some pods every 7 seconds
+            if j % 17 == 0 and int(time.time() / 7) % 2 == 0:
                 pass
             else:
-                pods.append(generate_mock_pod(index, i, j))
-        nodes.append({'name': 'node-{}'.format(i), 'labels': labels, 'status': {'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'}}, 'pods': pods})
-    unassigned_pods = [generate_mock_pod(index, 11, index)]
+                pod = generate_mock_pod(index, i, j)
+                pods['{}/{}'.format(pod['namespace'], pod['name'])] = pod
+        node = {'name': 'node-{}'.format(i), 'labels': labels, 'status': {'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'}}, 'pods': pods}
+        nodes[node['name']] = node
+    pod = generate_mock_pod(index, 11, index)
+    unassigned_pods = {'{}/{}'.format(pod['namespace'], pod['name']): pod}
     return {
         'id': 'mock-cluster-{}'.format(index),
         'api_server_url': 'https://kube-{}.example.org'.format(index),
@@ -316,6 +340,41 @@ def get_mock_clusters():
         yield data
 
 
+def map_node_status(status: dict):
+    return {
+        'addresses': status.get('addresses'),
+        'capacity': status.get('capacity'),
+    }
+
+
+def map_node(node: dict):
+    return {
+        'name': node['metadata']['name'],
+        'labels': node['metadata']['labels'],
+        'status': map_node_status(node['status']),
+        'pods': {}
+    }
+
+
+def map_pod(pod: dict):
+    return {
+        'name': pod['metadata']['name'],
+        'namespace': pod['metadata']['namespace'],
+        'labels': pod['metadata'].get('labels', {}),
+        'phase': pod['status'].get('phase'),
+        'startTime': pod['status']['startTime'] if 'startTime' in pod['status'] else '',
+        'containers': []
+    }
+
+
+def map_container(cont: dict, pod: dict):
+    obj = {'name': cont['name'], 'image': cont['image'], 'resources': cont['resources']}
+    status = list([s for s in pod.get('status', {}).get('containerStatuses', []) if s['name'] == cont['name']])
+    if status:
+        obj.update(**status[0])
+    return obj
+
+
 def get_kubernetes_clusters():
     for api_server_url in (os.getenv('CLUSTERS') or DEFAULT_CLUSTERS).split(','):
         cluster_id = generate_cluster_id(api_server_url)
@@ -324,36 +383,28 @@ def get_kubernetes_clusters():
             session.headers['Authorization'] = 'Bearer {}'.format(tokens.get('read-only'))
         response = session.get(urljoin(api_server_url, '/api/v1/nodes'), timeout=5)
         response.raise_for_status()
-        nodes = []
-        nodes_by_name = {}
+        nodes = {}
         pods_by_namespace_name = {}
-        unassigned_pods = []
+        unassigned_pods = {}
         for node in response.json()['items']:
-            obj = {'name': node['metadata']['name'], 'labels': node['metadata']['labels'], 'status': node['status'],
-                   'pods': []}
-            nodes.append(obj)
-            nodes_by_name[obj['name']] = obj
+            obj = map_node(node)
+            nodes[obj['name']] = obj
         response = session.get(urljoin(api_server_url, '/api/v1/pods'), timeout=5)
         response.raise_for_status()
         for pod in response.json()['items']:
-            obj = {'name': pod['metadata']['name'],
-                   'namespace': pod['metadata']['namespace'],
-                   'labels': pod['metadata'].get('labels', {}),
-                   'status': pod['status'],
-                   'startTime': pod['status']['startTime'] if 'startTime' in pod['status'] else '',
-                   'containers': []
-                   }
+            obj = map_pod(pod)
             if 'deletionTimestamp' in pod['metadata']:
                 obj['deleted'] = datetime.datetime.strptime(pod['metadata']['deletionTimestamp'],
                                                             '%Y-%m-%dT%H:%M:%SZ').replace(
                     tzinfo=datetime.timezone.utc).timestamp()
             for cont in pod['spec']['containers']:
-                obj['containers'].append({'name': cont['name'], 'image': cont['image'], 'resources': cont['resources']})
+                obj['containers'].append(map_container(cont, pod))
             pods_by_namespace_name[(obj['namespace'], obj['name'])] = obj
-            if 'nodeName' in pod['spec'] and pod['spec']['nodeName'] in nodes_by_name:
-                nodes_by_name[pod['spec']['nodeName']]['pods'].append(obj)
+            pod_key = '{}/{}'.format(obj['namespace'], obj['name'])
+            if 'nodeName' in pod['spec'] and pod['spec']['nodeName'] in nodes:
+                nodes[pod['spec']['nodeName']]['pods'][pod_key] = obj
             else:
-                unassigned_pods.append(obj)
+                unassigned_pods[pod_key] = obj
 
         try:
             response = session.get(urljoin(api_server_url, '/api/v1/namespaces/kube-system/services/heapster/proxy/apis/metrics/v1alpha1/nodes'), timeout=5)
@@ -363,7 +414,7 @@ def get_kubernetes_clusters():
                 logging.info('Heapster node metrics not available (yet)')
             else:
                 for metrics in data['items']:
-                    nodes_by_name[metrics['metadata']['name']]['usage'] = metrics['usage']
+                    nodes[metrics['metadata']['name']]['usage'] = metrics['usage']
         except:
             logging.exception('Failed to get node metrics')
         try:
@@ -388,10 +439,16 @@ def get_kubernetes_clusters():
 
 
 def event(cluster_ids: set):
+    # first sent full data once
+    for cluster_id in (STORE.get('cluster-ids') or []):
+        if not cluster_ids or cluster_id in cluster_ids:
+            cluster = STORE.get(cluster_id)
+            yield 'event: clusterupdate\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
     while True:
-        for event_type, cluster in STORE.listen():
-            if not cluster_ids or cluster['id'] in cluster_ids:
-                yield 'event: ' + event_type + '\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
+        for event_type, event_data in STORE.listen():
+            # hacky, event_data can be delta or full cluster object
+            if not cluster_ids or event_data.get('cluster_id', event_data.get('id')) in cluster_ids:
+                yield 'event: ' + event_type + '\ndata: ' + json.dumps(event_data, separators=(',', ':')) + '\n\n'
 
 
 @app.route('/events')
@@ -461,8 +518,19 @@ def update():
                     clusters = get_mock_clusters()
                 else:
                     clusters = get_kubernetes_clusters()
+                cluster_ids = []
                 for cluster in clusters:
-                    STORE.publish('clusterupdate', cluster)
+                    old_data = STORE.get(cluster['id'])
+                    if old_data:
+                        # https://pikacode.com/phijaro/json_delta/ticket/11/
+                        # diff is extremely slow without array_align=False
+                        delta = json_delta.diff(old_data, cluster, verbose=DEBUG, array_align=False)
+                        STORE.publish('clusterdelta', {'cluster_id': cluster['id'], 'delta': delta})
+                    else:
+                        STORE.publish('clusterupdate', cluster)
+                    STORE.set(cluster['id'], cluster)
+                    cluster_ids.append(cluster['id'])
+                STORE.set('cluster-ids', cluster_ids)
             except:
                 logging.exception('Failed to update')
             finally:

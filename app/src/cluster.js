@@ -26,7 +26,8 @@ export default class Cluster extends PIXI.Graphics {
         let workerHeight = 0
         const workerNodes = []
         const maxWidth = window.innerWidth - 130
-        for (const node of this.cluster.nodes) {
+        for (const nodeName of Object.keys(this.cluster.nodes).sort()) {
+            const node = this.cluster.nodes[nodeName]
             var nodeBox = new Node(node, this, this.tooltip)
             nodeBox.draw()
             if (nodeBox.isMaster()) {
@@ -64,7 +65,7 @@ export default class Cluster extends PIXI.Graphics {
         }
 
 
-        for (const pod of this.cluster.unassigned_pods) {
+        for (const pod of Object.values(this.cluster.unassigned_pods)) {
             var podBox = Pod.getOrCreate(pod, this, this.tooltip)
             podBox.x = masterX
             podBox.y = masterY
@@ -86,7 +87,7 @@ export default class Cluster extends PIXI.Graphics {
         topHandle.interactive = true
         topHandle.buttonMode = true
         const that = this
-        topHandle.on('click', function(event) {
+        topHandle.on('click', function(_event) {
             App.current.toggleCluster(that.cluster.id)
         })
         var text = new PIXI.Text(this.cluster.api_server_url, {fontFamily: 'ShareTechMono', fontSize: 10, fill: 0x000000})

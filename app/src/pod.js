@@ -10,8 +10,8 @@ const sortByName = (a, b) => {
 }
 
 const sortByAge = (a, b) => {
-    const dateA = new Date(a.status.startTime)
-    const dateB = new Date(b.status.startTime)
+    const dateA = new Date(a.startTime)
+    const dateB = new Date(b.startTime)
     if (dateA.getTime() < dateB.getTime()) {
         return -1
     } else if (dateA.getTime() === dateB.getTime())
@@ -54,6 +54,7 @@ export class Pod extends PIXI.Graphics {
         if (this.tick) {
             PIXI.ticker.shared.remove(this.tick, this)
         }
+        PIXI.ticker.shared.remove(this.animateMove, this)
         super.destroy()
     }
 
@@ -122,39 +123,37 @@ export class Pod extends PIXI.Graphics {
         }
     }
 
-    pulsate(time) {
+    pulsate(_time) {
         const v = Math.sin((PIXI.ticker.shared.lastTime % 1000) / 1000. * Math.PI)
         this.alpha = v * this._progress
     }
 
-    crashing(time) {
+    crashing(_time) {
         const v = Math.sin((PIXI.ticker.shared.lastTime % 1000) / 1000. * Math.PI)
         this.tint = PIXI.utils.rgb2hex([1, v, v])
     }
 
-    terminating(time) {
+    terminating(_time) {
         const v = Math.sin(((1000 + PIXI.ticker.shared.lastTime) % 1000) / 1000. * Math.PI)
         this.cross.alpha = v
     }
 
     draw() {
 
-        // pod.status.containerStatuses might be undefined!
-        const containerStatuses = this.pod.status.containerStatuses || []
         let ready = 0
         let running = 0
         let restarts = 0
-        for (const containerStatus of containerStatuses) {
-            if (containerStatus.ready) {
+        for (const container of this.pod.containers) {
+            if (container.ready) {
                 ready++
             }
-            if (containerStatus.state.running) {
+            if (container.state && container.state.running) {
                 running++
             }
-            restarts += containerStatus.restartCount || 0
+            restarts += container.restartCount || 0
         }
-        const allReady = ready >= containerStatuses.length
-        const allRunning = running >= containerStatuses.length
+        const allReady = ready >= this.pod.containers.length
+        const allRunning = running >= this.pod.containers.length
         const resources = this.getResourceUsage()
 
         let newTick = null
@@ -164,8 +163,8 @@ export class Pod extends PIXI.Graphics {
         podBox.on('mouseover', function () {
             podBox.filters = podBox.filters.filter(x => x != BRIGHTNESS_FILTER).concat([BRIGHTNESS_FILTER])
             let s = this.pod.name
-            s += '\nStatus    : ' + this.pod.status.phase + ' (' + ready + '/' + containerStatuses.length + ' ready)'
-            s += '\nStart Time: ' + this.pod.status.startTime
+            s += '\nStatus    : ' + this.pod.phase + ' (' + ready + '/' + this.pod.containers.length + ' ready)'
+            s += '\nStart Time: ' + this.pod.startTime
             s += '\nLabels    :'
             for (var key of Object.keys(this.pod.labels).sort()) {
                 if (key !== 'pod-template-hash') {
@@ -173,15 +172,18 @@ export class Pod extends PIXI.Graphics {
                 }
             }
             s += '\nContainers:'
-            for (const containerStatus of containerStatuses) {
-                const key = Object.keys(containerStatus.state)[0]
-                s += '\n  ' + containerStatus.name + ': ' + key
-                if (containerStatus.state[key].reason) {
-                    // "CrashLoopBackOff"
-                    s += ': ' + containerStatus.state[key].reason
+            for (const container of this.pod.containers) {
+                s += '\n  ' + container.name + ': '
+                if (container.state) {
+                    const key = Object.keys(container.state)[0]
+                    s += key
+                    if (container.state[key].reason) {
+                        // "CrashLoopBackOff"
+                        s += ': ' + container.state[key].reason
+                    }
                 }
-                if (containerStatus.restartCount) {
-                    s += ' (' + containerStatus.restartCount + ' restarts)'
+                if (container.restartCount) {
+                    s += ' (' + container.restartCount + ' restarts)'
                 }
             }
             s += '\nCPU:'
@@ -202,23 +204,21 @@ export class Pod extends PIXI.Graphics {
             this.tooltip.visible = false
         })
         podBox.lineStyle(1, App.current.theme.primaryColor, 1)
-        let i = 0
         const w = 10 / this.pod.containers.length
-        for (const container of this.pod.containers) {
+        for (let i = 0; i < this.pod.containers.length; i++) {
             podBox.drawRect(i * w, 0, w, 10)
-            i++
         }
         let color
-        if (this.pod.status.phase == 'Succeeded') {
+        if (this.pod.phase == 'Succeeded') {
             // completed Job
             color = 0xaaaaff
-        } else if (this.pod.status.phase == 'Running' && allReady) {
+        } else if (this.pod.phase == 'Running' && allReady) {
             color = 0xaaffaa
-        } else if (this.pod.status.phase == 'Running' && allRunning && !allReady) {
+        } else if (this.pod.phase == 'Running' && allRunning && !allReady) {
             // all containers running, but some not ready (readinessProbe)
             newTick = this.pulsate
             color = 0xaaffaa
-        } else if (this.pod.status.phase == 'Pending') {
+        } else if (this.pod.phase == 'Pending') {
             newTick = this.pulsate
             color = 0xffffaa
         } else {

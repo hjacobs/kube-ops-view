@@ -4,6 +4,7 @@ import {Pod, ALL_PODS, sortByName, sortByMemory, sortByCPU, sortByAge} from './p
 import SelectBox from './selectbox'
 import { Theme, ALL_THEMES} from './themes.js'
 import { DESATURATION_FILTER } from './filters.js'
+import { JSON_delta } from './vendor/json_delta.js'
 
 const PIXI = require('pixi.js')
 
@@ -18,6 +19,12 @@ export default class App {
         this.sorterFn = ''
         this.theme = Theme.get(localStorage.getItem('theme'))
         this.eventSource = null
+        this.connectTime = null
+        this.keepAliveTimer = null
+        // make sure we got activity at least every 20 seconds
+        this.keepAliveSeconds = 20
+        // always reconnect after 5 minutes
+        this.maxConnectionLifetimeSeconds = 300
         this.clusters = new Map()
     }
 
@@ -262,17 +269,19 @@ export default class App {
         this.stage.addChild(pod)
     }
     update() {
+        // make sure we create a copy (this.clusters might get modified)
+        const clusters = Array.from(this.clusters.entries()).sort().map(idCluster => idCluster[1])
         const that = this
         let changes = 0
         const firstTime = this.seenPods.size == 0
         const podKeys = new Set()
-        for (const cluster of this.clusters.values()) {
-            for (const node of cluster.nodes) {
-                for (const pod of node.pods) {
+        for (const cluster of clusters) {
+            for (const node of Object.values(cluster.nodes)) {
+                for (const pod of Object.values(node.pods)) {
                     podKeys.add(cluster.id + '/' + pod.namespace + '/' + pod.name)
                 }
             }
-            for (const pod of cluster.unassigned_pods) {
+            for (const pod of Object.values(cluster.unassigned_pods)) {
                 podKeys.add(cluster.id + '/' + pod.namespace + '/' + pod.name)
             }
         }
@@ -301,10 +310,10 @@ export default class App {
         }
         let y = 0
         const clusterIds = new Set()
-        for (const [clusterId, cluster] of Array.from(this.clusters.entries()).sort()) {
-            if (!this.selectedClusters.size || this.selectedClusters.has(clusterId)) {
-                clusterIds.add(clusterId)
-                let clusterBox = clusterComponentById[clusterId]
+        for (const cluster of clusters) {
+            if (!this.selectedClusters.size || this.selectedClusters.has(cluster.id)) {
+                clusterIds.add(cluster.id)
+                let clusterBox = clusterComponentById[cluster.id]
                 if (!clusterBox) {
                     clusterBox = new Cluster(cluster, this.tooltip)
                     this.viewContainer.addChild(clusterBox)
@@ -340,7 +349,7 @@ export default class App {
         }
     }
 
-    tick(time) {
+    tick(_time) {
         this.renderer.render(this.stage)
     }
 
@@ -364,15 +373,35 @@ export default class App {
         }
         this.changeLocationHash('clusters', Array.from(this.selectedClusters).join(','))
         // make sure we are updating our EventSource filter
-        this.listen()
+        this.connect()
         this.update()
     }
 
-    listen() {
+    keepAlive() {
+        if (this.keepAliveTimer != null) {
+            clearTimeout(this.keepAliveTimer)
+        }
+        this.keepAliveTimer = setTimeout(this.connect.bind(this), this.keepAliveSeconds * 1000)
+        if (this.connectTime != null) {
+            const now = Date.now()
+            if (now - this.connectTime > this.maxConnectionLifetimeSeconds * 1000) {
+                // maximum connection lifetime exceeded => reconnect
+                this.connect()
+            }
+        }
+    }
+
+    disconnect() {
         if (this.eventSource != null) {
             this.eventSource.close()
             this.eventSource = null
+            this.connectTime = null
         }
+    }
+
+    connect() {
+        // first close the old connection
+        this.disconnect()
         const that = this
         // NOTE: path must be relative to work with kubectl proxy out of the box
         let url = 'events'
@@ -381,20 +410,44 @@ export default class App {
             url += '?cluster_ids=' + clusterIds
         }
         const eventSource = this.eventSource = new EventSource(url, {credentials: 'include'})
-        eventSource.onerror = function(event) {
-            that.listen()
+        this.keepAlive()
+        eventSource.onerror = function(_event) {
+            that._errors++
+            if (that._errors <= 1) {
+                // immediately reconnect on first error
+                that.connect()
+            } else {
+                // rely on keep-alive timer to reconnect
+                that.disconnect()
+            }
         }
         eventSource.addEventListener('clusterupdate', function(event) {
+            that._errors = 0
+            that.keepAlive()
             const cluster = JSON.parse(event.data)
             that.clusters.set(cluster.id, cluster)
             that.update()
         })
+        eventSource.addEventListener('clusterdelta', function(event) {
+            that._errors = 0
+            that.keepAlive()
+            const data = JSON.parse(event.data)
+            let cluster = that.clusters.get(data.cluster_id)
+            if (cluster && data.delta) {
+                // deep copy cluster object (patch function mutates inplace!)
+                cluster = JSON.parse(JSON.stringify(cluster))
+                cluster = JSON_delta.patch(cluster, data.delta)
+                that.clusters.set(cluster.id, cluster)
+                that.update()
+            }
+        })
+        this.connectTime = Date.now()
     }
 
     run() {
         this.initialize()
         this.draw()
-        this.listen()
+        this.connect()
 
         PIXI.ticker.shared.add(this.tick, this)
     }
