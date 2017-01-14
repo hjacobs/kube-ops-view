@@ -2,6 +2,10 @@
 Kubernetes Operational View
 ===========================
 
+.. image:: https://travis-ci.org/hjacobs/kube-ops-view.svg?branch=master
+   :target: https://travis-ci.org/hjacobs/kube-ops-view
+   :alt: Travis CI Build Status
+
 .. image:: https://readthedocs.org/projects/kubernetes-operational-view/badge/?version=latest
    :target: http://kubernetes-operational-view.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
