@@ -345,7 +345,7 @@ export default class App {
         }
     }
 
-    tick(time) {
+    tick(_time) {
         this.renderer.render(this.stage)
     }
 
@@ -399,7 +399,7 @@ export default class App {
         }
         const eventSource = this.eventSource = new EventSource(url, {credentials: 'include'})
         this.keepAlive()
-        eventSource.onerror = function(event) {
+        eventSource.onerror = function(_event) {
             that._errors++
             if (that._errors <= 1) {
                 // immediately reconnect on first error

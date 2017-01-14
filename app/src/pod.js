@@ -123,17 +123,17 @@ export class Pod extends PIXI.Graphics {
         }
     }
 
-    pulsate(time) {
+    pulsate(_time) {
         const v = Math.sin((PIXI.ticker.shared.lastTime % 1000) / 1000. * Math.PI)
         this.alpha = v * this._progress
     }
 
-    crashing(time) {
+    crashing(_time) {
         const v = Math.sin((PIXI.ticker.shared.lastTime % 1000) / 1000. * Math.PI)
         this.tint = PIXI.utils.rgb2hex([1, v, v])
     }
 
-    terminating(time) {
+    terminating(_time) {
         const v = Math.sin(((1000 + PIXI.ticker.shared.lastTime) % 1000) / 1000. * Math.PI)
         this.cross.alpha = v
     }
@@ -204,11 +204,9 @@ export class Pod extends PIXI.Graphics {
             this.tooltip.visible = false
         })
         podBox.lineStyle(1, App.current.theme.primaryColor, 1)
-        let i = 0
         const w = 10 / this.pod.containers.length
-        for (const container of this.pod.containers) {
+        for (let i = 0; i < this.pod.containers.length; i++) {
             podBox.drawRect(i * w, 0, w, 10)
-            i++
         }
         let color
         if (this.pod.phase == 'Succeeded') {

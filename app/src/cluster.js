@@ -87,7 +87,7 @@ export default class Cluster extends PIXI.Graphics {
         topHandle.interactive = true
         topHandle.buttonMode = true
         const that = this
-        topHandle.on('click', function(event) {
+        topHandle.on('click', function(_event) {
             App.current.toggleCluster(that.cluster.id)
         })
         var text = new PIXI.Text(this.cluster.api_server_url, {fontFamily: 'ShareTechMono', fontSize: 10, fill: 0x000000})
