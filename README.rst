@@ -10,7 +10,7 @@ Kubernetes Operational View
    :target: http://kubernetes-operational-view.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-**This project is in pre-alpha, but it might already be useful.**
+**This project is in a very early state, but it might already be useful.**
 
 .. image:: screenshot.png
    :alt: Screenshot
@@ -45,7 +45,7 @@ Usage
 Running Locally
 ---------------
 
-You can run the app locally with `kubectl proxy` against your running cluster:
+You can run the app locally with ``kubectl proxy`` against your running cluster:
 
 .. code-block:: bash
 
