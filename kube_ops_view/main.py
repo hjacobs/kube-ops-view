@@ -17,7 +17,8 @@ import time
 from pathlib import Path
 
 from flask import Flask, redirect
-from flask_oauthlib.client import OAuth, OAuthRemoteApp
+from flask_oauthlib.client import OAuth
+from .oauth import OAuthRemoteAppWithRefresh
 from urllib.parse import urljoin
 
 from .mock import get_mock_clusters
@@ -35,7 +36,6 @@ def get_bool(name: str):
 DEBUG = get_bool('DEBUG')
 SERVER_PORT = int(os.getenv('SERVER_PORT', 8080))
 SERVER_STATUS = {'shutdown': False}
-CREDENTIALS_DIR = os.getenv('CREDENTIALS_DIR', '')
 AUTHORIZE_URL = os.getenv('AUTHORIZE_URL')
 APP_URL = os.getenv('APP_URL')
 MOCK = get_bool('MOCK')
@@ -48,31 +48,15 @@ app.secret_key = os.getenv('SECRET_KEY', 'development')
 
 oauth = OAuth(app)
 
-
-class OAuthRemoteAppWithRefresh(OAuthRemoteApp):
-    '''Same as flask_oauthlib.client.OAuthRemoteApp, but always loads client credentials from file.'''
-
-    def __init__(self, oauth, name, **kwargs):
-        # constructor expects some values, so make it happy..
-        kwargs['consumer_key'] = 'not-needed-here'
-        kwargs['consumer_secret'] = 'not-needed-here'
-        OAuthRemoteApp.__init__(self, oauth, name, **kwargs)
-
-    def refresh_credentials(self):
-        with open(os.path.join(CREDENTIALS_DIR, 'authcode-client-id')) as fd:
-            self._consumer_key = fd.read().strip()
-        with open(os.path.join(CREDENTIALS_DIR, 'authcode-client-secret')) as fd:
-            self._consumer_secret = fd.read().strip()
-
-    @property
-    def consumer_key(self):
-        self.refresh_credentials()
-        return self._consumer_key
-
-    @property
-    def consumer_secrect(self):
-        self.refresh_credentials()
-        return self._consumer_secret
+auth = OAuthRemoteAppWithRefresh(
+    oauth,
+    'auth',
+    request_token_url=None,
+    access_token_method='POST',
+    access_token_url=os.getenv('ACCESS_TOKEN_URL'),
+    authorize_url=AUTHORIZE_URL
+)
+oauth.remote_apps['auth'] = auth
 
 
 def authorize(f):
@@ -83,17 +67,6 @@ def authorize(f):
         return f(*args, **kwargs)
 
     return wrapper
-
-
-auth = OAuthRemoteAppWithRefresh(
-    oauth,
-    'auth',
-    request_token_url=None,
-    access_token_method='POST',
-    access_token_url=os.getenv('ACCESS_TOKEN_URL'),
-    authorize_url=AUTHORIZE_URL
-)
-oauth.remote_apps['auth'] = auth
 
 
 @app.route('/health')
