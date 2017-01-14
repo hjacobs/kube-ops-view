@@ -19,8 +19,12 @@ export default class App {
         this.sorterFn = ''
         this.theme = Theme.get(localStorage.getItem('theme'))
         this.eventSource = null
+        this.connectTime = null
         this.keepAliveTimer = null
+        // make sure we got activity at least every 20 seconds
         this.keepAliveSeconds = 20
+        // always reconnect after 5 minutes
+        this.maxConnectionLifetimeSeconds = 300
         this.clusters = new Map()
     }
 
@@ -378,12 +382,20 @@ export default class App {
             clearTimeout(this.keepAliveTimer)
         }
         this.keepAliveTimer = setTimeout(this.connect.bind(this), this.keepAliveSeconds * 1000)
+        if (this.connectTime != null) {
+            const now = Date.now()
+            if (now - this.connectTime > this.maxConnectionLifetimeSeconds * 1000) {
+                // maximum connection lifetime exceeded => reconnect
+                this.connect()
+            }
+        }
     }
 
     disconnect() {
         if (this.eventSource != null) {
             this.eventSource.close()
             this.eventSource = null
+            this.connectTime = null
         }
     }
 
@@ -429,6 +441,7 @@ export default class App {
                 that.update()
             }
         })
+        this.connectTime = Date.now()
     }
 
     run() {
