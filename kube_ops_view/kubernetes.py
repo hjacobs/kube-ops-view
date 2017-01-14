@@ -56,7 +56,7 @@ def map_container(cont: dict, pod: dict):
 def request(cluster, path, **kwargs):
     if 'timeout' not in kwargs:
         # sane default timeout
-        kwargs['time'] = 5
+        kwargs['timeout'] = 5
     return session.get(urljoin(cluster.api_server_url, path), auth=cluster.auth, verify=cluster.ssl_ca_cert, **kwargs)
 
 

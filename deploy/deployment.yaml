@@ -18,10 +18,9 @@ spec:
     spec:
       containers:
       - name: service
-        image: hjacobs/kube-ops-view:2017.0.dev1-d9a1e2b-dirty
+        image: hjacobs/kube-ops-view:latest
         args:
         - --redis-url=redis://kube-ops-view-redis:6379
-        - --debug
         ports:
         - containerPort: 8080
           protocol: TCP
