@@ -2,6 +2,10 @@
 Kubernetes Operational View
 ===========================
 
+.. image:: https://travis-ci.org/hjacobs/kube-ops-view.svg?branch=master
+   :target: https://travis-ci.org/hjacobs/kube-ops-view
+   :alt: Travis CI Build Status
+
 .. image:: https://readthedocs.org/projects/kubernetes-operational-view/badge/?version=latest
    :target: http://kubernetes-operational-view.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
@@ -45,7 +49,7 @@ You can run the app locally:
     $ pip3 install -r requirements.txt
     $ kubectl proxy &
     $ (cd app && npm start &)
-    $ ./app.py
+    $ python3 -m kube_ops_view
 
 Now direct your browser to http://localhost:8080
 
@@ -74,13 +78,23 @@ You can start the app in "mock mode" to see all UI features without running any 
 
     $ pip3 install -r requirements.txt
     $ (cd app && npm start &)
-    $ MOCK=true ./app.py
+    $ python3 -m kube_ops_view --mock --debug
 
 You can also run the latest Docker image directly:
 
 .. code-block:: bash
 
-    $ docker run -it -p 8080:8080 -e MOCK=true hjacobs/kube-ops-view
+    $ docker run -it -p 8080:8080 hjacobs/kube-ops-view --mock
+
+
+Building
+========
+
+The provided ``Makefile`` will generate a Docker image by default:
+
+.. code-block:: bash
+
+    $ make
 
 
 Multiple Clusters

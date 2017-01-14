@@ -3,6 +3,12 @@ __pycache__
 *.pyc
 .idea/
 **/node_modules/
-static/build/
+kube_ops_view/static/build/
 *-secret
 npm-debug.log*
+.tox/
+*.egg*
+dist/
+scm-source.json
+.cache/
+.coverage

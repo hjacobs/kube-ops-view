@@ -1,7 +1,11 @@
-language: node_js
-node_js:
-  - '6'
-before_script:
+language: python
+python:
+  - "3.5"
+install:
+  - pip install tox tox-travis coveralls
+  - nvm install 7.4
   - npm install -g eslint
 script:
-  - cd app && eslint src
+  - tox
+after_success:
+  - coveralls
