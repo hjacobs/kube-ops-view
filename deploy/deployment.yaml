@@ -18,7 +18,9 @@ spec:
     spec:
       containers:
       - name: service
-        image: hjacobs/kube-ops-view
+        image: hjacobs/kube-ops-view:latest
+        args:
+        - --redis-url=redis://kube-ops-view-redis:6379
         ports:
         - containerPort: 8080
           protocol: TCP
@@ -28,9 +30,6 @@ spec:
             port: 8080
           initialDelaySeconds: 5
           timeoutSeconds: 1
-        env:
-        - name: REDIS_URL
-          value: "redis://kube-ops-view-redis:6379"
         resources:
           limits:
             cpu: 200m
@@ -38,17 +37,3 @@ spec:
           requests:
             cpu: 50m
             memory: 50Mi
-      - name: kubectl
-        image: registry.opensource.zalan.do/teapot/hyperkube:v1.4.7_zalando.0
-        command:
-        - /hyperkube
-        args:
-        - kubectl
-        - proxy
-        resources:
-          limits:
-            cpu: 100m
-            memory: 100Mi
-          requests:
-            cpu: 25m
-            memory: 25Mi

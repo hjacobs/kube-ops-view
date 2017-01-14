@@ -1,7 +1,7 @@
 .PHONY: clean test appjs docker push mock
 
 IMAGE            ?= hjacobs/kube-ops-view
-VERSION          ?= 2017.0.dev1-$(shell git describe --tags --always --dirty)
+VERSION          ?= $(shell git describe --tags --always --dirty)
 TAG              ?= $(VERSION)
 GITHEAD          = $(shell git rev-parse --short HEAD)
 GITURL           = $(shell git config --get remote.origin.url)
