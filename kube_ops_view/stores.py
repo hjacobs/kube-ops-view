@@ -8,6 +8,8 @@ import time
 from redlock import Redlock
 from queue import Queue
 
+logger = logging.getLogger(__name__)
+
 ONE_YEAR = 3600 * 24 * 365
 
 
@@ -87,7 +89,7 @@ class RedisStore:
     '''Redis-based backend for deployments with replicas > 1'''
 
     def __init__(self, url: str):
-        logging.info('Connecting to Redis on {}..'.format(url))
+        logger.info('Connecting to Redis on {}..'.format(url))
         self._redis = redis.StrictRedis.from_url(url)
         self._redlock = Redlock([url])
 

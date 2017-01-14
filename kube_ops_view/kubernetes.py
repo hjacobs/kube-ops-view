@@ -1,21 +1,12 @@
 import datetime
 import logging
-import re
 from urllib.parse import urljoin
 
 import requests
 
-CLUSTER_ID_INVALID_CHARS = re.compile('[^a-z0-9:-]')
+logger = logging.getLogger(__name__)
 
 session = requests.Session()
-
-
-def generate_cluster_id(url: str):
-    '''Generate some "cluster ID" from given API server URL'''
-    for prefix in ('https://', 'http://'):
-        if url.startswith(prefix):
-            url = url[len(prefix):]
-    return CLUSTER_ID_INVALID_CHARS.sub('-', url.lower()).strip('-')
 
 
 def map_node_status(status: dict):
@@ -62,8 +53,8 @@ def request(cluster, path, **kwargs):
 
 def get_kubernetes_clusters(cluster_discoverer):
     for cluster in cluster_discoverer.get_clusters():
+        cluster_id = cluster.id
         api_server_url = cluster.api_server_url
-        cluster_id = generate_cluster_id(api_server_url)
         response = request(cluster, '/api/v1/nodes')
         response.raise_for_status()
         nodes = {}
@@ -94,18 +85,18 @@ def get_kubernetes_clusters(cluster_discoverer):
             response.raise_for_status()
             data = response.json()
             if not data.get('items'):
-                logging.info('Heapster node metrics not available (yet)')
+                logger.info('Heapster node metrics not available (yet)')
             else:
                 for metrics in data['items']:
                     nodes[metrics['metadata']['name']]['usage'] = metrics['usage']
         except:
-            logging.exception('Failed to get node metrics')
+            logger.exception('Failed to get node metrics')
         try:
             response = request(cluster, '/api/v1/namespaces/kube-system/services/heapster/proxy/apis/metrics/v1alpha1/pods')
             response.raise_for_status()
             data = response.json()
             if not data.get('items'):
-                logging.info('Heapster pod metrics not available (yet)')
+                logger.info('Heapster pod metrics not available (yet)')
             else:
                 for metrics in data['items']:
                     pod = pods_by_namespace_name.get((metrics['metadata']['namespace'], metrics['metadata']['name']))
@@ -115,5 +106,5 @@ def get_kubernetes_clusters(cluster_discoverer):
                                 if container['name'] == container_metrics['name']:
                                     container['resources']['usage'] = container_metrics['usage']
         except:
-            logging.exception('Failed to get pod metrics')
+            logger.exception('Failed to get pod metrics')
         yield {'id': cluster_id, 'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods}
