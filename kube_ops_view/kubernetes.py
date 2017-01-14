@@ -4,12 +4,8 @@ import re
 from urllib.parse import urljoin
 
 import requests
-import tokens
 
 CLUSTER_ID_INVALID_CHARS = re.compile('[^a-z0-9:-]')
-
-tokens.configure(from_file_only=True)
-tokens.manage('read-only')
 
 session = requests.Session()
 
@@ -57,13 +53,11 @@ def map_container(cont: dict, pod: dict):
     return obj
 
 
-def get_kubernetes_clusters(clusters):
-    for api_server_url in clusters:
+def get_kubernetes_clusters(cluster_discoverer):
+    for cluster in cluster_discoverer.get_clusters():
+        api_server_url = cluster.api_server_url
         cluster_id = generate_cluster_id(api_server_url)
-        if 'localhost' not in api_server_url:
-            # TODO: hacky way of detecting whether we need a token or not
-            session.headers['Authorization'] = 'Bearer {}'.format(tokens.get('read-only'))
-        response = session.get(urljoin(api_server_url, '/api/v1/nodes'), timeout=5)
+        response = session.get(urljoin(api_server_url, '/api/v1/nodes'), timeout=5, auth=cluster.auth, verify=cluster.ssl_ca_cert)
         response.raise_for_status()
         nodes = {}
         pods_by_namespace_name = {}

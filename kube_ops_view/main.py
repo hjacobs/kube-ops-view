@@ -26,11 +26,11 @@ from urllib.parse import urljoin
 from .mock import get_mock_clusters
 from .kubernetes import get_kubernetes_clusters
 from .stores import MemoryStore, RedisStore
+from .cluster_discovery import DEFAULT_CLUSTERS, StaticClusterDiscoverer
 
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_CLUSTERS = 'http://localhost:8001/'
 SERVER_STATUS = {'shutdown': False}
 AUTHORIZE_URL = os.getenv('AUTHORIZE_URL')
 APP_URL = os.getenv('APP_URL')
@@ -155,7 +155,7 @@ def authorized():
     return redirect(urljoin(APP_URL, '/'))
 
 
-def update(clusters: list, store, mock: bool):
+def update(cluster_discoverer, store, mock: bool):
     while True:
         lock = store.acquire_lock()
         if lock:
@@ -163,7 +163,7 @@ def update(clusters: list, store, mock: bool):
                 if mock:
                     _clusters = get_mock_clusters()
                 else:
-                    _clusters = get_kubernetes_clusters(clusters)
+                    _clusters = get_kubernetes_clusters(cluster_discoverer)
                 cluster_ids = []
                 for cluster in _clusters:
                     old_data = store.get(cluster['id'])
@@ -215,7 +215,7 @@ def print_version(ctx, param, value):
 @click.option('--secret-key', help='Secret key for session cookies', envvar='SECRET_KEY', default='development')
 @click.option('--redis-url', help='Redis URL to use for pub/sub and job locking', envvar='REDIS_URL')
 @click.option('--clusters', help='Comma separated list of Kubernetes API server URLs (default: {})'.format(DEFAULT_CLUSTERS),
-              envvar='CLUSTERS', default=DEFAULT_CLUSTERS)
+              envvar='CLUSTERS')
 def main(port, debug, mock, secret_key, redis_url, clusters):
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
 
@@ -225,8 +225,10 @@ def main(port, debug, mock, secret_key, redis_url, clusters):
     app.secret_key = secret_key
     app.store = store
 
+    api_server_urls = clusters.split(',') if clusters else []
+    gevent.spawn(update, cluster_discoverer=StaticClusterDiscoverer(api_server_urls), store=store, mock=mock)
+
     signal.signal(signal.SIGTERM, exit_gracefully)
     http_server = gevent.wsgi.WSGIServer(('0.0.0.0', port), app)
-    gevent.spawn(update, clusters=clusters.split(','), store=store, mock=mock)
     logger.info('Listening on :{}..'.format(port))
     http_server.serve_forever()
