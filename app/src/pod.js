@@ -139,22 +139,20 @@ export class Pod extends PIXI.Graphics {
 
     draw() {
 
-        // pod.status.containerStatuses might be undefined!
-        const containerStatuses = this.pod.status.containerStatuses || []
         let ready = 0
         let running = 0
         let restarts = 0
-        for (const containerStatus of containerStatuses) {
-            if (containerStatus.ready) {
+        for (const container of this.pod.containers) {
+            if (container.ready) {
                 ready++
             }
-            if (containerStatus.state.running) {
+            if (container.state && container.state.running) {
                 running++
             }
-            restarts += containerStatus.restartCount || 0
+            restarts += container.restartCount || 0
         }
-        const allReady = ready >= containerStatuses.length
-        const allRunning = running >= containerStatuses.length
+        const allReady = ready >= this.pod.containers.length
+        const allRunning = running >= this.pod.containers.length
         const resources = this.getResourceUsage()
 
         let newTick = null
@@ -164,7 +162,7 @@ export class Pod extends PIXI.Graphics {
         podBox.on('mouseover', function () {
             podBox.filters = podBox.filters.filter(x => x != BRIGHTNESS_FILTER).concat([BRIGHTNESS_FILTER])
             let s = this.pod.name
-            s += '\nStatus    : ' + this.pod.status.phase + ' (' + ready + '/' + containerStatuses.length + ' ready)'
+            s += '\nStatus    : ' + this.pod.status.phase + ' (' + ready + '/' + this.pod.containers.length + ' ready)'
             s += '\nStart Time: ' + this.pod.status.startTime
             s += '\nLabels    :'
             for (var key of Object.keys(this.pod.labels).sort()) {
@@ -173,15 +171,18 @@ export class Pod extends PIXI.Graphics {
                 }
             }
             s += '\nContainers:'
-            for (const containerStatus of containerStatuses) {
-                const key = Object.keys(containerStatus.state)[0]
-                s += '\n  ' + containerStatus.name + ': ' + key
-                if (containerStatus.state[key].reason) {
-                    // "CrashLoopBackOff"
-                    s += ': ' + containerStatus.state[key].reason
+            for (const container of this.pod.containers) {
+                s += '\n  ' + container.name + ': '
+                if (container.state) {
+                    const key = Object.keys(container.state)[0]
+                    s += key
+                    if (container.state[key].reason) {
+                        // "CrashLoopBackOff"
+                        s += ': ' + container.state[key].reason
+                    }
                 }
-                if (containerStatus.restartCount) {
-                    s += ' (' + containerStatus.restartCount + ' restarts)'
+                if (container.restartCount) {
+                    s += ' (' + container.restartCount + ' restarts)'
                 }
             }
             s += '\nCPU:'

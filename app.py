@@ -267,7 +267,7 @@ def generate_mock_pod(index: int, i: int, j: int):
         'agent-cooper',
         'black-lodge',
         'bob',
-        'bobby-briggs'
+        'bobby-briggs',
         'laura-palmer',
         'leland-palmer',
         'log-lady',
@@ -276,15 +276,20 @@ def generate_mock_pod(index: int, i: int, j: int):
     pod_phases = ['Pending', 'Running', 'Running']
     labels = {}
     phase = pod_phases[hash_int((index + 1) * (i + 1) * (j + 1)) % len(pod_phases)]
+    status = {'phase': phase}
     containers = []
     for k in range(1 + j % 2):
-        containers.append({'name': 'myapp', 'image': 'foo/bar/{}'.format(j), 'resources': {'requests': {'cpu': '100m', 'memory': '100Mi'}, 'limits': {}}})
-    status = {'phase': phase}
-    if phase == 'Running':
-        if j % 13 == 0:
-            status['containerStatuses'] = [{'ready': False, 'state': {'waiting': {'reason': 'CrashLoopBackOff'}}}]
-        elif j % 7 == 0:
-            status['containerStatuses'] = [{'ready': True, 'state': {'running': {}}, 'restartCount': 3}]
+        container = {
+            'name': 'myapp', 'image': 'foo/bar/{}'.format(j), 'resources': {'requests': {'cpu': '100m', 'memory': '100Mi'}, 'limits': {}},
+            'ready': True,
+            'state': {'running': {}}
+        }
+        if phase == 'Running':
+            if j % 13 == 0:
+                container.update(**{'ready': False, 'state': {'waiting': {'reason': 'CrashLoopBackOff'}}})
+            elif j % 7 == 0:
+                container.update(**{'ready': True, 'state': {'running': {}}, 'restartCount': 3})
+        containers.append(container)
     pod = {'name': '{}-{}-{}'.format(names[hash_int((i + 1) * (j + 1)) % len(names)], i, j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels, 'status': status, 'containers': containers}
     if phase == 'Running' and j % 17 == 0:
         pod['deleted'] = 123
@@ -352,6 +357,28 @@ def map_node(node: dict):
     }
 
 
+def map_pod_status(status: dict):
+    return {'phase': status.get('phase'), 'startTime': status.get('startTime')}
+
+
+def map_pod(pod: dict):
+    return {
+        'name': pod['metadata']['name'],
+        'namespace': pod['metadata']['namespace'],
+        'labels': pod['metadata'].get('labels', {}),
+        'status': map_pod_status(pod['status']),
+        'startTime': pod['status']['startTime'] if 'startTime' in pod['status'] else '',
+        'containers': []
+    }
+
+def map_container(cont: dict, pod: dict):
+    obj = {'name': cont['name'], 'image': cont['image'], 'resources': cont['resources']}
+    status = list([s for s in pod.get('status', {}).get('containerStatuses', []) if s['name'] == cont['name']])
+    if status:
+        obj.update(**status[0])
+    return obj
+
+
 def get_kubernetes_clusters():
     for api_server_url in (os.getenv('CLUSTERS') or DEFAULT_CLUSTERS).split(','):
         cluster_id = generate_cluster_id(api_server_url)
@@ -369,19 +396,13 @@ def get_kubernetes_clusters():
         response = session.get(urljoin(api_server_url, '/api/v1/pods'), timeout=5)
         response.raise_for_status()
         for pod in response.json()['items']:
-            obj = {'name': pod['metadata']['name'],
-                   'namespace': pod['metadata']['namespace'],
-                   'labels': pod['metadata'].get('labels', {}),
-                   'status': pod['status'],
-                   'startTime': pod['status']['startTime'] if 'startTime' in pod['status'] else '',
-                   'containers': []
-                   }
+            obj = map_pod(pod)
             if 'deletionTimestamp' in pod['metadata']:
                 obj['deleted'] = datetime.datetime.strptime(pod['metadata']['deletionTimestamp'],
                                                             '%Y-%m-%dT%H:%M:%SZ').replace(
                     tzinfo=datetime.timezone.utc).timestamp()
             for cont in pod['spec']['containers']:
-                obj['containers'].append({'name': cont['name'], 'image': cont['image'], 'resources': cont['resources']})
+                obj['containers'].append(map_container(cont, pod))
             pods_by_namespace_name[(obj['namespace'], obj['name'])] = obj
             pod_key = '{}/{}'.format(obj['namespace'], obj['name'])
             if 'nodeName' in pod['spec'] and pod['spec']['nodeName'] in nodes:
