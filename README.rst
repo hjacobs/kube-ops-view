@@ -58,7 +58,7 @@ It should be as simple as:
 
 .. code-block:: bash
 
-    $ kubectl apply -f deploy/deployment.yaml -f deploy/service.yaml
+    $ kubectl apply -f deploy  # apply all manifests from the folder
 
 Afterwards you can open "kube-ops-view" via the kubectl proxy:
 
