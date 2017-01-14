@@ -1,3 +1,4 @@
+click
 Flask
 Flask-OAuthlib
 gevent

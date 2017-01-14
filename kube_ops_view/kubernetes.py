@@ -1,6 +1,5 @@
 import datetime
 import logging
-import os
 import re
 from urllib.parse import urljoin
 
@@ -8,7 +7,6 @@ import requests
 import tokens
 
 CLUSTER_ID_INVALID_CHARS = re.compile('[^a-z0-9:-]')
-DEFAULT_CLUSTERS = 'http://localhost:8001/'
 
 tokens.configure(from_file_only=True)
 tokens.manage('read-only')
@@ -59,8 +57,8 @@ def map_container(cont: dict, pod: dict):
     return obj
 
 
-def get_kubernetes_clusters():
-    for api_server_url in (os.getenv('CLUSTERS') or DEFAULT_CLUSTERS).split(','):
+def get_kubernetes_clusters(clusters):
+    for api_server_url in clusters:
         cluster_id = generate_cluster_id(api_server_url)
         if 'localhost' not in api_server_url:
             # TODO: hacky way of detecting whether we need a token or not
