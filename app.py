@@ -276,7 +276,6 @@ def generate_mock_pod(index: int, i: int, j: int):
     pod_phases = ['Pending', 'Running', 'Running']
     labels = {}
     phase = pod_phases[hash_int((index + 1) * (i + 1) * (j + 1)) % len(pod_phases)]
-    status = {'phase': phase}
     containers = []
     for k in range(1 + j % 2):
         container = {
@@ -290,7 +289,7 @@ def generate_mock_pod(index: int, i: int, j: int):
             elif j % 7 == 0:
                 container.update(**{'ready': True, 'state': {'running': {}}, 'restartCount': 3})
         containers.append(container)
-    pod = {'name': '{}-{}-{}'.format(names[hash_int((i + 1) * (j + 1)) % len(names)], i, j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels, 'status': status, 'containers': containers}
+    pod = {'name': '{}-{}-{}'.format(names[hash_int((i + 1) * (j + 1)) % len(names)], i, j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels, 'phase': phase, 'containers': containers}
     if phase == 'Running' and j % 17 == 0:
         pod['deleted'] = 123
 
@@ -357,19 +356,16 @@ def map_node(node: dict):
     }
 
 
-def map_pod_status(status: dict):
-    return {'phase': status.get('phase'), 'startTime': status.get('startTime')}
-
-
 def map_pod(pod: dict):
     return {
         'name': pod['metadata']['name'],
         'namespace': pod['metadata']['namespace'],
         'labels': pod['metadata'].get('labels', {}),
-        'status': map_pod_status(pod['status']),
+        'phase': pod['status'].get('phase'),
         'startTime': pod['status']['startTime'] if 'startTime' in pod['status'] else '',
         'containers': []
     }
+
 
 def map_container(cont: dict, pod: dict):
     obj = {'name': cont['name'], 'image': cont['image'], 'resources': cont['resources']}
@@ -449,9 +445,10 @@ def event(cluster_ids: set):
             cluster = STORE.get(cluster_id)
             yield 'event: clusterupdate\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
     while True:
-        for event_type, cluster in STORE.listen():
-            if not cluster_ids or cluster['id'] in cluster_ids:
-                yield 'event: ' + event_type + '\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
+        for event_type, event_data in STORE.listen():
+            # hacky, event_data can be delta or full cluster object
+            if not cluster_ids or event_data.get('cluster_id', event_data.get('id')) in cluster_ids:
+                yield 'event: ' + event_type + '\ndata: ' + json.dumps(event_data, separators=(',', ':')) + '\n\n'
 
 
 @app.route('/events')

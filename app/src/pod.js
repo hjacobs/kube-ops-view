@@ -10,8 +10,8 @@ const sortByName = (a, b) => {
 }
 
 const sortByAge = (a, b) => {
-    const dateA = new Date(a.status.startTime)
-    const dateB = new Date(b.status.startTime)
+    const dateA = new Date(a.startTime)
+    const dateB = new Date(b.startTime)
     if (dateA.getTime() < dateB.getTime()) {
         return -1
     } else if (dateA.getTime() === dateB.getTime())
@@ -54,6 +54,7 @@ export class Pod extends PIXI.Graphics {
         if (this.tick) {
             PIXI.ticker.shared.remove(this.tick, this)
         }
+        PIXI.ticker.shared.remove(this.animateMove, this)
         super.destroy()
     }
 
@@ -162,8 +163,8 @@ export class Pod extends PIXI.Graphics {
         podBox.on('mouseover', function () {
             podBox.filters = podBox.filters.filter(x => x != BRIGHTNESS_FILTER).concat([BRIGHTNESS_FILTER])
             let s = this.pod.name
-            s += '\nStatus    : ' + this.pod.status.phase + ' (' + ready + '/' + this.pod.containers.length + ' ready)'
-            s += '\nStart Time: ' + this.pod.status.startTime
+            s += '\nStatus    : ' + this.pod.phase + ' (' + ready + '/' + this.pod.containers.length + ' ready)'
+            s += '\nStart Time: ' + this.pod.startTime
             s += '\nLabels    :'
             for (var key of Object.keys(this.pod.labels).sort()) {
                 if (key !== 'pod-template-hash') {
@@ -210,16 +211,16 @@ export class Pod extends PIXI.Graphics {
             i++
         }
         let color
-        if (this.pod.status.phase == 'Succeeded') {
+        if (this.pod.phase == 'Succeeded') {
             // completed Job
             color = 0xaaaaff
-        } else if (this.pod.status.phase == 'Running' && allReady) {
+        } else if (this.pod.phase == 'Running' && allReady) {
             color = 0xaaffaa
-        } else if (this.pod.status.phase == 'Running' && allRunning && !allReady) {
+        } else if (this.pod.phase == 'Running' && allRunning && !allReady) {
             // all containers running, but some not ready (readinessProbe)
             newTick = this.pulsate
             color = 0xaaffaa
-        } else if (this.pod.status.phase == 'Pending') {
+        } else if (this.pod.phase == 'Pending') {
             newTick = this.pulsate
             color = 0xffffaa
         } else {
