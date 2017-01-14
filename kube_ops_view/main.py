@@ -15,6 +15,7 @@ import logging
 import os
 import signal
 import time
+import kube_ops_view
 from pathlib import Path
 
 from flask import Flask, redirect
@@ -80,7 +81,7 @@ def index():
     else:
         logger.error('Could not find JavaScript application bundle app*.js in {}'.format(static_build_path))
         flask.abort(503, 'JavaScript application bundle not found (missing build)')
-    return flask.render_template('index.html', app_js=app_js)
+    return flask.render_template('index.html', app_js=app_js, version=kube_ops_view.__version__)
 
 
 def event(cluster_ids: set):
@@ -198,7 +199,16 @@ def exit_gracefully(signum, frame):
     gevent.spawn(shutdown)
 
 
+def print_version(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    click.echo('Kubernetes Operational View {}'.format(kube_ops_view.__version__))
+    ctx.exit()
+
+
 @click.command(context_settings={'help_option_names': ['-h', '--help']})
+@click.option('-V', '--version', is_flag=True, callback=print_version, expose_value=False, is_eager=True,
+              help='Print the current version number and exit.')
 @click.option('-p', '--port', type=int, help='HTTP port to listen on (default: 8080)', envvar='SERVER_PORT', default=8080)
 @click.option('-d', '--debug', is_flag=True, help='Run in debugging mode', envvar='DEBUG')
 @click.option('-m', '--mock', is_flag=True, help='Mock Kubernetes clusters', envvar='MOCK')

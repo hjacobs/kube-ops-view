@@ -3,6 +3,18 @@ import sys
 from setuptools import find_packages, setup
 from setuptools.command.test import test as TestCommand
 
+from pathlib import Path
+
+
+def read_version(package):
+    with (Path(package) / '__init__.py').open() as fd:
+        for line in fd:
+            if line.startswith('__version__ = '):
+                return line.split()[-1].strip().strip("'")
+
+
+version = read_version('kube_ops_view')
+
 
 class PyTest(TestCommand):
 
@@ -39,7 +51,7 @@ tests_require = [
 setup(
     name='kube-ops-view',
     packages=find_packages(),
-    version='0.1',
+    version=version,
     description='Kubernetes Operational View - read-only system dashboard for multiple K8s clusters',
     long_description=readme(),
     author='Henning Jacobs',
