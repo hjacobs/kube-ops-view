@@ -1,14 +1,12 @@
-.PHONY: clean 
+.PHONY: clean test appjs docker push mock
 
-IMAGE				 ?= hjacobs/kube-ops-view
-TAG					 ?= latest
-GITHEAD       		 = $(shell git rev-parse --short HEAD)
-GITURL        		 = $(shell git config --get remote.origin.url)
-GITSTATUS     		 = $(shell git status --porcelain || echo "no changes")
+IMAGE            ?= hjacobs/kube-ops-view
+TAG              ?= latest
+GITHEAD          = $(shell git rev-parse --short HEAD)
+GITURL           = $(shell git config --get remote.origin.url)
+GITSTATU         = $(shell git status --porcelain || echo "no changes")
 
 default: docker
-
-build: appjs docker
 
 clean:
 	rm -fr kube_ops_view/static/build
