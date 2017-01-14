@@ -126,6 +126,8 @@ The following environment variables are supported:
     Optional token endpoint URL for the OAuth 2 Authorization Code Grant flow.
 ``CLUSTERS``
     Comma separated list of Kubernetes API server URLs. It defaults to ``http://localhost:8001/`` (default endpoint of ``kubectl proxy``).
+``CLUSTER_REGISTRY_URL``
+    URL to cluster registry returning list of Kubernetes clusters.
 ``CREDENTIALS_DIR``
     Directory to read (OAuth) credentials from --- these credentials are only used for non-localhost cluster URLs.
 ``DEBUG``

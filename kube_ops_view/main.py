@@ -26,7 +26,7 @@ from urllib.parse import urljoin
 from .mock import get_mock_clusters
 from .kubernetes import get_kubernetes_clusters
 from .stores import MemoryStore, RedisStore
-from .cluster_discovery import DEFAULT_CLUSTERS, StaticClusterDiscoverer
+from .cluster_discovery import DEFAULT_CLUSTERS, StaticClusterDiscoverer, ClusterRegistryDiscoverer
 
 
 logger = logging.getLogger(__name__)
@@ -216,7 +216,8 @@ def print_version(ctx, param, value):
 @click.option('--redis-url', help='Redis URL to use for pub/sub and job locking', envvar='REDIS_URL')
 @click.option('--clusters', help='Comma separated list of Kubernetes API server URLs (default: {})'.format(DEFAULT_CLUSTERS),
               envvar='CLUSTERS')
-def main(port, debug, mock, secret_key, redis_url, clusters):
+@click.option('--cluster-registry-url', help='URL to cluster registry', envvar='CLUSTER_REGISTRY_URL')
+def main(port, debug, mock, secret_key, redis_url, clusters, cluster_registry_url):
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
 
     store = RedisStore(redis_url) if redis_url else MemoryStore()
@@ -225,8 +226,13 @@ def main(port, debug, mock, secret_key, redis_url, clusters):
     app.secret_key = secret_key
     app.store = store
 
-    api_server_urls = clusters.split(',') if clusters else []
-    gevent.spawn(update, cluster_discoverer=StaticClusterDiscoverer(api_server_urls), store=store, mock=mock)
+    if cluster_registry_url:
+        discoverer = ClusterRegistryDiscoverer(cluster_registry_url)
+    else:
+        api_server_urls = clusters.split(',') if clusters else []
+        discoverer = StaticClusterDiscoverer(api_server_urls)
+
+    gevent.spawn(update, cluster_discoverer=discoverer, store=store, mock=mock)
 
     signal.signal(signal.SIGTERM, exit_gracefully)
     http_server = gevent.wsgi.WSGIServer(('0.0.0.0', port), app)
