@@ -105,7 +105,7 @@ class ClusterRegistryDiscoverer:
             for row in response.json()['items']:
                 # only consider "ready" clusters
                 if row.get('lifecycle_status', 'ready') == 'ready':
-                    clusters.append(Cluster(row['id'], row['api_server_url']))
+                    clusters.append(Cluster(row['id'], row['api_server_url'], auth=OAuthTokenAuth('read-only')))
             self._clusters = clusters
             self._last_cache_refresh = time.time()
         except:
