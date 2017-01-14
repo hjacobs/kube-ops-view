@@ -42,16 +42,26 @@ What it is not:
 Usage
 =====
 
-You can run the app locally:
+Running Locally
+---------------
+
+You can run the app locally with `kubectl proxy` against your running cluster:
 
 .. code-block:: bash
 
-    $ pip3 install -r requirements.txt
     $ kubectl proxy &
-    $ (cd app && npm start &)
-    $ python3 -m kube_ops_view
+    $ docker run -it --net=host hjacobs/kube-ops-view
 
 Now direct your browser to http://localhost:8080
+
+You can also try the UI with the integrated mock mode. This does not require any Kubernetes cluster access:
+
+.. code-block:: bash
+
+    $ docker run -it -p 8080:8080 hjacobs/kube-ops-view --mock
+
+Installation
+------------
 
 You can find example Kubernetes manifests for deployment in the ``deploy`` folder.
 It should be as simple as:
@@ -68,23 +78,21 @@ Afterwards you can open "kube-ops-view" via the kubectl proxy:
 
 Now direct your browser to http://localhost:8001/api/v1/proxy/namespaces/default/services/kube-ops-view/
 
+There is also a `pending PR to make Kubernetes Operational View available as a Helm Chart`_.
 
-Mock Mode
-=========
+.. _pending PR to make Kubernetes Operational View available as a Helm Chart: https://github.com/kubernetes/charts/pull/398
 
-You can start the app in "mock mode" to see all UI features without running any Kubernetes cluster:
+
+Development
+===========
+
+The app can be started in "mock mode" to work on UI features without running any Kubernetes cluster:
 
 .. code-block:: bash
 
     $ pip3 install -r requirements.txt
-    $ (cd app && npm start &)
+    $ (cd app && npm start &)  # watch and compile JS bundle
     $ python3 -m kube_ops_view --mock --debug
-
-You can also run the latest Docker image directly:
-
-.. code-block:: bash
-
-    $ docker run -it -p 8080:8080 hjacobs/kube-ops-view --mock
 
 
 Building
