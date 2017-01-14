@@ -6,3 +6,6 @@ __pycache__
 kube_ops_view/static/build/
 *-secret
 npm-debug.log*
+.tox/
+*.egg*
+dist/

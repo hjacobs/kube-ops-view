@@ -292,7 +292,13 @@ def generate_mock_pod(index: int, i: int, j: int):
             elif j % 7 == 0:
                 container.update(**{'ready': True, 'state': {'running': {}}, 'restartCount': 3})
         containers.append(container)
-    pod = {'name': '{}-{}-{}'.format(names[hash_int((i + 1) * (j + 1)) % len(names)], i, j), 'namespace': 'kube-system' if j < 3 else 'default', 'labels': labels, 'phase': phase, 'containers': containers}
+    pod = {
+        'name': '{}-{}-{}'.format(names[hash_int((i + 1) * (j + 1)) % len(names)], i, j),
+        'namespace': 'kube-system' if j < 3 else 'default',
+        'labels': labels,
+        'phase': phase,
+        'containers': containers
+    }
     if phase == 'Running' and j % 17 == 0:
         pod['deleted'] = 123
 

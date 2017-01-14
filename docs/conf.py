@@ -159,6 +159,3 @@ texinfo_documents = [
      author, 'KubernetesOperationalView', 'One line description of project.',
      'Miscellaneous'),
 ]
-
-
-
