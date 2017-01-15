@@ -48,6 +48,8 @@ def request(cluster, path, **kwargs):
     if 'timeout' not in kwargs:
         # sane default timeout
         kwargs['timeout'] = 5
+    if cluster.cert_file and cluster.key_file:
+        kwargs['cert'] = (cluster.cert_file, cluster.key_file)
     return session.get(urljoin(cluster.api_server_url, path), auth=cluster.auth, verify=cluster.ssl_ca_cert, **kwargs)
 
 

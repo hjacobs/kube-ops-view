@@ -178,6 +178,17 @@ def print_version(ctx, param, value):
     ctx.exit()
 
 
+class CommaSeparatedValues(click.ParamType):
+    name = 'comma_separated_values'
+
+    def convert(self, value, param, ctx):
+        if isinstance(value, str):
+            values = filter(None, value.split(','))
+        else:
+            values = value
+        return values
+
+
 @click.command(context_settings={'help_option_names': ['-h', '--help']})
 @click.option('-V', '--version', is_flag=True, callback=print_version, expose_value=False, is_eager=True,
               help='Print the current version number and exit.')
@@ -186,12 +197,13 @@ def print_version(ctx, param, value):
 @click.option('-m', '--mock', is_flag=True, help='Mock Kubernetes clusters', envvar='MOCK')
 @click.option('--secret-key', help='Secret key for session cookies', envvar='SECRET_KEY', default='development')
 @click.option('--redis-url', help='Redis URL to use for pub/sub and job locking', envvar='REDIS_URL')
-@click.option('--clusters', help='Comma separated list of Kubernetes API server URLs (default: {})'.format(DEFAULT_CLUSTERS),
+@click.option('--clusters', type=CommaSeparatedValues(), help='Comma separated list of Kubernetes API server URLs (default: {})'.format(DEFAULT_CLUSTERS),
               envvar='CLUSTERS')
 @click.option('--cluster-registry-url', help='URL to cluster registry', envvar='CLUSTER_REGISTRY_URL')
 @click.option('--kubeconfig-path', type=click.Path(exists=True), help='Path to kubeconfig file', envvar='KUBECONFIG_PATH')
+@click.option('--kubeconfig-contexts', type=CommaSeparatedValues(), help='Path to kubeconfig file', envvar='KUBECONFIG_PATH')
 @click.option('--query-interval', type=float, help='Interval in seconds for querying clusters (default: 5)', envvar='QUERY_INTERVAL', default=5)
-def main(port, debug, mock, secret_key, redis_url, clusters, cluster_registry_url, kubeconfig_path, query_interval):
+def main(port, debug, mock, secret_key, redis_url, clusters: list, cluster_registry_url, kubeconfig_path, kubeconfig_contexts: list, query_interval):
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
 
     store = RedisStore(redis_url) if redis_url else MemoryStore()
@@ -208,9 +220,9 @@ def main(port, debug, mock, secret_key, redis_url, clusters, cluster_registry_ur
         if cluster_registry_url:
             discoverer = ClusterRegistryDiscoverer(cluster_registry_url)
         elif kubeconfig_path:
-            discoverer = KubeconfigDiscoverer(Path(kubeconfig_path))
+            discoverer = KubeconfigDiscoverer(Path(kubeconfig_path), set(kubeconfig_contexts or []))
         else:
-            api_server_urls = clusters.split(',') if clusters else []
+            api_server_urls = clusters or []
             discoverer = StaticClusterDiscoverer(api_server_urls)
 
     gevent.spawn(update_clusters, cluster_discoverer=discoverer, query_cluster=cluster_query, store=store, query_interval=query_interval, debug=debug)
