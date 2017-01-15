@@ -1,4 +1,5 @@
 import App from './app'
+import {BRIGHTNESS_FILTER} from './filters.js'
 
 const PIXI = require('pixi.js')
 
@@ -29,6 +30,10 @@ export default class SelectBox extends PIXI.Graphics {
         this.onchange = onchange
     }
 
+    onForwardOver() {
+        this.forwardArrow.filters = [BRIGHTNESS_FILTER]
+    }
+
     onForwardPressed() {
         const selectBox = this
         selectBox.count++
@@ -38,6 +43,10 @@ export default class SelectBox extends PIXI.Graphics {
         selectBox.text.text = selectBox.items[selectBox.count].text
         this.value = this.items[this.count].value
         this.onchange(this.value)
+    }
+
+    onBackOver() {
+        this.backArrow.filters = [BRIGHTNESS_FILTER]
     }
 
     onBackPressed() {
@@ -54,8 +63,8 @@ export default class SelectBox extends PIXI.Graphics {
     draw() {
         const selectBox = this
 
-        const backArrow = new PIXI.Graphics()
-        const forwardArrow = new PIXI.Graphics()
+        const backArrow = this.backArrow = new PIXI.Graphics()
+        const forwardArrow = this.forwardArrow = new PIXI.Graphics()
         backArrow.interactive = true
         forwardArrow.interactive = true
         selectBox.interactive = true
@@ -77,9 +86,7 @@ export default class SelectBox extends PIXI.Graphics {
         selectBox.addChild(backArrow)
 
         selectBox.lineStyle(1, App.current.theme.primaryColor, 1)
-        selectBox.beginFill(App.current.theme.secondaryColor, 0.5)
         selectBox.drawRect(4, 0, textBoxWidth, 22)
-        selectBox.endFill()
 
         forwardArrow.beginFill(App.current.theme.secondaryColor, 1)
         forwardArrow.drawRect(textBoxWidth + 8, 0, arrowBoxWidth, 22)
@@ -92,8 +99,10 @@ export default class SelectBox extends PIXI.Graphics {
         forwardArrow.endFill()
         selectBox.addChild(forwardArrow)
 
+        backArrow.on('mouseover', selectBox.onBackOver.bind(this))
         backArrow.on('mousedown', selectBox.onBackPressed.bind(this))
         backArrow.on('touchstart', selectBox.onBackPressed.bind(this))
+        forwardArrow.on('mouseover', selectBox.onForwardOver.bind(this))
         forwardArrow.on('mousedown', selectBox.onForwardPressed.bind(this))
         forwardArrow.on('touchstart', selectBox.onForwardPressed.bind(this))
 
