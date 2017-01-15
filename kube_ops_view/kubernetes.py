@@ -110,4 +110,9 @@ def query_kubernetes_cluster(cluster):
                                 container['resources']['usage'] = container_metrics['usage']
     except Exception as e:
         logger.warning('Failed to query pod metrics for cluster {}: {}'.format(cluster.id, get_short_error_message(e)))
-    return {'id': cluster_id, 'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods}
+    return {
+        'id': cluster_id,
+        'api_server_url': api_server_url,
+        'nodes': nodes,
+        'unassigned_pods': unassigned_pods
+    }

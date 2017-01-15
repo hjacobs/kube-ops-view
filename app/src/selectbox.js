@@ -29,6 +29,14 @@ export default class SelectBox extends PIXI.Graphics {
         this.onchange = onchange
     }
 
+    onForwardOver() {
+        this.forwardArrow.alpha = 0.5
+    }
+
+    onForwardOut() {
+        this.forwardArrow.alpha = 1
+    }
+
     onForwardPressed() {
         const selectBox = this
         selectBox.count++
@@ -38,6 +46,14 @@ export default class SelectBox extends PIXI.Graphics {
         selectBox.text.text = selectBox.items[selectBox.count].text
         this.value = this.items[this.count].value
         this.onchange(this.value)
+    }
+
+    onBackOver() {
+        this.backArrow.alpha = 0.5
+    }
+
+    onBackOut() {
+        this.backArrow.alpha = 1
     }
 
     onBackPressed() {
@@ -54,11 +70,12 @@ export default class SelectBox extends PIXI.Graphics {
     draw() {
         const selectBox = this
 
-        const backArrow = new PIXI.Graphics()
-        const forwardArrow = new PIXI.Graphics()
+        const backArrow = this.backArrow = new PIXI.Graphics()
+        const forwardArrow = this.forwardArrow = new PIXI.Graphics()
         backArrow.interactive = true
+        backArrow.buttonMode = true
         forwardArrow.interactive = true
-        selectBox.interactive = true
+        forwardArrow.buttonMode = true
 
         // FIXME: hardcoded value for average char width..
         const textBoxWidth = 10 + 8 * Math.max.apply(Math, this.items.map(item => item.text.length))
@@ -77,9 +94,7 @@ export default class SelectBox extends PIXI.Graphics {
         selectBox.addChild(backArrow)
 
         selectBox.lineStyle(1, App.current.theme.primaryColor, 1)
-        selectBox.beginFill(App.current.theme.secondaryColor, 0.5)
         selectBox.drawRect(4, 0, textBoxWidth, 22)
-        selectBox.endFill()
 
         forwardArrow.beginFill(App.current.theme.secondaryColor, 1)
         forwardArrow.drawRect(textBoxWidth + 8, 0, arrowBoxWidth, 22)
@@ -92,8 +107,12 @@ export default class SelectBox extends PIXI.Graphics {
         forwardArrow.endFill()
         selectBox.addChild(forwardArrow)
 
+        backArrow.on('mouseover', selectBox.onBackOver.bind(this))
+        backArrow.on('mouseout', selectBox.onBackOut.bind(this))
         backArrow.on('mousedown', selectBox.onBackPressed.bind(this))
         backArrow.on('touchstart', selectBox.onBackPressed.bind(this))
+        forwardArrow.on('mouseover', selectBox.onForwardOver.bind(this))
+        forwardArrow.on('mouseout', selectBox.onForwardOut.bind(this))
         forwardArrow.on('mousedown', selectBox.onForwardPressed.bind(this))
         forwardArrow.on('touchstart', selectBox.onForwardPressed.bind(this))
 
