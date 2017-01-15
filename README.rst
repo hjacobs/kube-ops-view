@@ -132,6 +132,10 @@ The following environment variables are supported:
     Directory to read (OAuth) credentials from --- these credentials are only used for non-localhost cluster URLs.
 ``DEBUG``
     Set to "true" for local development to reload code changes.
+``KUBECONFIG_PATH``
+    Path to kubeconfig file to use for cluster access.
+``KUBECONFIG_CONTEXTS``
+    Comma separated list of contexts to use when reading the kubeconfig file from ``KUBECONFIG_PATH``.
 ``MOCK``
     Set to "true" to mock Kubernetes cluster data.
 ``QUERY_INTERVAL``
