@@ -115,7 +115,7 @@ You can pass this file by mounting a secret like:
 
 The deployment manifest to mount the above secret:
 
-.. code-blocka:: yaml
+.. code-block:: yaml
 
     apiVersion: extensions/v1beta1
     kind: Deployment
