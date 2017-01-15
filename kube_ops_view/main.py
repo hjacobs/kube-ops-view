@@ -89,7 +89,8 @@ def event(cluster_ids: set):
     for cluster_id in (app.store.get('cluster-ids') or []):
         if not cluster_ids or cluster_id in cluster_ids:
             cluster = app.store.get(cluster_id)
-            yield 'event: clusterupdate\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
+            if cluster:
+                yield 'event: clusterupdate\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
     while True:
         for event_type, event_data in app.store.listen():
             # hacky, event_data can be delta or full cluster object
