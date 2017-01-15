@@ -137,3 +137,10 @@ class KubeconfigDiscoverer:
                 ssl_ca_cert=config.ssl_ca_cert,
                 auth=StaticTokenAuth(config.api_key['authorization'].split(' ', 1)[-1]))
             yield cluster
+
+
+class MockDiscoverer:
+
+    def get_clusters(self):
+        for i in range(3):
+            yield Cluster('mock-cluster-{}'.format(i), api_server_url='https://kube-{}.example.org'.format(i))

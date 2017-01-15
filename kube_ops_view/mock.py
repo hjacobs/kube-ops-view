@@ -48,8 +48,9 @@ def generate_mock_pod(index: int, i: int, j: int):
     return pod
 
 
-def generate_mock_cluster_data(index: int):
+def query_mock_cluster(cluster):
     '''Generate deterministic (no randomness!) mock data'''
+    index = int(cluster.id.split('-')[-1])
     nodes = {}
     for i in range(10):
         # add/remove the second to last node every 13 seconds
@@ -76,9 +77,3 @@ def generate_mock_cluster_data(index: int):
         'nodes': nodes,
         'unassigned_pods': unassigned_pods
     }
-
-
-def get_mock_clusters():
-    for i in range(3):
-        data = generate_mock_cluster_data(i)
-        yield data

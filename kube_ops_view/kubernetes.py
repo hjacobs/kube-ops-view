@@ -51,7 +51,7 @@ def request(cluster, path, **kwargs):
     return session.get(urljoin(cluster.api_server_url, path), auth=cluster.auth, verify=cluster.ssl_ca_cert, **kwargs)
 
 
-def get_kubernetes_cluster(cluster):
+def query_kubernetes_cluster(cluster):
     cluster_id = cluster.id
     api_server_url = cluster.api_server_url
     response = request(cluster, '/api/v1/nodes')
@@ -107,12 +107,3 @@ def get_kubernetes_cluster(cluster):
     except:
         logger.exception('Failed to get pod metrics')
     return {'id': cluster_id, 'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods}
-
-
-def get_kubernetes_clusters(cluster_discoverer):
-    for cluster in cluster_discoverer.get_clusters():
-        try:
-            data = get_kubernetes_cluster(cluster)
-            yield data
-        except:
-            logger.exception('Failed to query cluster {} ({})'.format(cluster.id, cluster.api_server_url))

@@ -10,7 +10,6 @@ import functools
 import gevent
 import gevent.wsgi
 import json
-import json_delta
 import logging
 import os
 import signal
@@ -23,10 +22,11 @@ from flask_oauthlib.client import OAuth
 from .oauth import OAuthRemoteAppWithRefresh
 from urllib.parse import urljoin
 
-from .mock import get_mock_clusters
-from .kubernetes import get_kubernetes_clusters
+from .mock import query_mock_cluster
+from .kubernetes import query_kubernetes_cluster
 from .stores import MemoryStore, RedisStore
-from .cluster_discovery import DEFAULT_CLUSTERS, StaticClusterDiscoverer, ClusterRegistryDiscoverer, KubeconfigDiscoverer
+from .cluster_discovery import DEFAULT_CLUSTERS, StaticClusterDiscoverer, ClusterRegistryDiscoverer, KubeconfigDiscoverer, MockDiscoverer
+from .update import update_clusters
 
 
 logger = logging.getLogger(__name__)
@@ -155,35 +155,6 @@ def authorized():
     return redirect(urljoin(APP_URL, '/'))
 
 
-def update(cluster_discoverer, store, mock: bool):
-    while True:
-        lock = store.acquire_lock()
-        if lock:
-            try:
-                if mock:
-                    _clusters = get_mock_clusters()
-                else:
-                    _clusters = get_kubernetes_clusters(cluster_discoverer)
-                cluster_ids = []
-                for cluster in _clusters:
-                    old_data = store.get(cluster['id'])
-                    if old_data:
-                        # https://pikacode.com/phijaro/json_delta/ticket/11/
-                        # diff is extremely slow without array_align=False
-                        delta = json_delta.diff(old_data, cluster, verbose=app.debug, array_align=False)
-                        store.publish('clusterdelta', {'cluster_id': cluster['id'], 'delta': delta})
-                    else:
-                        store.publish('clusterupdate', cluster)
-                    store.set(cluster['id'], cluster)
-                    cluster_ids.append(cluster['id'])
-                store.set('cluster-ids', cluster_ids)
-            except:
-                logger.exception('Failed to update')
-            finally:
-                store.release_lock(lock)
-        gevent.sleep(5)
-
-
 def shutdown():
     # just wait some time to give Kubernetes time to update endpoints
     # this requires changing the readinessProbe's
@@ -227,15 +198,20 @@ def main(port, debug, mock, secret_key, redis_url, clusters, cluster_registry_ur
     app.secret_key = secret_key
     app.store = store
 
-    if cluster_registry_url:
-        discoverer = ClusterRegistryDiscoverer(cluster_registry_url)
-    elif kubeconfig_path:
-        discoverer = KubeconfigDiscoverer(Path(kubeconfig_path))
+    if mock:
+        cluster_query = query_mock_cluster
+        discoverer = MockDiscoverer()
     else:
-        api_server_urls = clusters.split(',') if clusters else []
-        discoverer = StaticClusterDiscoverer(api_server_urls)
+        cluster_query = query_kubernetes_cluster
+        if cluster_registry_url:
+            discoverer = ClusterRegistryDiscoverer(cluster_registry_url)
+        elif kubeconfig_path:
+            discoverer = KubeconfigDiscoverer(Path(kubeconfig_path))
+        else:
+            api_server_urls = clusters.split(',') if clusters else []
+            discoverer = StaticClusterDiscoverer(api_server_urls)
 
-    gevent.spawn(update, cluster_discoverer=discoverer, store=store, mock=mock)
+    gevent.spawn(update_clusters, cluster_discoverer=discoverer, query_cluster=cluster_query, store=store, debug=debug)
 
     signal.signal(signal.SIGTERM, exit_gracefully)
     http_server = gevent.wsgi.WSGIServer(('0.0.0.0', port), app)
