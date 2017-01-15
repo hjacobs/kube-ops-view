@@ -1,5 +1,4 @@
 import App from './app'
-import {BRIGHTNESS_FILTER} from './filters.js'
 
 const PIXI = require('pixi.js')
 
@@ -31,7 +30,11 @@ export default class SelectBox extends PIXI.Graphics {
     }
 
     onForwardOver() {
-        this.forwardArrow.filters = [BRIGHTNESS_FILTER]
+        this.forwardArrow.alpha = 0.5
+    }
+
+    onForwardOut() {
+        this.forwardArrow.alpha = 1
     }
 
     onForwardPressed() {
@@ -46,7 +49,11 @@ export default class SelectBox extends PIXI.Graphics {
     }
 
     onBackOver() {
-        this.backArrow.filters = [BRIGHTNESS_FILTER]
+        this.backArrow.alpha = 0.5
+    }
+
+    onBackOut() {
+        this.backArrow.alpha = 1
     }
 
     onBackPressed() {
@@ -66,8 +73,9 @@ export default class SelectBox extends PIXI.Graphics {
         const backArrow = this.backArrow = new PIXI.Graphics()
         const forwardArrow = this.forwardArrow = new PIXI.Graphics()
         backArrow.interactive = true
+        backArrow.buttonMode = true
         forwardArrow.interactive = true
-        selectBox.interactive = true
+        forwardArrow.buttonMode = true
 
         // FIXME: hardcoded value for average char width..
         const textBoxWidth = 10 + 8 * Math.max.apply(Math, this.items.map(item => item.text.length))
@@ -100,9 +108,11 @@ export default class SelectBox extends PIXI.Graphics {
         selectBox.addChild(forwardArrow)
 
         backArrow.on('mouseover', selectBox.onBackOver.bind(this))
+        backArrow.on('mouseout', selectBox.onBackOut.bind(this))
         backArrow.on('mousedown', selectBox.onBackPressed.bind(this))
         backArrow.on('touchstart', selectBox.onBackPressed.bind(this))
         forwardArrow.on('mouseover', selectBox.onForwardOver.bind(this))
+        forwardArrow.on('mouseout', selectBox.onForwardOut.bind(this))
         forwardArrow.on('mousedown', selectBox.onForwardPressed.bind(this))
         forwardArrow.on('touchstart', selectBox.onForwardPressed.bind(this))
 
