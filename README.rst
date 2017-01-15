@@ -134,6 +134,8 @@ The following environment variables are supported:
     Set to "true" for local development to reload code changes.
 ``MOCK``
     Set to "true" to mock Kubernetes cluster data.
+``QUERY_INTERVAL``
+    Interval in seconds for querying clusters (default: 5). Each cluster will at most queried once per configured interval.
 ``REDIS_URL``
     Optional Redis server to use for pub/sub events and job locking when running more than one replica. Example: ``redis://my-redis:6379``
 ``SERVER_PORT``
