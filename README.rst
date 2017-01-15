@@ -108,11 +108,11 @@ The provided ``Makefile`` will generate a Docker image by default:
 Multiple Clusters
 =================
 
-Multiple clusters are supported by passing a list of API server URLs in the ``CLUSTERS`` environment variable.
-These can either be unprotected ``localhost`` URLs or OAuth 2 protected API endpoints.
-Note that authentication via client-certificates is currently not supported!
+Multiple clusters are supported by passing a list of API servers, reading a kubeconfig file or pointing to an HTTP Cluster Registry endpoint.
 
-The needed OAuth credentials (``Bearer`` access token) must be provided via a file ``${CREDENTIALS_DIR}/read-only-token``.
+See the `documentation on multiple clusters`_ for details.
+
+.. _documentation on multiple clusters: https://kubernetes-operational-view.readthedocs.io/en/latest/multiple-clusters.html
 
 
 Configuration
@@ -132,8 +132,14 @@ The following environment variables are supported:
     Directory to read (OAuth) credentials from --- these credentials are only used for non-localhost cluster URLs.
 ``DEBUG``
     Set to "true" for local development to reload code changes.
+``KUBECONFIG_PATH``
+    Path to kubeconfig file to use for cluster access.
+``KUBECONFIG_CONTEXTS``
+    Comma separated list of contexts to use when reading the kubeconfig file from ``KUBECONFIG_PATH``.
 ``MOCK``
     Set to "true" to mock Kubernetes cluster data.
+``QUERY_INTERVAL``
+    Interval in seconds for querying clusters (default: 5). Each cluster will at most queried once per configured interval.
 ``REDIS_URL``
     Optional Redis server to use for pub/sub events and job locking when running more than one replica. Example: ``redis://my-redis:6379``
 ``SERVER_PORT``
