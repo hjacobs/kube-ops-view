@@ -6,25 +6,13 @@ import json_delta
 import requests.exceptions
 
 from .backoff import expo, random_jitter
+from .utils import get_short_error_message
 
 logger = logging.getLogger(__name__)
 
 
 def calculate_backoff(tries: int):
     return random_jitter(expo(tries, factor=2, max_value=60), jitter=4)
-
-
-def get_short_error_message(e: requests.exceptions.RequestException):
-    '''Generate a reasonable short message why the HTTP request failed'''
-
-    if e.response is not None:
-        # e.g. "401 Unauthorized"
-        return '{} {}'.format(e.response.status_code, e.response.reason)
-    elif isinstance(e, requests.exceptions.ConnectionError):
-        # e.g. "ConnectionError" or "ConnectTimeout"
-        return e.__class__.__name__
-    else:
-        return str(e)
 
 
 def handle_query_failure(e: Exception, cluster, backoff: dict):
@@ -34,11 +22,10 @@ def handle_query_failure(e: Exception, cluster, backoff: dict):
     backoff['tries'] = tries
     wait_seconds = calculate_backoff(tries)
     backoff['next_try'] = time.time() + wait_seconds
+    message = get_short_error_message(e)
     if isinstance(e, requests.exceptions.RequestException):
-        message = get_short_error_message(e)
         log = logger.error
     else:
-        message = str(e)
         log = logger.exception
     log('Failed to query cluster {} ({}): {} (try {}, wait {} seconds)'.format(
         cluster.id, cluster.api_server_url, message, tries, round(wait_seconds)))

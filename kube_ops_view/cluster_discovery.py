@@ -1,11 +1,11 @@
+import logging
+import re
 import time
 from pathlib import Path
 from urllib.parse import urljoin
 
 import kubernetes.client
 import kubernetes.config
-import logging
-import re
 import requests
 import tokens
 from requests.auth import AuthBase

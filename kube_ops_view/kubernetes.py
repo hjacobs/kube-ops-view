@@ -4,6 +4,8 @@ from urllib.parse import urljoin
 
 import requests
 
+from .utils import get_short_error_message
+
 logger = logging.getLogger(__name__)
 
 session = requests.Session()
@@ -90,8 +92,8 @@ def query_kubernetes_cluster(cluster):
         else:
             for metrics in data['items']:
                 nodes[metrics['metadata']['name']]['usage'] = metrics['usage']
-    except:
-        logger.exception('Failed to get node metrics')
+    except Exception as e:
+        logger.warning('Failed to query node metrics {}: {}'.format(cluster.id, get_short_error_message(e)))
     try:
         response = request(cluster, '/api/v1/namespaces/kube-system/services/heapster/proxy/apis/metrics/v1alpha1/pods')
         response.raise_for_status()
@@ -106,6 +108,6 @@ def query_kubernetes_cluster(cluster):
                         for container_metrics in metrics['containers']:
                             if container['name'] == container_metrics['name']:
                                 container['resources']['usage'] = container_metrics['usage']
-    except:
-        logger.exception('Failed to get pod metrics')
+    except Exception as e:
+        logger.warning('Failed to query pod metrics for cluster {}: {}'.format(cluster.id, get_short_error_message(e)))
     return {'id': cluster_id, 'api_server_url': api_server_url, 'nodes': nodes, 'unassigned_pods': unassigned_pods}
