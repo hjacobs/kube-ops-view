@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 def calculate_backoff(tries: int):
-    return random_jitter(expo(tries, factor=2, max_value=120), jitter=4)
+    return random_jitter(expo(tries, factor=2, max_value=60), jitter=4)
 
 
 def get_short_error_message(e: requests.exceptions.RequestException):
@@ -45,7 +45,7 @@ def handle_query_failure(e: Exception, cluster, backoff: dict):
     return backoff
 
 
-def update_clusters(cluster_discoverer, query_cluster: callable, store, query_interval=5, debug: bool=False):
+def update_clusters(cluster_discoverer, query_cluster: callable, store, query_interval: float=5, debug: bool=False):
     while True:
         lock = store.acquire_lock()
         if lock:
@@ -92,4 +92,5 @@ def update_clusters(cluster_discoverer, query_cluster: callable, store, query_in
                 logger.exception('Failed to update')
             finally:
                 store.release_lock(lock)
-        gevent.sleep(random_jitter(1))
+        # sleep 1-2 seconds
+        gevent.sleep(min(random_jitter(1), query_interval))

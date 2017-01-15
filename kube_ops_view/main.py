@@ -190,7 +190,8 @@ def print_version(ctx, param, value):
               envvar='CLUSTERS')
 @click.option('--cluster-registry-url', help='URL to cluster registry', envvar='CLUSTER_REGISTRY_URL')
 @click.option('--kubeconfig-path', type=click.Path(exists=True), help='Path to kubeconfig file', envvar='KUBECONFIG_PATH')
-def main(port, debug, mock, secret_key, redis_url, clusters, cluster_registry_url, kubeconfig_path):
+@click.option('--query-interval', type=float, help='Interval in seconds for querying clusters (default: 5)', envvar='QUERY_INTERVAL', default=5)
+def main(port, debug, mock, secret_key, redis_url, clusters, cluster_registry_url, kubeconfig_path, query_interval):
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
 
     store = RedisStore(redis_url) if redis_url else MemoryStore()
@@ -212,7 +213,7 @@ def main(port, debug, mock, secret_key, redis_url, clusters, cluster_registry_ur
             api_server_urls = clusters.split(',') if clusters else []
             discoverer = StaticClusterDiscoverer(api_server_urls)
 
-    gevent.spawn(update_clusters, cluster_discoverer=discoverer, query_cluster=cluster_query, store=store, debug=debug)
+    gevent.spawn(update_clusters, cluster_discoverer=discoverer, query_cluster=cluster_query, store=store, query_interval=query_interval, debug=debug)
 
     signal.signal(signal.SIGTERM, exit_gracefully)
     http_server = gevent.wsgi.WSGIServer(('0.0.0.0', port), app)
