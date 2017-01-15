@@ -134,9 +134,9 @@ export default class App {
         this.theme.apply(this.stage)
 
         const menuBar = new PIXI.Graphics()
-        menuBar.beginFill(this.theme.secondaryColor, 0.8)
+        menuBar.beginFill(this.theme.secondaryColor, 1)
         menuBar.drawRect(0, 0, this.renderer.width, 28)
-        menuBar.lineStyle(2, this.theme.secondaryColor, 0.8)
+        menuBar.lineStyle(2, this.theme.secondaryColor, 1)
         menuBar.moveTo(0, 28)
         menuBar.lineTo(this.renderer.width, 28)
         menuBar.lineStyle(1, this.theme.primaryColor, 1)
