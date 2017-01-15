@@ -51,13 +51,24 @@ Kubernetes Operational View would try to reach both endpoints with the respectiv
 .. code-block:: bash
 
     $ # note that we need to mount the local ~/.kube/config file into the Docker container
-    $ docker run -it -p 8080:8080 -v ~/.kube/config:/kubeconfig hjacobs/kube-ops-view --kubeconfig-path=/kubeconfig
+    $ docker run -it --net=host -v ~/.kube:/kube hjacobs/kube-ops-view --kubeconfig-path=/kube/config
+
+.. Note::
+
+    You need to make sure that the Docker container has access to any required SSL certificate files.
+    `Minikube`_ by default will use certificates in ``~/.minikube``. You can copy them to ``~/.kube`` and make the paths in ``~/.kube/config`` relative.
+
+    The following command should work out of the box with Minikube:
+
+    .. code-block:: bash
+
+        $ docker run -it --net=host -v ~/.kube:/kube -v ~/.minikube:$HOME/.minikube hjacobs/kube-ops-view --kubeconfig-path=/kube/config
 
 You can select which clusters should be queried by specifying a list of kubeconfig contexts with the ``--kubeconfig-contexts`` option:
 
 .. code-block:: bash
 
-    $ docker run -it -p 8080:8080 -v ~/.kube/config:/kubeconfig hjacobs/kube-ops-view --kubeconfig-path=/kubeconfig --kubeconfig-contexts=bar
+    $ docker run -it --net=host -v ~/.kube:/kube hjacobs/kube-ops-view --kubeconfig-path=/kube/config --kubeconfig-contexts=bar
 
 This would only query the Kubernetes cluster defined by the ``bar`` context.
 
@@ -91,3 +102,4 @@ Example:
 Otherwise the needed OAuth credentials (``Bearer`` access token) must be provided via a file ``${CREDENTIALS_DIR}/read-only-token-secret``.
 
 .. _kubeconfig file: https://kubernetes.io/docs/user-guide/kubeconfig-file/
+.. _Minikube: https://github.com/kubernetes/minikube
