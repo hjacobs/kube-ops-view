@@ -100,6 +100,54 @@ Example:
     $ docker run -it -p 8080:8080 -e OAUTH2_ACCESS_TOKENS=read-only=$token hjacobs/kube-ops-view --cluster-registry-url=https://cluster-registry.example.org
 
 Otherwise the needed OAuth credentials (``Bearer`` access token) must be provided via a file ``${CREDENTIALS_DIR}/read-only-token-secret``.
+You can pass this file by mounting a secret like:
+
+.. code-block:: yaml
+
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: kube-ops-view-credentials
+    type: Opaque
+    data:
+      read-only-token-type: Bearer
+      read-only-token-secret: dXNlcjpwYXNzCg== # base64 encoded token
+
+The deployment manifest to mount the above secret:
+
+.. code-blocka:: yaml
+
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    metadata:
+      name: kube-ops-view
+    spec:
+      replicas: 1
+      template:
+        metadata:
+          labels:
+            app: kube-ops-view
+        spec:
+          containers:
+          - name: kube-ops-view
+            image: hjacobs/kube-ops-view:latest
+            env:
+            - name: CLUSTER_REGISTRY_URL
+              value: "https://cluster-registry.example.org"
+            - name: CREDENTIALS_DIR
+              value: "/meta/credentials"
+            ports:
+            - containerPort: 8080
+              protocol: TCP
+            volumeMounts:
+            - name: credentials
+              mountPath: /meta/credentials
+              readOnly: true
+          volumes:
+          - name: credentials
+            secret:
+              secretName: kube-ops-view-credentials
+
 
 .. _kubeconfig file: https://kubernetes.io/docs/user-guide/kubeconfig-file/
 .. _Minikube: https://github.com/kubernetes/minikube
