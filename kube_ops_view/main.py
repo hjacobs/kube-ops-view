@@ -86,9 +86,9 @@ def index():
 
 def event(cluster_ids: set):
     # first sent full data once
-    for cluster_id in (app.store.get('cluster-ids') or []):
+    for cluster_id in app.store.get_cluster_ids():
         if not cluster_ids or cluster_id in cluster_ids:
-            cluster = app.store.get(cluster_id)
+            cluster = app.store.get_cluster_data(cluster_id)
             if cluster:
                 yield 'event: clusterupdate\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
     while True:

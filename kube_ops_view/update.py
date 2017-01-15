@@ -41,8 +41,7 @@ def update_clusters(cluster_discoverer, query_cluster: callable, store, query_in
                 cluster_ids = set()
                 for cluster in clusters:
                     cluster_ids.add(cluster.id)
-                    status_key = '{}:status'.format(cluster.id)
-                    status = store.get(status_key) or {}
+                    status = store.get_cluster_status(cluster.id)
                     now = time.time()
                     if now < status.get('last_query_time', 0) + query_interval:
                         continue
@@ -61,20 +60,20 @@ def update_clusters(cluster_discoverer, query_cluster: callable, store, query_in
                         if backoff:
                             logger.info('Cluster {} ({}) recovered after {} tries.'.format(cluster.id, cluster.api_server_url, backoff['tries']))
                             del status['backoff']
-                        old_data = store.get(data['id'])
+                        old_data = store.get_cluster_data(data['id'])
                         if old_data:
                             # https://pikacode.com/phijaro/json_delta/ticket/11/
                             # diff is extremely slow without array_align=False
                             delta = json_delta.diff(old_data, data, verbose=debug, array_align=False)
                             store.publish('clusterdelta', {'cluster_id': cluster.id, 'delta': delta})
                             if delta:
-                                store.set(cluster.id, data)
+                                store.set_cluster_data(cluster.id, data)
                         else:
                             logger.info('Discovered new cluster {} ({}).'.format(cluster.id, cluster.api_server_url))
                             store.publish('clusterupdate', data)
-                            store.set(cluster.id, data)
-                    store.set(status_key, status)
-                store.set('cluster-ids', list(sorted(cluster_ids)))
+                            store.set_cluster_data(cluster.id, data)
+                    store.set_cluster_status(cluster.id, status)
+                store.set_cluster_ids(cluster_ids)
             except:
                 logger.exception('Failed to update')
             finally:

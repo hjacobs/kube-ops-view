@@ -37,7 +37,28 @@ def check_token(token: str, remote_addr: str, data: dict):
         raise ValueError('Invalid token')
 
 
-class MemoryStore:
+class AbstractStore:
+
+    def get_cluster_ids(self):
+        return self.get('cluster-ids') or []
+
+    def set_cluster_ids(self, cluster_ids: set):
+        self.set('cluster-ids', list(sorted(cluster_ids)))
+
+    def get_cluster_status(self, cluster_id: str) -> dict:
+        return self.get('clusters:{}:status'.format(cluster_id)) or {}
+
+    def set_cluster_status(self, cluster_id: str, status: dict):
+        self.set('clusters:{}:status'.format(cluster_id), status)
+
+    def get_cluster_data(self, cluster_id: str) -> dict:
+        return self.get('clusters:{}:data'.format(cluster_id)) or {}
+
+    def set_cluster_data(self, cluster_id: str, data: dict):
+        self.set('clusters:{}:data'.format(cluster_id), data)
+
+
+class MemoryStore(AbstractStore):
     '''Memory-only backend, mostly useful for local debugging'''
 
     def __init__(self):
@@ -85,7 +106,7 @@ class MemoryStore:
         self._screen_tokens[token] = data
 
 
-class RedisStore:
+class RedisStore(AbstractStore):
     '''Redis-based backend for deployments with replicas > 1'''
 
     def __init__(self, url: str):
