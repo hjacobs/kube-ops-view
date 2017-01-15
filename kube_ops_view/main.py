@@ -26,7 +26,7 @@ from urllib.parse import urljoin
 from .mock import get_mock_clusters
 from .kubernetes import get_kubernetes_clusters
 from .stores import MemoryStore, RedisStore
-from .cluster_discovery import DEFAULT_CLUSTERS, StaticClusterDiscoverer, ClusterRegistryDiscoverer
+from .cluster_discovery import DEFAULT_CLUSTERS, StaticClusterDiscoverer, ClusterRegistryDiscoverer, KubeconfigDiscoverer
 
 
 logger = logging.getLogger(__name__)
@@ -217,7 +217,8 @@ def print_version(ctx, param, value):
 @click.option('--clusters', help='Comma separated list of Kubernetes API server URLs (default: {})'.format(DEFAULT_CLUSTERS),
               envvar='CLUSTERS')
 @click.option('--cluster-registry-url', help='URL to cluster registry', envvar='CLUSTER_REGISTRY_URL')
-def main(port, debug, mock, secret_key, redis_url, clusters, cluster_registry_url):
+@click.option('--kubeconfig-path', type=click.Path(exists=True), help='Path to kubeconfig file', envvar='KUBECONFIG_PATH')
+def main(port, debug, mock, secret_key, redis_url, clusters, cluster_registry_url, kubeconfig_path):
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
 
     store = RedisStore(redis_url) if redis_url else MemoryStore()
@@ -228,6 +229,8 @@ def main(port, debug, mock, secret_key, redis_url, clusters, cluster_registry_ur
 
     if cluster_registry_url:
         discoverer = ClusterRegistryDiscoverer(cluster_registry_url)
+    elif kubeconfig_path:
+        discoverer = KubeconfigDiscoverer(Path(kubeconfig_path))
     else:
         api_server_urls = clusters.split(',') if clusters else []
         discoverer = StaticClusterDiscoverer(api_server_urls)

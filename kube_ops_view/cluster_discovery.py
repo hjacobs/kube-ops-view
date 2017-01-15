@@ -1,4 +1,5 @@
 import time
+from pathlib import Path
 from urllib.parse import urljoin
 
 import kubernetes.client
@@ -116,3 +117,23 @@ class ClusterRegistryDiscoverer:
         if now - self._last_cache_refresh > self._cache_lifetime:
             self.refresh()
         return self._clusters
+
+
+class KubeconfigDiscoverer:
+
+    def __init__(self, kubeconfig_path: Path):
+        self._path = kubeconfig_path
+
+    def get_clusters(self):
+        # Kubernetes Python client expects "vintage" string path
+        config_file = str(self._path)
+        contexts, current_context = kubernetes.config.list_kube_config_contexts(config_file)
+        for context in contexts:
+            config = kubernetes.client.ConfigurationObject()
+            kubernetes.config.load_kube_config(config_file, context=context['name'], client_configuration=config)
+            cluster = Cluster(
+                context['name'],
+                config.host,
+                ssl_ca_cert=config.ssl_ca_cert,
+                auth=StaticTokenAuth(config.api_key['authorization'].split(' ', 1)[-1]))
+            yield cluster
