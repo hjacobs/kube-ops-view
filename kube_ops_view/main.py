@@ -197,11 +197,12 @@ class CommaSeparatedValues(click.ParamType):
 @click.option('-m', '--mock', is_flag=True, help='Mock Kubernetes clusters', envvar='MOCK')
 @click.option('--secret-key', help='Secret key for session cookies', envvar='SECRET_KEY', default='development')
 @click.option('--redis-url', help='Redis URL to use for pub/sub and job locking', envvar='REDIS_URL')
-@click.option('--clusters', type=CommaSeparatedValues(), help='Comma separated list of Kubernetes API server URLs (default: {})'.format(DEFAULT_CLUSTERS),
-              envvar='CLUSTERS')
+@click.option('--clusters', type=CommaSeparatedValues(),
+              help='Comma separated list of Kubernetes API server URLs (default: {})'.format(DEFAULT_CLUSTERS), envvar='CLUSTERS')
 @click.option('--cluster-registry-url', help='URL to cluster registry', envvar='CLUSTER_REGISTRY_URL')
 @click.option('--kubeconfig-path', type=click.Path(exists=True), help='Path to kubeconfig file', envvar='KUBECONFIG_PATH')
-@click.option('--kubeconfig-contexts', type=CommaSeparatedValues(), help='Path to kubeconfig file', envvar='KUBECONFIG_PATH')
+@click.option('--kubeconfig-contexts', type=CommaSeparatedValues(),
+              help='List of kubeconfig contexts to use (default: use all defined contexts)', envvar='KUBECONFIG_CONTEXTS')
 @click.option('--query-interval', type=float, help='Interval in seconds for querying clusters (default: 5)', envvar='QUERY_INTERVAL', default=5)
 def main(port, debug, mock, secret_key, redis_url, clusters: list, cluster_registry_url, kubeconfig_path, kubeconfig_contexts: list, query_interval):
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
