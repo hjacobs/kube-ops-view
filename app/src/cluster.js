@@ -4,10 +4,23 @@ import App from './app.js'
 const PIXI = require('pixi.js')
 
 export default class Cluster extends PIXI.Graphics {
-    constructor (cluster, tooltip) {
+    constructor (cluster, status, tooltip) {
         super()
         this.cluster = cluster
+        this.status = status
         this.tooltip = tooltip
+    }
+
+    destroy() {
+        if (this.tick) {
+            PIXI.ticker.shared.remove(this.tick, this)
+        }
+        super.destroy()
+    }
+
+    pulsate(_time) {
+        const v = Math.sin((PIXI.ticker.shared.lastTime % 1000) / 1000. * Math.PI)
+        this.alpha = 0.4 + (v * 0.6)
     }
 
     draw () {
@@ -80,7 +93,7 @@ export default class Cluster extends PIXI.Graphics {
         const width = Math.max(masterWidth, workerWidth)
         this.drawRect(0, 0, width, top + masterHeight + workerHeight)
 
-        var topHandle = new PIXI.Graphics()
+        const topHandle = this.topHandle = new PIXI.Graphics()
         topHandle.beginFill(App.current.theme.primaryColor, 1)
         topHandle.drawRect(0, 0, width, 15)
         topHandle.endFill()
@@ -90,11 +103,29 @@ export default class Cluster extends PIXI.Graphics {
         topHandle.on('click', function(_event) {
             App.current.toggleCluster(that.cluster.id)
         })
-        var text = new PIXI.Text(this.cluster.api_server_url, {fontFamily: 'ShareTechMono', fontSize: 10, fill: 0x000000})
+        const text = new PIXI.Text(this.cluster.api_server_url, {fontFamily: 'ShareTechMono', fontSize: 10, fill: 0x000000})
         text.x = 2
         text.y = 2
         topHandle.addChild(text)
         this.addChild(topHandle)
+
+        let newTick = null
+        const nowSeconds = Date.now() / 1000
+        if (this.status && this.status.last_query_time < nowSeconds - 20) {
+            newTick = this.pulsate
+        }
+
+        if (newTick && newTick != this.tick) {
+            this.tick = newTick
+            // important: only register new listener if it does not exist yet!
+            // (otherwise we leak listeners)
+            PIXI.ticker.shared.add(this.tick, this)
+        } else if (!newTick && this.tick) {
+            PIXI.ticker.shared.remove(this.tick, this)
+            this.tick = null
+            this.alpha = 1
+            this.tint = 0xffffff
+        }
     }
 
 }

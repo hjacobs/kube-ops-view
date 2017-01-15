@@ -25,7 +25,10 @@ export default class App {
         this.keepAliveSeconds = 20
         // always reconnect after 5 minutes
         this.maxConnectionLifetimeSeconds = 300
+        // consider cluster data older than 1 minute outdated
+        this.maxDataAgeSeconds = 60
         this.clusters = new Map()
+        this.clusterStatuses = new Map()
     }
 
     parseLocationHash() {
@@ -122,6 +125,8 @@ export default class App {
         addEventListener(
             'keydown', downHandler.bind(this), false
         )
+
+        setInterval(this.pruneUnavailableClusters.bind(this), 5 * 1000)
     }
 
     draw() {
@@ -313,12 +318,14 @@ export default class App {
         for (const cluster of clusters) {
             if (!this.selectedClusters.size || this.selectedClusters.has(cluster.id)) {
                 clusterIds.add(cluster.id)
+                const status = this.clusterStatuses.get(cluster.id)
                 let clusterBox = clusterComponentById[cluster.id]
                 if (!clusterBox) {
-                    clusterBox = new Cluster(cluster, this.tooltip)
+                    clusterBox = new Cluster(cluster, status, this.tooltip)
                     this.viewContainer.addChild(clusterBox)
                 } else {
                     clusterBox.cluster = cluster
+                    clusterBox.status = status
                 }
                 clusterBox.draw()
                 clusterBox.x = 0
@@ -391,12 +398,38 @@ export default class App {
         }
     }
 
+    pruneUnavailableClusters() {
+        let updateNeeded = false
+        const nowSeconds = Date.now() / 1000
+        for (const [clusterId, statusObj] of this.clusterStatuses.entries()) {
+            const lastQueryTime = statusObj.last_query_time || 0
+            if (lastQueryTime < nowSeconds - this.maxDataAgeSeconds) {
+                this.clusters.delete(clusterId)
+                updateNeeded = true
+            } else if (lastQueryTime < nowSeconds - 20) {
+                updateNeeded = true
+            }
+        }
+        if (updateNeeded) {
+            this.update()
+        }
+    }
+
     disconnect() {
         if (this.eventSource != null) {
             this.eventSource.close()
             this.eventSource = null
             this.connectTime = null
         }
+    }
+
+    refreshLastQueryTime(clusterId) {
+        let statusObj = this.clusterStatuses.get(clusterId)
+        if (!statusObj) {
+            statusObj = {}
+        }
+        statusObj.last_query_time = Date.now() / 1000
+        this.clusterStatuses.set(clusterId, statusObj)
     }
 
     connect() {
@@ -425,13 +458,21 @@ export default class App {
             that._errors = 0
             that.keepAlive()
             const cluster = JSON.parse(event.data)
-            that.clusters.set(cluster.id, cluster)
-            that.update()
+            const status = that.clusterStatuses.get(cluster.id)
+            const nowSeconds = Date.now() / 1000
+            if (status && status.last_query_time < nowSeconds - that.maxDataAgeSeconds) {
+                // outdated data => ignore
+            } else {
+                that.clusters.set(cluster.id, cluster)
+                that.update()
+            }
         })
         eventSource.addEventListener('clusterdelta', function(event) {
             that._errors = 0
             that.keepAlive()
             const data = JSON.parse(event.data)
+            // we received some delta => we know that the cluster query succeeded!
+            that.refreshLastQueryTime(data.cluster_id)
             let cluster = that.clusters.get(data.cluster_id)
             if (cluster && data.delta) {
                 // deep copy cluster object (patch function mutates inplace!)
@@ -440,6 +481,12 @@ export default class App {
                 that.clusters.set(cluster.id, cluster)
                 that.update()
             }
+        })
+        eventSource.addEventListener('clusterstatus', function(event) {
+            that._errors = 0
+            that.keepAlive()
+            const data = JSON.parse(event.data)
+            that.clusterStatuses.set(data.cluster_id, data.status)
         })
         this.connectTime = Date.now()
     }

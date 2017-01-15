@@ -88,9 +88,15 @@ def event(cluster_ids: set):
     # first sent full data once
     for cluster_id in app.store.get_cluster_ids():
         if not cluster_ids or cluster_id in cluster_ids:
+            status = app.store.get_cluster_status(cluster_id)
+            if status:
+                # send the cluster status including last_query_time BEFORE the cluster data
+                # so the UI knows how to render correctly from the start
+                yield 'event: clusterstatus\ndata: ' + json.dumps({'cluster_id': cluster_id, 'status': status}, separators=(',', ':')) + '\n\n'
             cluster = app.store.get_cluster_data(cluster_id)
             if cluster:
                 yield 'event: clusterupdate\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
+
     while True:
         for event_type, event_data in app.store.listen():
             # hacky, event_data can be delta or full cluster object

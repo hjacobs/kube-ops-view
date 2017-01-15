@@ -55,6 +55,7 @@ def update_clusters(cluster_discoverer, query_cluster: callable, store, query_in
                     except Exception as e:
                         backoff = handle_query_failure(e, cluster, backoff)
                         status['backoff'] = backoff
+                        store.publish('clusterstatus', {'cluster_id': cluster.id, 'status': status})
                     else:
                         status['last_query_time'] = now
                         if backoff:
@@ -70,6 +71,8 @@ def update_clusters(cluster_discoverer, query_cluster: callable, store, query_in
                                 store.set_cluster_data(cluster.id, data)
                         else:
                             logger.info('Discovered new cluster {} ({}).'.format(cluster.id, cluster.api_server_url))
+                            # first send status with last_query_time!
+                            store.publish('clusterstatus', {'cluster_id': cluster.id, 'status': status})
                             store.publish('clusterupdate', data)
                             store.set_cluster_data(cluster.id, data)
                     store.set_cluster_status(cluster.id, status)
