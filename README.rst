@@ -108,11 +108,11 @@ The provided ``Makefile`` will generate a Docker image by default:
 Multiple Clusters
 =================
 
-Multiple clusters are supported by passing a list of API server URLs in the ``CLUSTERS`` environment variable.
-These can either be unprotected ``localhost`` URLs or OAuth 2 protected API endpoints.
-Note that authentication via client-certificates is currently not supported!
+Multiple clusters are supported by passing a list of API servers, reading a kubeconfig file or pointing to an HTTP Cluster Registry endpoint.
 
-The needed OAuth credentials (``Bearer`` access token) must be provided via a file ``${CREDENTIALS_DIR}/read-only-token``.
+See the `documentation on multiple clusters`_ for details.
+
+.. _documentation on multiple clusters: https://kubernetes-operational-view.readthedocs.io/en/latest/multiple-clusters.html
 
 
 Configuration

@@ -2,7 +2,17 @@
 Multiple Clusters
 =================
 
+Multiple clusters are supported by either passing a static list of API server URLs, using an existing kubeconfig file or pointing to a Cluster Registry HTTP endpoint.
+
+Static List of API Server URLs
+==============================
+
 Set the ``CLUSTERS`` environment variable to a comma separated list of Kubernetes API server URLs.
+
+These can either be unprotected ``localhost`` URLs or OAuth 2 protected API endpoints.
+
+The needed OAuth credentials (``Bearer`` access token) must be provided via a file ``${CREDENTIALS_DIR}/read-only-token-secret``.
+
 
 Kubeconfig File
 ===============
@@ -77,5 +87,7 @@ Example:
 
     $ token=mysecrettoken
     $ docker run -it -p 8080:8080 -e OAUTH2_ACCESS_TOKENS=read-only=$token hjacobs/kube-ops-view --cluster-registry-url=https://cluster-registry.example.org
+
+Otherwise the needed OAuth credentials (``Bearer`` access token) must be provided via a file ``${CREDENTIALS_DIR}/read-only-token-secret``.
 
 .. _kubeconfig file: https://kubernetes.io/docs/user-guide/kubeconfig-file/
