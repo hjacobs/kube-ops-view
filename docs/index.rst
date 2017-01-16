@@ -15,6 +15,7 @@ GitHub repository: https://github.com/hjacobs/kube-ops-view
    :caption: Contents:
 
    getting-started
+   user-guide
    multiple-clusters
    access-control
 
