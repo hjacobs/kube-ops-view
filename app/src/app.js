@@ -8,6 +8,8 @@ import { JSON_delta } from './vendor/json_delta.js'
 
 const PIXI = require('pixi.js')
 
+const addWheelListener = require('./vendor/addWheelListener')
+
 
 export default class App {
 
@@ -110,6 +112,11 @@ export default class App {
         //Create a container object called the `stage`
         this.stage = new PIXI.Container()
 
+        this.registerEventListeners()
+        setInterval(this.pruneUnavailableClusters.bind(this), 5 * 1000)
+    }
+
+    registerEventListeners() {
         function downHandler(event) {
             const panAmount = 20
             if (event.key == 'ArrowLeft') {
@@ -119,16 +126,16 @@ export default class App {
                 this.viewContainerTargetPosition.x -= panAmount
             }
             if (event.key == 'ArrowUp') {
-                this.viewContainerTargetPosition.y -= panAmount
-            }
-            else if (event.key == 'ArrowDown') {
                 this.viewContainerTargetPosition.y += panAmount
             }
+            else if (event.key == 'ArrowDown') {
+                this.viewContainerTargetPosition.y -= panAmount
+            }
             if (event.key == 'PageUp') {
-                this.viewContainerTargetPosition.y -= window.innerHeight
+                this.viewContainerTargetPosition.y += window.innerHeight
             }
             else if (event.key == 'PageDown') {
-                this.viewContainerTargetPosition.y += window.innerHeight
+                this.viewContainerTargetPosition.y -= window.innerHeight
             }
             else if (event.key == 'Home') {
                 this.viewContainerTargetPosition.x = 20
@@ -146,11 +153,104 @@ export default class App {
             }
         }
 
-        addEventListener(
-            'keydown', downHandler.bind(this), false
-        )
+        var isDragging = false,
+            prevX, prevY
 
-        setInterval(this.pruneUnavailableClusters.bind(this), 5 * 1000)
+        function mouseDownHandler(event) {
+            if (event.button == 1) {
+                prevX = event.clientX; prevY = event.clientY
+                isDragging = true
+                this.renderer.view.style.cursor = 'move'
+            }
+        }
+
+        function mouseMoveHandler(event) {
+            if (!isDragging) {
+                return
+            }
+            var dx = event.clientX - prevX
+            var dy = event.clientY - prevY
+
+            this.viewContainer.x += dx
+            this.viewContainer.y += dy
+            // stop any current move animation
+            this.viewContainerTargetPosition.x = this.viewContainer.x
+            this.viewContainerTargetPosition.y = this.viewContainer.y
+            prevX = event.clientX; prevY = event.clientY
+        }
+
+        function mouseUpHandler(_event) {
+            isDragging = false
+            this.renderer.view.style.cursor = 'default'
+        }
+
+        function touchStartHandler(event) {
+            if (event.touches.length == 1) {
+                const touch = event.touches[0]
+                prevX = touch.clientX; prevY = touch.clientY
+                isDragging = true
+            }
+        }
+
+        function touchMoveHandler(event) {
+            if (!isDragging) {
+                return
+            }
+            if (event.touches.length == 1) {
+                const touch = event.touches[0]
+                var dx = touch.clientX - prevX
+                var dy = touch.clientY - prevY
+
+                this.viewContainer.x += dx
+                this.viewContainer.y += dy
+                // stop any current move animation
+                this.viewContainerTargetPosition.x = this.viewContainer.x
+                this.viewContainerTargetPosition.y = this.viewContainer.y
+                prevX = touch.clientX; prevY = touch.clientY
+            }
+        }
+
+        function touchEndHandler(_event) {
+            isDragging = false
+        }
+
+        addEventListener('keydown', downHandler.bind(this), false)
+        addEventListener('mousedown', mouseDownHandler.bind(this), false)
+        addEventListener('mousemove', mouseMoveHandler.bind(this), false)
+        addEventListener('mouseup', mouseUpHandler.bind(this), false)
+        addEventListener('touchstart', touchStartHandler.bind(this), false)
+        addEventListener('touchmove', touchMoveHandler.bind(this), false)
+        addEventListener('touchend', touchEndHandler.bind(this), false)
+
+        const that = this
+        const interactionObj = new PIXI.interaction.InteractionData()
+
+        function getLocalCoordinates(x, y) {
+            return interactionObj.getLocalPosition(that.viewContainer, undefined, {x: x, y: y})
+        }
+
+        function zoom(x, y, isZoomIn) {
+            const direction = isZoomIn ? 1 : -1
+            const factor = (1 + direction * 0.1)
+            const newScale = that.viewContainer.scale.x * factor
+            that.viewContainer.scale.set(newScale)
+
+            // zoom around one point on ViewContainer
+            const beforeTransform = getLocalCoordinates(x, y)
+            that.viewContainer.updateTransform()
+            const afterTransform = getLocalCoordinates(x, y)
+
+            that.viewContainer.x += (afterTransform.x - beforeTransform.x) * newScale
+            that.viewContainer.y += (afterTransform.y - beforeTransform.y) * newScale
+
+            // stop any current move animation
+            that.viewContainerTargetPosition.x = that.viewContainer.x
+            that.viewContainerTargetPosition.y = that.viewContainer.y
+        }
+
+        addWheelListener(this.renderer.view, function (e) {
+            zoom(e.clientX, e.clientY, e.deltaY < 0)
+        })
     }
 
     draw() {
