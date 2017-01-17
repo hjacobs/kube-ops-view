@@ -8,6 +8,8 @@ import { JSON_delta } from './vendor/json_delta.js'
 
 const PIXI = require('pixi.js')
 
+const addWheelListener = require('./vendor/addWheelListener')
+
 
 export default class App {
 
@@ -29,6 +31,7 @@ export default class App {
         this.maxDataAgeSeconds = 60
         this.clusters = new Map()
         this.clusterStatuses = new Map()
+        this.viewContainerTargetPosition = new PIXI.Point()
     }
 
     parseLocationHash() {
@@ -109,8 +112,36 @@ export default class App {
         //Create a container object called the `stage`
         this.stage = new PIXI.Container()
 
+        this.registerEventListeners()
+        setInterval(this.pruneUnavailableClusters.bind(this), 5 * 1000)
+    }
+
+    registerEventListeners() {
         function downHandler(event) {
-            if (event.key && event.key.length == 1 && !event.ctrlKey && !event.metaKey) {
+            const panAmount = 20
+            if (event.key == 'ArrowLeft') {
+                this.viewContainerTargetPosition.x += panAmount
+            }
+            else if (event.key == 'ArrowRight') {
+                this.viewContainerTargetPosition.x -= panAmount
+            }
+            if (event.key == 'ArrowUp') {
+                this.viewContainerTargetPosition.y += panAmount
+            }
+            else if (event.key == 'ArrowDown') {
+                this.viewContainerTargetPosition.y -= panAmount
+            }
+            if (event.key == 'PageUp') {
+                this.viewContainerTargetPosition.y += window.innerHeight
+            }
+            else if (event.key == 'PageDown') {
+                this.viewContainerTargetPosition.y -= window.innerHeight
+            }
+            else if (event.key == 'Home') {
+                this.viewContainerTargetPosition.x = 20
+                this.viewContainerTargetPosition.y = 40
+            }
+            else if (event.key && event.key.length == 1 && !event.ctrlKey && !event.metaKey) {
                 this.filterString += event.key
                 this.filter()
                 event.preventDefault()
@@ -122,16 +153,119 @@ export default class App {
             }
         }
 
-        addEventListener(
-            'keydown', downHandler.bind(this), false
-        )
+        var isDragging = false,
+            prevX, prevY
 
-        setInterval(this.pruneUnavailableClusters.bind(this), 5 * 1000)
+        function mouseDownHandler(event) {
+            if (event.button == 1) {
+                prevX = event.clientX; prevY = event.clientY
+                isDragging = true
+                this.renderer.view.style.cursor = 'move'
+            }
+        }
+
+        function mouseMoveHandler(event) {
+            if (!isDragging) {
+                return
+            }
+            var dx = event.clientX - prevX
+            var dy = event.clientY - prevY
+
+            this.viewContainer.x += dx
+            this.viewContainer.y += dy
+            // stop any current move animation
+            this.viewContainerTargetPosition.x = this.viewContainer.x
+            this.viewContainerTargetPosition.y = this.viewContainer.y
+            prevX = event.clientX; prevY = event.clientY
+        }
+
+        function mouseUpHandler(_event) {
+            isDragging = false
+            this.renderer.view.style.cursor = 'default'
+        }
+
+        function touchStartHandler(event) {
+            if (event.touches.length == 1) {
+                const touch = event.touches[0]
+                prevX = touch.clientX; prevY = touch.clientY
+                isDragging = true
+            }
+        }
+
+        function touchMoveHandler(event) {
+            if (!isDragging) {
+                return
+            }
+            if (event.touches.length == 1) {
+                const touch = event.touches[0]
+                var dx = touch.clientX - prevX
+                var dy = touch.clientY - prevY
+
+                this.viewContainer.x += dx
+                this.viewContainer.y += dy
+                // stop any current move animation
+                this.viewContainerTargetPosition.x = this.viewContainer.x
+                this.viewContainerTargetPosition.y = this.viewContainer.y
+                prevX = touch.clientX; prevY = touch.clientY
+            }
+        }
+
+        function touchEndHandler(_event) {
+            isDragging = false
+        }
+
+        addEventListener('keydown', downHandler.bind(this), false)
+        addEventListener('mousedown', mouseDownHandler.bind(this), false)
+        addEventListener('mousemove', mouseMoveHandler.bind(this), false)
+        addEventListener('mouseup', mouseUpHandler.bind(this), false)
+        addEventListener('touchstart', touchStartHandler.bind(this), false)
+        addEventListener('touchmove', touchMoveHandler.bind(this), false)
+        addEventListener('touchend', touchEndHandler.bind(this), false)
+
+        const that = this
+        const interactionObj = new PIXI.interaction.InteractionData()
+
+        function getLocalCoordinates(x, y) {
+            return interactionObj.getLocalPosition(that.viewContainer, undefined, {x: x, y: y})
+        }
+
+        const minScale = 1/32
+        const maxScale = 32
+
+        function zoom(x, y, isZoomIn) {
+            const direction = isZoomIn ? 1 : -1
+            const factor = (1 + direction * 0.1)
+            const newScale = Math.min(Math.max(that.viewContainer.scale.x * factor, minScale), maxScale)
+            that.viewContainer.scale.set(newScale)
+
+            // zoom around one point on ViewContainer
+            const beforeTransform = getLocalCoordinates(x, y)
+            that.viewContainer.updateTransform()
+            const afterTransform = getLocalCoordinates(x, y)
+
+            that.viewContainer.x += (afterTransform.x - beforeTransform.x) * newScale
+            that.viewContainer.y += (afterTransform.y - beforeTransform.y) * newScale
+
+            // stop any current move animation
+            that.viewContainerTargetPosition.x = that.viewContainer.x
+            that.viewContainerTargetPosition.y = that.viewContainer.y
+        }
+
+        addWheelListener(this.renderer.view, function (e) {
+            zoom(e.clientX, e.clientY, e.deltaY < 0)
+        })
     }
 
     draw() {
         this.stage.removeChildren()
         this.theme.apply(this.stage)
+
+        const viewContainer = new PIXI.Container()
+        viewContainer.x = 20
+        viewContainer.y = 40
+        this.viewContainerTargetPosition.x = 20
+        this.viewContainerTargetPosition.y = 40
+        this.stage.addChild(viewContainer)
 
         const menuBar = new PIXI.Graphics()
         menuBar.beginFill(this.theme.secondaryColor, 1)
@@ -189,10 +323,6 @@ export default class App {
         themeSelector.y = 3
         menuBar.addChild(themeSelector.draw())
 
-        const viewContainer = new PIXI.Container()
-        viewContainer.x = 20
-        viewContainer.y = 40
-        this.stage.addChild(viewContainer)
 
         const tooltip = new Tooltip()
         tooltip.draw()
@@ -356,7 +486,20 @@ export default class App {
         }
     }
 
-    tick(_time) {
+    tick(time) {
+        const deltaX = this.viewContainerTargetPosition.x - this.viewContainer.x
+        const deltaY = this.viewContainerTargetPosition.y - this.viewContainer.y
+        if (Math.abs(deltaX) < 20 && Math.abs(deltaY) < 20) {
+            this.viewContainer.position.x = this.viewContainerTargetPosition.x
+            this.viewContainer.position.y = this.viewContainerTargetPosition.y
+        } else {
+            if (Math.abs(deltaX) > time) {
+                this.viewContainer.x += time * Math.sign(deltaX) * Math.max(10, Math.abs(deltaX)/10)
+            }
+            if (Math.abs(deltaY) > time) {
+                this.viewContainer.y += time * Math.sign(deltaY) * Math.max(10, Math.abs(deltaY)/10)
+            }
+        }
         this.renderer.render(this.stage)
     }
 
