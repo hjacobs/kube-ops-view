@@ -29,6 +29,7 @@ export default class App {
         this.maxDataAgeSeconds = 60
         this.clusters = new Map()
         this.clusterStatuses = new Map()
+        this.viewContainerTargetPosition = new PIXI.Point()
     }
 
     parseLocationHash() {
@@ -110,7 +111,30 @@ export default class App {
         this.stage = new PIXI.Container()
 
         function downHandler(event) {
-            if (event.key && event.key.length == 1 && !event.ctrlKey && !event.metaKey) {
+            const panAmount = 20
+            if (event.key == 'ArrowLeft') {
+                this.viewContainerTargetPosition.x += panAmount
+            }
+            else if (event.key == 'ArrowRight') {
+                this.viewContainerTargetPosition.x -= panAmount
+            }
+            if (event.key == 'ArrowUp') {
+                this.viewContainerTargetPosition.y -= panAmount
+            }
+            else if (event.key == 'ArrowDown') {
+                this.viewContainerTargetPosition.y += panAmount
+            }
+            if (event.key == 'PageUp') {
+                this.viewContainerTargetPosition.y -= window.innerHeight
+            }
+            else if (event.key == 'PageDown') {
+                this.viewContainerTargetPosition.y += window.innerHeight
+            }
+            else if (event.key == 'Home') {
+                this.viewContainerTargetPosition.x = 20
+                this.viewContainerTargetPosition.y = 40
+            }
+            else if (event.key && event.key.length == 1 && !event.ctrlKey && !event.metaKey) {
                 this.filterString += event.key
                 this.filter()
                 event.preventDefault()
@@ -132,6 +156,13 @@ export default class App {
     draw() {
         this.stage.removeChildren()
         this.theme.apply(this.stage)
+
+        const viewContainer = new PIXI.Container()
+        viewContainer.x = 20
+        viewContainer.y = 40
+        this.viewContainerTargetPosition.x = 20
+        this.viewContainerTargetPosition.y = 40
+        this.stage.addChild(viewContainer)
 
         const menuBar = new PIXI.Graphics()
         menuBar.beginFill(this.theme.secondaryColor, 1)
@@ -189,10 +220,6 @@ export default class App {
         themeSelector.y = 3
         menuBar.addChild(themeSelector.draw())
 
-        const viewContainer = new PIXI.Container()
-        viewContainer.x = 20
-        viewContainer.y = 40
-        this.stage.addChild(viewContainer)
 
         const tooltip = new Tooltip()
         tooltip.draw()
@@ -356,7 +383,20 @@ export default class App {
         }
     }
 
-    tick(_time) {
+    tick(time) {
+        const deltaX = this.viewContainerTargetPosition.x - this.viewContainer.x
+        const deltaY = this.viewContainerTargetPosition.y - this.viewContainer.y
+        if (Math.abs(deltaX) < 20 && Math.abs(deltaY) < 20) {
+            this.viewContainer.position.x = this.viewContainerTargetPosition.x
+            this.viewContainer.position.y = this.viewContainerTargetPosition.y
+        } else {
+            if (Math.abs(deltaX) > time) {
+                this.viewContainer.x += time * Math.sign(deltaX) * Math.max(10, Math.abs(deltaX)/10)
+            }
+            if (Math.abs(deltaY) > time) {
+                this.viewContainer.y += time * Math.sign(deltaY) * Math.max(10, Math.abs(deltaY)/10)
+            }
+        }
         this.renderer.render(this.stage)
     }
 
