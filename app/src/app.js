@@ -229,10 +229,13 @@ export default class App {
             return interactionObj.getLocalPosition(that.viewContainer, undefined, {x: x, y: y})
         }
 
+        const minScale = 1/32
+        const maxScale = 32
+
         function zoom(x, y, isZoomIn) {
             const direction = isZoomIn ? 1 : -1
             const factor = (1 + direction * 0.1)
-            const newScale = that.viewContainer.scale.x * factor
+            const newScale = Math.min(Math.max(that.viewContainer.scale.x * factor, minScale), maxScale)
             that.viewContainer.scale.set(newScale)
 
             // zoom around one point on ViewContainer
