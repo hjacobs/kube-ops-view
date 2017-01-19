@@ -150,7 +150,7 @@ export default class App {
             }
             else if (event.key == 'Home') {
                 this.viewContainerTargetPosition.x = 20
-                this.viewContainerTargetPosition.y = 40
+                this.viewContainerTargetPosition.y = this.dashboardMode ? 20 : 40
             }
             else if (event.key && event.key.length == 1 && !event.ctrlKey && !event.metaKey) {
                 this.filterString += event.key
