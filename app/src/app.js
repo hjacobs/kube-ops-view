@@ -15,6 +15,7 @@ export default class App {
 
     constructor() {
         const params = this.parseLocationHash()
+        this.reloadIntervalSeconds = parseInt(params.get('reload')) || 0
         this.filterString = params.get('q') || ''
         this.selectedClusters = new Set((params.get('clusters') || '').split(',').filter(x => x))
         this.seenPods = new Set()
@@ -114,6 +115,10 @@ export default class App {
 
         this.registerEventListeners()
         setInterval(this.pruneUnavailableClusters.bind(this), 5 * 1000)
+
+        if (this.reloadIntervalSeconds) {
+            setTimeout(function() { location.reload(false) }, this.reloadIntervalSeconds * 1000)
+        }
     }
 
     registerEventListeners() {
