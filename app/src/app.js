@@ -10,11 +10,14 @@ const PIXI = require('pixi.js')
 
 const addWheelListener = require('./vendor/addWheelListener')
 
+const TRUTHY_VALUES = new Set(['1', 'true'])
+
 
 export default class App {
 
     constructor() {
         const params = this.parseLocationHash()
+        this.dashboardMode = TRUTHY_VALUES.has(params.get('dashboard'))
         this.reloadIntervalSeconds = parseInt(params.get('reload')) || 0
         this.filterString = params.get('q') || ''
         this.selectedClusters = new Set((params.get('clusters') || '').split(',').filter(x => x))
@@ -63,7 +66,10 @@ export default class App {
 
     filter() {
         const searchString = this.filterString
-        this.searchText.text = searchString
+        if (this.searchText) {
+            // this.searchText might be undefined (dashboard mode)
+            this.searchText.text = searchString
+        }
         this.changeLocationHash('q', searchString)
         const filter = DESATURATION_FILTER
         for (const cluster of this.viewContainer.children) {
@@ -144,7 +150,7 @@ export default class App {
             }
             else if (event.key == 'Home') {
                 this.viewContainerTargetPosition.x = 20
-                this.viewContainerTargetPosition.y = 40
+                this.viewContainerTargetPosition.y = this.dashboardMode ? 20 : 40
             }
             else if (event.key && event.key.length == 1 && !event.ctrlKey && !event.metaKey) {
                 this.filterString += event.key
@@ -261,17 +267,7 @@ export default class App {
         })
     }
 
-    draw() {
-        this.stage.removeChildren()
-        this.theme.apply(this.stage)
-
-        const viewContainer = new PIXI.Container()
-        viewContainer.x = 20
-        viewContainer.y = 40
-        this.viewContainerTargetPosition.x = 20
-        this.viewContainerTargetPosition.y = 40
-        this.stage.addChild(viewContainer)
-
+    drawMenuBar() {
         const menuBar = new PIXI.Graphics()
         menuBar.beginFill(this.theme.secondaryColor, 1)
         menuBar.drawRect(0, 0, this.renderer.width, 28)
@@ -328,12 +324,28 @@ export default class App {
         themeSelector.y = 3
         menuBar.addChild(themeSelector.draw())
 
+        this.searchText = searchText
+    }
+
+    draw() {
+        this.stage.removeChildren()
+        this.theme.apply(this.stage)
+
+        const viewContainer = new PIXI.Container()
+        viewContainer.x = 20
+        viewContainer.y = this.dashboardMode ? 20 : 40
+        this.viewContainerTargetPosition.x = viewContainer.x
+        this.viewContainerTargetPosition.y = viewContainer.y
+        this.stage.addChild(viewContainer)
+
+        if (!this.dashboardMode) {
+            this.drawMenuBar()
+        }
 
         const tooltip = new Tooltip()
         tooltip.draw()
         this.stage.addChild(tooltip)
 
-        this.searchText = searchText
         this.viewContainer = viewContainer
         this.tooltip = tooltip
     }
