@@ -36,6 +36,7 @@ export default class App {
         this.clusters = new Map()
         this.clusterStatuses = new Map()
         this.viewContainerTargetPosition = new PIXI.Point()
+        this.bootstrapping = true
     }
 
     parseLocationHash() {
@@ -425,7 +426,6 @@ export default class App {
         const clusters = Array.from(this.clusters.entries()).sort().map(idCluster => idCluster[1])
         const that = this
         let changes = 0
-        const firstTime = this.seenPods.size == 0
         const podKeys = new Set()
         for (const cluster of clusters) {
             for (const node of Object.values(cluster.nodes)) {
@@ -492,7 +492,7 @@ export default class App {
             if (!this.seenPods.has(key)) {
                 // pod was created
                 this.seenPods.add(key)
-                if (!firstTime && changes < 10) {
+                if (!this.bootstrapping && changes < 10) {
                     const globalPos = pod.toGlobal({x: 0, y: 0})
                     window.setTimeout(function() {
                         that.animatePodCreation(pod, globalPos)
@@ -647,6 +647,11 @@ export default class App {
             that.keepAlive()
             const data = JSON.parse(event.data)
             that.clusterStatuses.set(data.cluster_id, data.status)
+        })
+        eventSource.addEventListener('bootstrapend', function(_event) {
+            that._errors = 0
+            that.keepAlive()
+            that.bootstrapping = false
         })
         this.connectTime = Date.now()
     }

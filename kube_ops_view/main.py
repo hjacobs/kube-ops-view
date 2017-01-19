@@ -96,6 +96,7 @@ def event(cluster_ids: set):
             cluster = app.store.get_cluster_data(cluster_id)
             if cluster:
                 yield 'event: clusterupdate\ndata: ' + json.dumps(cluster, separators=(',', ':')) + '\n\n'
+    yield 'event: bootstrapend\ndata: \n\n'
 
     while True:
         for event_type, event_data in app.store.listen():
