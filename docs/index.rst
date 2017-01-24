@@ -18,6 +18,7 @@ GitHub repository: https://github.com/hjacobs/kube-ops-view
    user-guide
    multiple-clusters
    access-control
+   ui-options
 
 
 
