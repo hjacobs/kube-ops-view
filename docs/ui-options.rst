@@ -8,9 +8,11 @@ All these options are passed in the URL's fragment identifier (starting with ``#
 Example URL: ``https://kube-ops-view.example.org/#dashboard=true;reload=600``
 
 
+``clusters``
+    Comma separated list of cluster IDs to show.
 ``dashboard``
     Enable dashboard mode which hides the menu bar.
 ``reload``
     Reload the whole page after X seconds. This is useful for unattended TV screens running 24x7 to mitigate JavaScript memory leaks and browser crashes.
-``clusters``
-    Comma separated list of cluster IDs to show.
+``scale``
+    Set the initial view scale (``1.0`` is 100%).
