@@ -25,12 +25,6 @@ export default class App {
         this.eventSource = null
         this.connectTime = null
         this.keepAliveTimer = null
-        // make sure we got activity at least every 20 seconds
-        this.keepAliveSeconds = 20
-        // always reconnect after 5 minutes
-        this.maxConnectionLifetimeSeconds = 300
-        // consider cluster data older than 1 minute outdated
-        this.maxDataAgeSeconds = 60
         this.clusters = new Map()
         this.clusterStatuses = new Map()
         this.viewContainerTargetPosition = new PIXI.Point()
@@ -548,10 +542,10 @@ export default class App {
         if (this.keepAliveTimer != null) {
             clearTimeout(this.keepAliveTimer)
         }
-        this.keepAliveTimer = setTimeout(this.connect.bind(this), this.keepAliveSeconds * 1000)
+        this.keepAliveTimer = setTimeout(this.connect.bind(this), this.config.keepAliveSeconds * 1000)
         if (this.connectTime != null) {
             const now = Date.now()
-            if (now - this.connectTime > this.maxConnectionLifetimeSeconds * 1000) {
+            if (now - this.connectTime > this.config.maxConnectionLifetimeSeconds * 1000) {
                 // maximum connection lifetime exceeded => reconnect
                 this.connect()
             }
@@ -563,7 +557,7 @@ export default class App {
         const nowSeconds = Date.now() / 1000
         for (const [clusterId, statusObj] of this.clusterStatuses.entries()) {
             const lastQueryTime = statusObj.last_query_time || 0
-            if (lastQueryTime < nowSeconds - this.maxDataAgeSeconds) {
+            if (lastQueryTime < nowSeconds - this.config.maxDataAgeSeconds) {
                 this.clusters.delete(clusterId)
                 updateNeeded = true
             } else if (lastQueryTime < nowSeconds - 20) {
@@ -620,7 +614,7 @@ export default class App {
             const cluster = JSON.parse(event.data)
             const status = that.clusterStatuses.get(cluster.id)
             const nowSeconds = Date.now() / 1000
-            if (status && status.last_query_time < nowSeconds - that.maxDataAgeSeconds) {
+            if (status && status.last_query_time < nowSeconds - that.config.maxDataAgeSeconds) {
                 // outdated data => ignore
             } else {
                 that.clusters.set(cluster.id, cluster)
