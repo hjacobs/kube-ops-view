@@ -6,7 +6,9 @@ import {BRIGHTNESS_FILTER} from './filters.js'
 const ALL_PODS = {}
 
 const sortByName = (a, b) => {
-    return a.name.localeCompare(b.name)
+    // https://github.com/hjacobs/kube-ops-view/issues/103
+    // *.name might be undefined
+    return (a.name || '').localeCompare(b.name || '')
 }
 
 const sortByAge = (a, b) => {
