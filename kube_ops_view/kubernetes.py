@@ -1,5 +1,6 @@
 import datetime
 import logging
+import time
 from urllib.parse import urljoin
 
 import requests
@@ -55,6 +56,10 @@ def request(cluster, path, **kwargs):
     return session.get(urljoin(cluster.api_server_url, path), auth=cluster.auth, verify=cluster.ssl_ca_cert, **kwargs)
 
 
+def parse_time(s: str):
+    return datetime.datetime.strptime(s, '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=datetime.timezone.utc).timestamp()
+
+
 def query_kubernetes_cluster(cluster):
     cluster_id = cluster.id
     api_server_url = cluster.api_server_url
@@ -68,14 +73,24 @@ def query_kubernetes_cluster(cluster):
         nodes[obj['name']] = obj
     response = request(cluster, '/api/v1/pods')
     response.raise_for_status()
+    now = time.time()
     for pod in response.json()['items']:
         obj = map_pod(pod)
         if 'deletionTimestamp' in pod['metadata']:
-            obj['deleted'] = datetime.datetime.strptime(pod['metadata']['deletionTimestamp'],
-                                                        '%Y-%m-%dT%H:%M:%SZ').replace(
-                tzinfo=datetime.timezone.utc).timestamp()
+            obj['deleted'] = parse_time(pod['metadata']['deletionTimestamp'])
         for cont in pod['spec']['containers']:
             obj['containers'].append(map_container(cont, pod))
+        if obj['phase'] == 'Succeeded':
+            last_termination_time = 0
+            for container in obj['containers']:
+                termination_time = container.get('state', {}).get('terminated', {}).get('finishedAt', '')
+                termination_time = parse_time(termination_time)
+                if termination_time > last_termination_time:
+                    last_termination_time = termination_time
+            if last_termination_time < now - 3600:
+                # the job/pod finished more than an hour ago
+                # => filter out
+                continue
         pods_by_namespace_name[(obj['namespace'], obj['name'])] = obj
         pod_key = '{}/{}'.format(obj['namespace'], obj['name'])
         if 'nodeName' in pod['spec'] and pod['spec']['nodeName'] in nodes:

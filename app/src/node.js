@@ -33,10 +33,13 @@ export default class Node extends PIXI.Graphics {
         let numberOfPods = 0
         for (const pod of Object.values(this.node.pods)) {
             numberOfPods++
-            for (const container of pod.containers) {
-                if (container.resources && container.resources.requests) {
-                    for (const key of Object.keys(container.resources.requests)) {
-                        resources[key].requested += parseResource(container.resources.requests[key])
+            // do not account for completed jobs
+            if (pod.phase != 'Succeeded') {
+                for (const container of pod.containers) {
+                    if (container.resources && container.resources.requests) {
+                        for (const key of Object.keys(container.resources.requests)) {
+                            resources[key].requested += parseResource(container.resources.requests[key])
+                        }
                     }
                 }
             }
