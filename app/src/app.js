@@ -21,6 +21,7 @@ export default class App {
         this.reloadIntervalSeconds = parseInt(params.get('reload')) || 0
         this.filterString = params.get('q') || ''
         this.selectedClusters = new Set((params.get('clusters') || '').split(',').filter(x => x))
+        this.initialScale = parseFloat(params.get('scale')) || 1.0
         this.seenPods = new Set()
         this.sorterFn = ''
         this.theme = Theme.get(localStorage.getItem('theme'))
@@ -333,6 +334,7 @@ export default class App {
         this.theme.apply(this.stage)
 
         const viewContainer = new PIXI.Container()
+        viewContainer.scale.set(this.initialScale)
         viewContainer.x = 20
         viewContainer.y = this.dashboardMode ? 20 : 40
         this.viewContainerTargetPosition.x = viewContainer.x
