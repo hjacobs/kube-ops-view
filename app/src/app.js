@@ -5,23 +5,20 @@ import SelectBox from './selectbox'
 import { Theme, ALL_THEMES} from './themes.js'
 import { DESATURATION_FILTER } from './filters.js'
 import { JSON_delta } from './vendor/json_delta.js'
+import Config from './config.js'
 
 const PIXI = require('pixi.js')
 
 const addWheelListener = require('./vendor/addWheelListener')
-
-const TRUTHY_VALUES = new Set(['1', 'true'])
 
 
 export default class App {
 
     constructor() {
         const params = this.parseLocationHash()
-        this.dashboardMode = TRUTHY_VALUES.has(params.get('dashboard'))
-        this.reloadIntervalSeconds = parseInt(params.get('reload')) || 0
+        this.config = Config.fromParams(params)
         this.filterString = params.get('q') || ''
         this.selectedClusters = new Set((params.get('clusters') || '').split(',').filter(x => x))
-        this.initialScale = parseFloat(params.get('scale')) || 1.0
         this.seenPods = new Set()
         this.sorterFn = ''
         this.theme = Theme.get(localStorage.getItem('theme'))
@@ -104,8 +101,9 @@ export default class App {
     initialize() {
         App.current = this
 
-        //Create the renderer
-        const renderer = PIXI.autoDetectRenderer(256, 256, {resolution: 2})
+        // create the renderer
+        const noWebGL = this.config.renderer === 'canvas'
+        const renderer = PIXI.autoDetectRenderer(256, 256, {resolution: 2}, noWebGL)
         renderer.view.style.display = 'block'
         renderer.autoResize = true
         renderer.resize(window.innerWidth, window.innerHeight)
@@ -124,8 +122,8 @@ export default class App {
         this.registerEventListeners()
         setInterval(this.pruneUnavailableClusters.bind(this), 5 * 1000)
 
-        if (this.reloadIntervalSeconds) {
-            setTimeout(function() { location.reload(false) }, this.reloadIntervalSeconds * 1000)
+        if (this.config.reloadIntervalSeconds) {
+            setTimeout(function() { location.reload(false) }, this.config.reloadIntervalSeconds * 1000)
         }
     }
 
@@ -152,7 +150,7 @@ export default class App {
             }
             else if (event.key == 'Home') {
                 this.viewContainerTargetPosition.x = 20
-                this.viewContainerTargetPosition.y = this.dashboardMode ? 20 : 40
+                this.viewContainerTargetPosition.y = this.config.dashboardMode ? 20 : 40
             }
             else if (event.key && event.key.length == 1 && !event.ctrlKey && !event.metaKey) {
                 this.filterString += event.key
@@ -334,14 +332,14 @@ export default class App {
         this.theme.apply(this.stage)
 
         const viewContainer = new PIXI.Container()
-        viewContainer.scale.set(this.initialScale)
+        viewContainer.scale.set(this.config.initialScale)
         viewContainer.x = 20
-        viewContainer.y = this.dashboardMode ? 20 : 40
+        viewContainer.y = this.config.dashboardMode ? 20 : 40
         this.viewContainerTargetPosition.x = viewContainer.x
         this.viewContainerTargetPosition.y = viewContainer.y
         this.stage.addChild(viewContainer)
 
-        if (!this.dashboardMode) {
+        if (!this.config.dashboardMode) {
             this.drawMenuBar()
         }
 
