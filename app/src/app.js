@@ -162,7 +162,7 @@ export default class App {
             prevX, prevY
 
         function mouseDownHandler(event) {
-            if (event.button == 1) {
+            if (event.button == 0 || event.button == 1) {
                 prevX = event.clientX; prevY = event.clientY
                 isDragging = true
                 this.renderer.view.style.cursor = 'move'
