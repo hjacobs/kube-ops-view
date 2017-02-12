@@ -67,7 +67,9 @@ def query_mock_cluster(cluster):
             else:
                 pod = generate_mock_pod(index, i, j)
                 pods['{}/{}'.format(pod['namespace'], pod['name'])] = pod
-        node = {'name': 'node-{}'.format(i), 'labels': labels, 'status': {'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'}}, 'pods': pods}
+        node = {'name': 'node-{}'.format(i), 'labels': labels, 'status': {
+            'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'},
+            'allocatable': {'cpu': '3800m', 'memory': '31Gi'}}, 'pods': pods}
         nodes[node['name']] = node
     pod = generate_mock_pod(index, 11, index)
     unassigned_pods = {'{}/{}'.format(pod['namespace'], pod['name']): pod}
