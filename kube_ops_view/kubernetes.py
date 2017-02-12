@@ -16,6 +16,7 @@ def map_node_status(status: dict):
     return {
         'addresses': status.get('addresses'),
         'capacity': status.get('capacity'),
+        'allocatable': status.get('allocatable')
     }
 
 

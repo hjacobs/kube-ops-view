@@ -21,8 +21,13 @@ export default class Node extends PIXI.Graphics {
         for (const key of Object.keys(this.node.status.capacity)) {
             resources[key] = {
                 'capacity': parseResource(this.node.status.capacity[key]),
+                'reserved': 0,
                 'requested': 0,
                 'used': 0
+            }
+            const allocatable = this.node.status.allocatable[key]
+            if (allocatable) {
+                resources[key]['reserved'] = resources[key]['capacity'] - parseResource(allocatable)
             }
         }
         if (this.node.usage) {
