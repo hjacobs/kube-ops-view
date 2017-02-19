@@ -81,7 +81,7 @@ def query_kubernetes_cluster(cluster):
             obj['deleted'] = parse_time(pod['metadata']['deletionTimestamp'])
         for cont in pod['spec']['containers']:
             obj['containers'].append(map_container(cont, pod))
-        if obj['phase'] == 'Succeeded':
+        if obj['phase'] in ('Succeeded', 'Failed'):
             last_termination_time = 0
             for container in obj['containers']:
                 termination_time = container.get('state', {}).get('terminated', {}).get('finishedAt', '')
