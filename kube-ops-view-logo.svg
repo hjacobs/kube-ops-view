@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="160"
+   height="160"
+   viewBox="0 0 160 160"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="kube-ops-view-logo.svg"
+   inkscape:export-filename="/home/hjacobs/workspace/kube-ops-view/kube-ops-view-logo.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90">
+  <title
+     id="title4516">Kubernetes Operational View</title>
+  <defs
+     id="defs4">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient4540">
+      <stop
+         style="stop-color:#222233;stop-opacity:1"
+         offset="0"
+         id="stop4542" />
+      <stop
+         style="stop-color:#0f0f16;stop-opacity:1"
+         offset="1"
+         id="stop4544" />
+    </linearGradient>
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient4540"
+       id="radialGradient4554"
+       cx="133.94101"
+       cy="773.27173"
+       fx="133.94101"
+       fy="773.27173"
+       r="77.5"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(-0.96774232,0.8387095,-1.0176001,-1.1741546,976.50184,1737.9651)" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="2"
+     inkscape:cx="34.338044"
+     inkscape:cy="85.001603"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     units="px"
+     inkscape:snap-bbox="false"
+     inkscape:bbox-paths="true"
+     inkscape:bbox-nodes="true"
+     inkscape:window-width="1920"
+     inkscape:window-height="1031"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3336" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Kubernetes Operational View</dc:title>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>hjacobs</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:publisher>
+          <cc:Agent>
+            <dc:title>hjacobs</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-892.36216)">
+    <rect
+       style="fill:url(#radialGradient4554);fill-opacity:1;stroke:#aaaaff;stroke-width:5.19329882;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect3338"
+       width="149.8067"
+       height="149.8067"
+       x="5.0966492"
+       y="897.4588" />
+    <rect
+       style="fill:#ffffab;fill-opacity:0.2;stroke:#ffffab;stroke-width:4.43460512;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect3338-3-6"
+       width="25.565395"
+       height="25.565395"
+       x="49.717304"
+       y="942.07947" />
+    <rect
+       style="fill:#ffabab;fill-opacity:0.2;stroke:#ffabab;stroke-width:4.43460464;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect3338-3-6-7"
+       width="25.565395"
+       height="25.565395"
+       x="84.7173"
+       y="907.07947" />
+    <rect
+       style="fill:#abffab;fill-opacity:0.2;stroke:#aaffaa;stroke-width:4.43460512;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect3338-3-5"
+       width="25.565395"
+       height="25.565395"
+       x="49.7173"
+       y="907.07947" />
+    <rect
+       style="fill:#abffab;fill-opacity:0.2;stroke:#aaffaa;stroke-width:4.43460512;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect3338-3-5-3-5"
+       width="25.565395"
+       height="25.565395"
+       x="49.717304"
+       y="977.07947" />
+    <rect
+       style="fill:#abffab;fill-opacity:0.2;stroke:#aaffaa;stroke-width:4.43460512;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect3338-3-62"
+       width="25.565395"
+       height="25.565395"
+       x="84.7173"
+       y="942.07947" />
+    <rect
+       style="fill:#abffab;fill-opacity:0.2;stroke:#aaffaa;stroke-width:4.43460512;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect3338-3-62-9"
+       width="25.565395"
+       height="25.565395"
+       x="119.7173"
+       y="907.07947" />
+    <rect
+       style="fill:#ffffab;fill-opacity:0.2;stroke:#ffffab;stroke-width:4.43460512;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect3338-3-6-9"
+       width="25.565395"
+       height="25.565395"
+       x="14.717302"
+       y="907.07947" />
+    <rect
+       style="fill:#ffffab;fill-opacity:0.2;stroke:#ffffab;stroke-width:4.43460512;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect3338-3-6-3"
+       width="25.565395"
+       height="25.565395"
+       x="14.717302"
+       y="1012.0795" />
+    <rect
+       style="fill:#ffabab;fill-opacity:0.2;stroke:#ffabab;stroke-width:4.43460464;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect3338-3-6-7-6-0"
+       width="25.565395"
+       height="25.565395"
+       x="14.717302"
+       y="977.07947" />
+    <rect
+       style="fill:#abffab;fill-opacity:0.2;stroke:#aaffaa;stroke-width:4.43460512;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect3338-3-62-6"
+       width="25.565395"
+       height="25.565395"
+       x="14.717302"
+       y="942.07947" />
+  </g>
+</svg>
