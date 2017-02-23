@@ -165,6 +165,7 @@ export class Pod extends PIXI.Graphics {
         podBox.on('mouseover', function () {
             podBox.filters = podBox.filters.filter(x => x != BRIGHTNESS_FILTER).concat([BRIGHTNESS_FILTER])
             let s = this.pod.name
+            s += '\nNamespace : ' + this.pod.namespace
             s += '\nStatus    : ' + this.pod.phase + ' (' + ready + '/' + this.pod.containers.length + ' ready)'
             s += '\nStart Time: ' + this.pod.startTime
             s += '\nLabels    :'
