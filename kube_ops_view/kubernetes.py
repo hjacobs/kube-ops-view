@@ -84,11 +84,12 @@ def query_kubernetes_cluster(cluster):
         if obj['phase'] in ('Succeeded', 'Failed'):
             last_termination_time = 0
             for container in obj['containers']:
-                termination_time = container.get('state', {}).get('terminated', {}).get('finishedAt', '')
-                termination_time = parse_time(termination_time)
-                if termination_time > last_termination_time:
-                    last_termination_time = termination_time
-            if last_termination_time < now - 3600:
+                termination_time = container.get('state', {}).get('terminated', {}).get('finishedAt')
+                if termination_time:
+                    termination_time = parse_time(termination_time)
+                    if termination_time > last_termination_time:
+                        last_termination_time = termination_time
+            if last_termination_time and last_termination_time < now - 3600:
                 # the job/pod finished more than an hour ago
                 # => filter out
                 continue
