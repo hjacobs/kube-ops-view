@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Clusters</title>
+        <link rel="shortcut icon" href="static/favicon.ico">
+<style>body { color: #aaaaff; background: #000;
+font: 14px Arial, Helvetica, sans-serif; }
+a, a:link { color: #ffffff; }
+a:visited { color: #ffffff; }
+</style>
+<style>
+/* latin */
+@font-face {
+  font-family: 'ShareTechMono';
+  font-style: normal;
+  font-weight: 400;
+  /* ShareTechMono-Regular.ttf: Copyright (c) 2012, Carrois Type Design, Ralph du Carrois (www.carrois.com post@carrois.com), with Reserved Font Name 'Share'
+     License: SIL Open Font License, 1.1 */
+  src: local('Share Tech Mono'), local('ShareTechMono-Regular'), url(static/sharetechmono.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
+}
+</style>
+    </head>
+    <body>
+        <!-- make sure the font is loaded -->
+        <div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>URL</th>
+                        <th>Nodes</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                {% for cluster in clusters: %}
+                <tr>
+                    <td><a href="/#clusters={{ cluster.id|e }}">{{ cluster.id|e }}</a></td>
+                    <td>{{ cluster.api_server_url|e }}</td>
+                    <td>{{ cluster.nodes|e }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+
+            </table>
+
+
+        </div>
+    </body>
+</html>

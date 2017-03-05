@@ -84,6 +84,21 @@ def index():
     return flask.render_template('index.html', app_js=app_js, version=kube_ops_view.__version__)
 
 
+@app.route('/clusters')
+@authorize
+def clusters():
+    clusters = []
+    for cluster_id in app.store.get_cluster_ids():
+        status = app.store.get_cluster_status(cluster_id)
+        if status:
+            data = app.store.get_cluster_data(cluster_id)
+            api_server_url = data.get('api_server_url')
+            nodes = len(data.get('nodes', []))
+            cluster = {'id': cluster_id, 'api_server_url': api_server_url, 'nodes': nodes}
+            clusters.append(cluster)
+    return flask.render_template('clusters.html', clusters=clusters)
+
+
 def event(cluster_ids: set):
     # first sent full data once
     for cluster_id in app.store.get_cluster_ids():
