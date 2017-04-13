@@ -16,6 +16,7 @@ spec:
         application: kube-ops-view
         version: v0.0.1
     spec:
+      serviceAccount: kube-ops-view
       containers:
       - name: service
         image: hjacobs/kube-ops-view:latest
