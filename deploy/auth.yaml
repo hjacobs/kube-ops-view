@@ -13,7 +13,7 @@ rules:
   resources: ["nodes", "pods"]
   verbs:
     - list
-- apiGroups: ["*"]
+- apiGroups: [""]
   resources: ["services/proxy"]
   resourceNames: ["heapster"]
   verbs:
