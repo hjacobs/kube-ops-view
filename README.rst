@@ -80,7 +80,7 @@ Now direct your browser to http://localhost:8001/api/v1/proxy/namespaces/default
 
 `Kubernetes Operational View is also available as a Helm Chart`_.
 
-.. _Kubernetes Operational View is also available as a Helm Chart: https://kubeapps.com/charts/incubator/kube-ops-view
+.. _Kubernetes Operational View is also available as a Helm Chart: https://kubeapps.com/charts/stable/kube-ops-view
 
 
 Development
