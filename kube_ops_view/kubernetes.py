@@ -1,5 +1,6 @@
 import datetime
 import logging
+import os
 import time
 from urllib.parse import urljoin
 
@@ -54,7 +55,12 @@ def request(cluster, path, **kwargs):
         kwargs['timeout'] = (5, 15)
     if cluster.cert_file and cluster.key_file:
         kwargs['cert'] = (cluster.cert_file, cluster.key_file)
-    return session.get(urljoin(cluster.api_server_url, path), auth=cluster.auth, verify=cluster.ssl_ca_cert, **kwargs)
+    VERIFY_CERT = os.getenv('VERIFY_CERT', '')
+    if VERIFY_CERT == "false":
+        verify = False
+    else:
+        verify = cluster.ssl_ca_cert
+    return session.get(urljoin(cluster.api_server_url, path), auth=cluster.auth, verify=verify, **kwargs)
 
 
 def parse_time(s: str):

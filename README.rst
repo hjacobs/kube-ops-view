@@ -144,6 +144,8 @@ The following environment variables are supported:
     Optional Redis server to use for pub/sub events and job locking when running more than one replica. Example: ``redis://my-redis:6379``
 ``SERVER_PORT``
     HTTP port to listen on. It defaults to ``8080``.
+``VERIFY_CERT``
+    Set to "false" to turn off cert verification of Kubernetes API server (e.g. when using a token secret without a CA).
 
 
 Supported Browsers
