@@ -21,7 +21,10 @@ module.exports = {
         fs: 'empty'
     },
     plugins: [
-        new webpack.HotModuleReplacementPlugin()
+        new webpack.HotModuleReplacementPlugin(),
+        new webpack.LoaderOptionsPlugin({
+            debug: DEBUG
+        })
     ],
     module: {
         rules: [
