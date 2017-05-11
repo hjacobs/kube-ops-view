@@ -9,7 +9,6 @@ var path = require('path'),
 module.exports = {
     context: path.join(__dirname, './'),
     entry: entry,
-    debug: DEBUG,
     target: 'web',
     devtool: DEBUG ? 'inline-source-map' : false,
     output: {
@@ -25,20 +24,15 @@ module.exports = {
         new webpack.HotModuleReplacementPlugin()
     ],
     module: {
-        preLoaders: [
-            {test: /\.js$/, loader: 'eslint-loader', exclude: /node_modules/}
-        ],
-        loaders: [
+        rules: [
+            {enforce: 'pre', test: /\.js$/, loader: 'eslint-loader', exclude: /node_modules/},
             {test: /\.js$/, exclude: /node_modules/, loader: 'babel-loader', query: {plugins: ['transform-runtime'], presets: ['es2015']}},
             {test: /\.html$/, exclude: /node_modules/, loader: 'file-loader?name=[path][name].[ext]'},
             {test: /\.jpe?g$|\.svg$|\.png$/, exclude: /node_modules/, loader: 'file-loader?name=[path][name].[ext]'},
             {test: /\.json$/, exclude: /node_modules/, loader: 'json'},
             {test: /\.(otf|eot|svg|ttf|woff|woff2)(\?v=\d+\.\d+\.\d+)?$/, loader: 'url?limit=8192&mimetype=application/font-woff'},
-            {test: /\.json$/, include: path.join(__dirname, 'node_modules', 'pixi.js'), loader: 'json'}
-        ],
-        postLoaders: [{
-            include: path.resolve(__dirname, 'node_modules/pixi.js'),
-            loader: 'transform?brfs'
-        }]
+            {test: /\.json$/, include: path.join(__dirname, 'node_modules', 'pixi.js'), loader: 'json'},
+            {enforce: 'post', include: path.resolve(__dirname, 'node_modules/pixi.js'), loader: 'transform-loader?brfs'}
+        ]
     }
 }
