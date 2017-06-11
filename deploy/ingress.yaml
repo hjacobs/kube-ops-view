@@ -2,9 +2,6 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: kube-ops-view
-  annotations:
-    # this annotation is specific to https://github.com/zalando-incubator/kube-ingress-aws-controller
-    zalando.org/aws-load-balancer-ssl-cert: arn:aws:acm:eu-central-1:123456789123:certificate/12345678-4246-47b0-8884-123456789088
 spec:
   rules:
   - host: "kube-ops-view.example.org"
