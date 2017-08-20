@@ -3,7 +3,7 @@
 IMAGE            ?= hjacobs/kube-ops-view
 VERSION          ?= $(shell git describe --tags --always --dirty)
 TAG              ?= $(VERSION)
-GITHEAD          = $(shell git rev-parse --short HEAD)
+GITHEAD          = $(shell git rev-parse HEAD)
 GITURL           = $(shell git config --get remote.origin.url)
 GITSTATUS        = $(shell git status --porcelain || echo "no changes")
 TTYFLAGS         = $(shell test -t 0 && echo "-it")
