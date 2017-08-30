@@ -1,4 +1,4 @@
-FROM alpine:3.5
+FROM alpine:3.6
 MAINTAINER Henning Jacobs <henning@jacobs1.de>
 
 EXPOSE 8080
