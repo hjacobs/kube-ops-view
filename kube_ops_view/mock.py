@@ -28,7 +28,7 @@ def generate_mock_pod(index: int, i: int, j: int):
     pod_labels = {}
     for li, k in enumerate(labels):
         v = labels[k]
-        label_choice = hash_int((index + 1) * (i + 1) * (j + 1) * (li + 1)) % (len(v) + 1);
+        label_choice = hash_int((index + 1) * (i + 1) * (j + 1) * (li + 1)) % (len(v) + 1)
         if(label_choice != 0):
             pod_labels[k] = v[label_choice - 1]
 
