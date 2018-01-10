@@ -19,8 +19,19 @@ def generate_mock_pod(index: int, i: int, j: int):
         'log-lady',
         'sheriff-truman',
     ]
+    labels = {
+        'env': ['prod', 'dev'],
+        'owner': ['x-wing', 'iris']
+    }
     pod_phases = ['Pending', 'Running', 'Running']
-    labels = {}
+
+    pod_labels = {}
+    for li, k in enumerate(labels):
+        v = labels[k]
+        label_choice = hash_int((index + 1) * (i + 1) * (j + 1) * (li + 1)) % (len(v) + 1)
+        if(label_choice != 0):
+            pod_labels[k] = v[label_choice - 1]
+
     phase = pod_phases[hash_int((index + 1) * (i + 1) * (j + 1)) % len(pod_phases)]
     containers = []
     for k in range(1 + j % 2):
@@ -38,7 +49,7 @@ def generate_mock_pod(index: int, i: int, j: int):
     pod = {
         'name': '{}-{}-{}'.format(names[hash_int((i + 1) * (j + 1)) % len(names)], i, j),
         'namespace': 'kube-system' if j < 3 else 'default',
-        'labels': labels,
+        'labels': pod_labels,
         'phase': phase,
         'containers': containers
     }
