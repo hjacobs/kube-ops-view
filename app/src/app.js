@@ -57,28 +57,22 @@ export default class App {
         document.location.hash = '#' + pairs.sort().join(';')
     }
 
-    nameMatches(element, searchString) {
-        const name = element.pod && element.pod.name
-        if (name) {
-            return name.includes(searchString)
-        }
-        return false
+    nameMatches(pod, searchString) {
+        const name = pod.name
+        return name && name.includes(searchString)
     }
 
-    labelMatches(element, label, value) {
-        const labels = element.pod && element.pod.labels
-        if (labels) {
-            return labels[label] === value
-        }
-        return false
+    labelMatches(pod, name, value) {
+        const labels = pod.labels
+        return labels && labels[name] === value
     }
 
     createMatchesFunctionForQuery(query) {
-        if(query.includes('=')) {
-            const splittedLabelAndValue = query.split('=', 2)
-            return elem => this.labelMatches(elem, splittedLabelAndValue[0], splittedLabelAndValue[1])
+        if (query.includes('=')) {
+            const labelAndValue = query.split('=', 2)
+            return pod => this.labelMatches(pod, labelAndValue[0], labelAndValue[1])
         } else {
-            return elem => this.nameMatches(elem, query)
+            return pod => this.nameMatches(pod, query)
         }
     }
 
@@ -89,22 +83,24 @@ export default class App {
             this.searchText.text = searchString
         }
         this.changeLocationHash('q', searchString)
-        const filter = DESATURATION_FILTER
-        const filterable = []
+        const elementDisplayFilter = DESATURATION_FILTER
+        const filterableElements = []
         const matchesQuery = this.createMatchesFunctionForQuery(searchString)
         for (const cluster of this.viewContainer.children) {
             for (const node of cluster.children) {
                 if (node.pod) { // node is actually unassigned pod
-                    filterable.push(node)
+                    filterableElements.push(node)
                 }
                 for (const pod of node.children) {
-                    filterable.push(pod)
+                    if (pod.pod) {
+                        filterableElements.push(pod)
+                    }
                 }
             }
         }
-        filterable.forEach(value => {
-            if (!matchesQuery(value)) {
-                value.filters = [filter]
+        filterableElements.forEach(value => {
+            if (!matchesQuery(value.pod)) {
+                value.filters = [elementDisplayFilter]
             } else {
                 // TODO: pod might have other filters set..
                 value.filters = []
