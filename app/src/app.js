@@ -2,9 +2,9 @@ import Tooltip from './tooltip.js'
 import Cluster from './cluster.js'
 import {Pod, ALL_PODS, sortByName, sortByMemory, sortByCPU, sortByAge} from './pod.js'
 import SelectBox from './selectbox'
-import { Theme, ALL_THEMES} from './themes.js'
-import { DESATURATION_FILTER } from './filters.js'
-import { JSON_delta } from './vendor/json_delta.js'
+import {Theme, ALL_THEMES} from './themes.js'
+import {DESATURATION_FILTER} from './filters.js'
+import {JSON_delta} from './vendor/json_delta.js'
 import Config from './config.js'
 
 const PIXI = require('pixi.js')
@@ -17,7 +17,7 @@ export default class App {
     constructor() {
         const params = this.parseLocationHash()
         this.config = Config.fromParams(params)
-        this.filterString = params.get('q') || ''
+        this.filterString = (params.get('q') && decodeURIComponent(params.get('q'))) || ''
         this.selectedClusters = new Set((params.get('clusters') || '').split(',').filter(x => x))
         this.seenPods = new Set()
         this.sorterFn = ''
@@ -50,11 +50,30 @@ export default class App {
         const pairs = []
         for (const [key, value] of params) {
             if (value) {
-                pairs.push(key + '=' + value)
+                pairs.push(key + '=' + encodeURIComponent(value))
             }
         }
 
         document.location.hash = '#' + pairs.sort().join(';')
+    }
+
+    nameMatches(pod, searchString) {
+        const name = pod.name
+        return name && name.includes(searchString)
+    }
+
+    labelMatches(pod, name, value) {
+        const labels = pod.labels
+        return labels && labels[name] === value
+    }
+
+    createMatchesFunctionForQuery(query) {
+        if (query.includes('=')) {
+            const labelAndValue = query.split('=', 2)
+            return pod => this.labelMatches(pod, labelAndValue[0], labelAndValue[1])
+        } else {
+            return pod => this.nameMatches(pod, query)
+        }
     }
 
     filter() {
@@ -64,32 +83,29 @@ export default class App {
             this.searchText.text = searchString
         }
         this.changeLocationHash('q', searchString)
-        const filter = DESATURATION_FILTER
+        const elementDisplayFilter = DESATURATION_FILTER
+        const filterableElements = []
+        const matchesQuery = this.createMatchesFunctionForQuery(searchString)
         for (const cluster of this.viewContainer.children) {
             for (const node of cluster.children) {
-                const name = node.pod && node.pod.name
-                if (name) {
-                    // node is actually unassigned pod
-                    if (!name.includes(searchString)){
-                        node.filters = [filter]
-                    } else {
-                        // TODO: pod might have other filters set..
-                        node.filters = []
-                    }
+                if (node.pod) { // node is actually unassigned pod
+                    filterableElements.push(node)
                 }
                 for (const pod of node.children) {
-                    const name = pod.pod && pod.pod.name
-                    if (name) {
-                        if (!name.includes(searchString)) {
-                            pod.filters = [filter]
-                        } else {
-                            // TODO: pod might have other filters set..
-                            pod.filters = []
-                        }
+                    if (pod.pod) {
+                        filterableElements.push(pod)
                     }
                 }
             }
         }
+        filterableElements.forEach(value => {
+            if (!matchesQuery(value.pod)) {
+                value.filters = [elementDisplayFilter]
+            } else {
+                // TODO: pod might have other filters set..
+                value.filters = []
+            }
+        })
     }
 
     initialize() {
@@ -102,7 +118,7 @@ export default class App {
         renderer.autoResize = true
         renderer.resize(window.innerWidth, window.innerHeight)
 
-        window.onresize = function() {
+        window.onresize = function () {
             renderer.resize(window.innerWidth, window.innerHeight)
         }
 
@@ -117,7 +133,9 @@ export default class App {
         setInterval(this.pruneUnavailableClusters.bind(this), 5 * 1000)
 
         if (this.config.reloadIntervalSeconds) {
-            setTimeout(function() { location.reload(false) }, this.config.reloadIntervalSeconds * 1000)
+            setTimeout(function () {
+                location.reload(false)
+            }, this.config.reloadIntervalSeconds * 1000)
         }
     }
 
@@ -163,7 +181,8 @@ export default class App {
 
         function mouseDownHandler(event) {
             if (event.button == 0 || event.button == 1) {
-                prevX = event.clientX; prevY = event.clientY
+                prevX = event.clientX
+                prevY = event.clientY
                 isDragging = true
                 this.renderer.view.style.cursor = 'move'
             }
@@ -181,7 +200,8 @@ export default class App {
             // stop any current move animation
             this.viewContainerTargetPosition.x = this.viewContainer.x
             this.viewContainerTargetPosition.y = this.viewContainer.y
-            prevX = event.clientX; prevY = event.clientY
+            prevX = event.clientX
+            prevY = event.clientY
         }
 
         function mouseUpHandler(_event) {
@@ -192,7 +212,8 @@ export default class App {
         function touchStartHandler(event) {
             if (event.touches.length == 1) {
                 const touch = event.touches[0]
-                prevX = touch.clientX; prevY = touch.clientY
+                prevX = touch.clientX
+                prevY = touch.clientY
                 isDragging = true
             }
         }
@@ -211,7 +232,8 @@ export default class App {
                 // stop any current move animation
                 this.viewContainerTargetPosition.x = this.viewContainer.x
                 this.viewContainerTargetPosition.y = this.viewContainer.y
-                prevX = touch.clientX; prevY = touch.clientY
+                prevX = touch.clientX
+                prevY = touch.clientY
             }
         }
 
@@ -234,7 +256,7 @@ export default class App {
             return interactionObj.getLocalPosition(that.viewContainer, undefined, {x: x, y: y})
         }
 
-        const minScale = 1/32
+        const minScale = 1 / 32
         const maxScale = 32
 
         function zoom(x, y, isZoomIn) {
@@ -272,7 +294,11 @@ export default class App {
         menuBar.drawRect(20, 3, 200, 22)
         this.stage.addChild(menuBar)
 
-        const searchPrompt = new PIXI.Text('>', {fontFamily: 'ShareTechMono', fontSize: 14, fill: this.theme.primaryColor})
+        const searchPrompt = new PIXI.Text('>', {
+            fontFamily: 'ShareTechMono',
+            fontSize: 14,
+            fill: this.theme.primaryColor
+        })
         searchPrompt.x = 26
         searchPrompt.y = 8
         PIXI.ticker.shared.add(function (_) {
@@ -303,15 +329,17 @@ export default class App {
         //setting default sort
         this.sorterFn = items[0].value
         const app = this
-        const selectBox = new SelectBox(items, this.sorterFn, function(value) {
+        const selectBox = new SelectBox(items, this.sorterFn, function (value) {
             app.changeSorting(value)
         })
         selectBox.x = 265
         selectBox.y = 3
         menuBar.addChild(selectBox.draw())
 
-        const themeOptions = Object.keys(ALL_THEMES).sort().map(name => { return {text: name.toUpperCase(), value: name}})
-        const themeSelector = new SelectBox(themeOptions, this.theme.name, function(value) {
+        const themeOptions = Object.keys(ALL_THEMES).sort().map(name => {
+            return {text: name.toUpperCase(), value: name}
+        })
+        const themeSelector = new SelectBox(themeOptions, this.theme.name, function (value) {
             app.switchTheme(value)
         })
         themeSelector.x = 420
@@ -351,7 +379,7 @@ export default class App {
         pod.blendMode = PIXI.BLEND_MODES.ADD
         pod.interactive = false
         const targetPosition = globalPosition
-        const angle = Math.random()*Math.PI*2
+        const angle = Math.random() * Math.PI * 2
         const cos = Math.cos(angle)
         const sin = Math.sin(angle)
         const distance = Math.max(200, Math.random() * Math.min(this.renderer.width, this.renderer.height))
@@ -385,11 +413,12 @@ export default class App {
         PIXI.ticker.shared.add(tick)
         this.stage.addChild(pod)
     }
+
     animatePodDeletion(originalPod, globalPosition) {
         const pod = new Pod(originalPod.pod, null, this.tooltip)
         pod.draw()
         pod.blendMode = PIXI.BLEND_MODES.ADD
-        const globalCenter = new PIXI.Point(globalPosition.x + pod.width/2, globalPosition.y + pod.height/2)
+        const globalCenter = new PIXI.Point(globalPosition.x + pod.width / 2, globalPosition.y + pod.height / 2)
         const blur = new PIXI.filters.BlurFilter(4)
         pod.filters = [blur]
         pod.position = globalPosition.clone()
@@ -397,14 +426,14 @@ export default class App {
         pod._progress = 1
         originalPod.destroy()
         const that = this
-        const tick = function(t) {
+        const tick = function (t) {
             // progress goes from 1 to 0
             const progress = Math.max(0, pod._progress - (0.02 * t))
             const scale = 1 + ((1 - progress) * 8)
             pod._progress = progress
             pod.alpha = progress
             pod.scale.set(scale)
-            pod.position.set(globalCenter.x - pod.width/2, globalCenter.y - pod.height/2)
+            pod.position.set(globalCenter.x - pod.width / 2, globalCenter.y - pod.height / 2)
 
             if (progress <= 0) {
                 PIXI.ticker.shared.remove(tick)
@@ -415,6 +444,7 @@ export default class App {
         PIXI.ticker.shared.add(tick)
         this.stage.addChild(pod)
     }
+
     update() {
         // make sure we create a copy (this.clusters might get modified)
         const clusters = Array.from(this.clusters.entries()).sort().map(idCluster => idCluster[1])
@@ -441,7 +471,7 @@ export default class App {
                     // NOTE: we need to do this BEFORE removeChildren()
                     // to get correct global coordinates
                     const globalPos = pod.toGlobal({x: 0, y: 0})
-                    window.setTimeout(function() {
+                    window.setTimeout(function () {
                         that.animatePodDeletion(pod, globalPos)
                     }, 100 * changes)
                 } else {
@@ -488,7 +518,7 @@ export default class App {
                 this.seenPods.add(key)
                 if (!this.bootstrapping && changes < 10) {
                     const globalPos = pod.toGlobal({x: 0, y: 0})
-                    window.setTimeout(function() {
+                    window.setTimeout(function () {
                         that.animatePodCreation(pod, globalPos)
                     }, 100 * changes)
                 }
@@ -505,10 +535,10 @@ export default class App {
             this.viewContainer.position.y = this.viewContainerTargetPosition.y
         } else {
             if (Math.abs(deltaX) > time) {
-                this.viewContainer.x += time * Math.sign(deltaX) * Math.max(10, Math.abs(deltaX)/10)
+                this.viewContainer.x += time * Math.sign(deltaX) * Math.max(10, Math.abs(deltaX) / 10)
             }
             if (Math.abs(deltaY) > time) {
-                this.viewContainer.y += time * Math.sign(deltaY) * Math.max(10, Math.abs(deltaY)/10)
+                this.viewContainer.y += time * Math.sign(deltaY) * Math.max(10, Math.abs(deltaY) / 10)
             }
         }
         this.renderer.render(this.stage)
@@ -598,7 +628,7 @@ export default class App {
         }
         const eventSource = this.eventSource = new EventSource(url, {credentials: 'include'})
         this.keepAlive()
-        eventSource.onerror = function(_event) {
+        eventSource.onerror = function (_event) {
             that._errors++
             if (that._errors <= 1) {
                 // immediately reconnect on first error
@@ -608,7 +638,7 @@ export default class App {
                 that.disconnect()
             }
         }
-        eventSource.addEventListener('clusterupdate', function(event) {
+        eventSource.addEventListener('clusterupdate', function (event) {
             that._errors = 0
             that.keepAlive()
             const cluster = JSON.parse(event.data)
@@ -621,7 +651,7 @@ export default class App {
                 that.update()
             }
         })
-        eventSource.addEventListener('clusterdelta', function(event) {
+        eventSource.addEventListener('clusterdelta', function (event) {
             that._errors = 0
             that.keepAlive()
             const data = JSON.parse(event.data)
@@ -636,13 +666,13 @@ export default class App {
                 that.update()
             }
         })
-        eventSource.addEventListener('clusterstatus', function(event) {
+        eventSource.addEventListener('clusterstatus', function (event) {
             that._errors = 0
             that.keepAlive()
             const data = JSON.parse(event.data)
             that.clusterStatuses.set(data.cluster_id, data.status)
         })
-        eventSource.addEventListener('bootstrapend', function(_event) {
+        eventSource.addEventListener('bootstrapend', function (_event) {
             that._errors = 0
             that.keepAlive()
             that.bootstrapping = false

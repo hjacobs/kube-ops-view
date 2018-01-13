@@ -24,12 +24,17 @@ Various UI elements provide additional tooltip information when hovering over th
 * Hovering over a pod will show the pod's labels, container status and resources.
 
 
-Filtering Pods by Name
+Filtering Pods
 ======================
 
 Kubernetes Operational View allows you to quickly find your running application pods.
 
-Typing characters will filter pods by name, i.e. non-matching pods will be greyed out.
+Typing characters will run the filter, i.e. non-matching pods will be greyed out.
+
+You can filter by:
+
+* name
+* labels - when query includes ``=``, e.g. ``env=prod``
 
 The pod filter is persisted in the location bar (``#q=..`` query parameter) which allows to conveniently send the filtered view to other users (e.g. for troubleshooting).
 
