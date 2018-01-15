@@ -13,7 +13,13 @@ export default class Node extends PIXI.Graphics {
     }
 
     isMaster() {
-        return this.node.labels.master == 'true'
+        for (var key in this.node.labels) {
+            if (key == 'node-role.kubernetes.io/master' ||
+                key == 'kubernetes.io/role' && this.node.labels[key] == 'master' ||
+                key == 'master' && this.node.labels[key] == 'true' ) {
+                return true
+            }
+        }
     }
 
     getResourceUsage() {
