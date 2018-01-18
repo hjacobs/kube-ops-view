@@ -22,6 +22,16 @@ export default class Node extends PIXI.Graphics {
         }
     }
 
+    isLB() {
+        for (var key in this.node.labels) {
+            if (key == 'node-role.kubernetes.io/lb' ||
+                key == 'kubernetes.io/role' && this.node.labels[key] == 'lb' ||
+                key == 'lb' && this.node.labels[key] == 'true' ) {
+                return true
+            }
+        }
+    }
+
     getResourceUsage() {
         const resources = {}
         for (const key of Object.keys(this.node.status.capacity)) {

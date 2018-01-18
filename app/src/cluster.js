@@ -33,6 +33,10 @@ export default class Cluster extends PIXI.Graphics {
         let masterY = top
         let masterWidth = 0
         let masterHeight = 0
+        let lbX = left
+        let lbY = top
+        let lbWidth = 0
+        let lbHeight = 0
         let workerX = left
         let workerY = top
         let workerWidth = 0
@@ -56,6 +60,19 @@ export default class Cluster extends PIXI.Graphics {
                 nodeBox.x = masterX
                 nodeBox.y = masterY
                 masterX += nodeBox.width + padding
+            } else if (nodeBox.isLB()) {
+                if (lbX > maxWidth) {
+                    lbWidth = lbX
+                    lbX = masterX + 105 + padding
+                    lbY += nodeBox.height + padding
+                    lbHeight += masterHeight + nodeBox.height + padding
+                }
+                if (lbHeight == 0) {
+                    lbHeight = masterHeight + nodeBox.height + padding
+                }
+                nodeBox.x = lbX
+                nodeBox.y = lbY + masterHeight
+                lbX += nodeBox.width + padding
             } else {
                 if (workerX > maxWidth) {
                     workerWidth = workerX
@@ -74,7 +91,7 @@ export default class Cluster extends PIXI.Graphics {
             this.addChild(nodeBox)
         }
         for (const nodeBox of workerNodes) {
-            nodeBox.y += masterHeight
+            nodeBox.y += lbHeight ? lbHeight : masterHeight
         }
 
 
@@ -90,8 +107,8 @@ export default class Cluster extends PIXI.Graphics {
         workerWidth = Math.max(workerX, workerWidth)
 
         this.lineStyle(2, App.current.theme.primaryColor, 1)
-        const width = Math.max(masterWidth, workerWidth)
-        this.drawRect(0, 0, width, top + masterHeight + workerHeight)
+        const width = Math.max(masterWidth, lbWidth, workerWidth)
+        this.drawRect(0, 0, width, top + (lbHeight ? lbHeight : masterHeight) + workerHeight)
 
         const topHandle = this.topHandle = new PIXI.Graphics()
         topHandle.beginFill(App.current.theme.primaryColor, 1)

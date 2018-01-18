@@ -161,5 +161,5 @@ class KubeconfigDiscoverer:
 class MockDiscoverer:
 
     def get_clusters(self):
-        for i in range(3):
+        for i in range(4):
             yield Cluster('mock-cluster-{}'.format(i), api_server_url='https://kube-{}.example.org'.format(i))

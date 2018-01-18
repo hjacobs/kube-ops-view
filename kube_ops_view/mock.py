@@ -75,6 +75,14 @@ def query_mock_cluster(cluster):
                 labels['node-role.kubernetes.io/master'] = ''
             else:
                 labels['master'] = 'true'
+        if i >= 2 and i < 4:
+            if index == 0:
+                labels['kubernetes.io/role'] = 'lb'
+            elif index == 1:
+                labels['node-role.kubernetes.io/lb'] = ''
+            elif index == 2:
+                labels['lb'] = 'true'
+            # no lb label for last cluster, as lb can be provided externally
         pods = {}
         for j in range(hash_int((index + 1) * (i + 1)) % 32):
             # add/remove some pods every 7 seconds
