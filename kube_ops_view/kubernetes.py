@@ -89,8 +89,8 @@ def query_kubernetes_cluster(cluster):
                     termination_time = parse_time(termination_time)
                     if termination_time > last_termination_time:
                         last_termination_time = termination_time
-            if last_termination_time and last_termination_time < now - 3600:
-                # the job/pod finished more than an hour ago
+            if (last_termination_time and last_termination_time < now - 3600) or (obj['reason'] in 'Evicted'):
+                # the job/pod finished more than an hour ago or if it is evicted by cgroup limits
                 # => filter out
                 continue
         pods_by_namespace_name[(obj['namespace'], obj['name'])] = obj
