@@ -23,7 +23,7 @@ def generate_mock_pod(index: int, i: int, j: int):
         'env': ['prod', 'dev'],
         'owner': ['x-wing', 'iris']
     }
-    pod_phases = ['Pending', 'Running', 'Running']
+    pod_phases = ['Pending', 'Running', 'Running', 'Failed']
 
     pod_labels = {}
     for li, k in enumerate(labels):
@@ -44,7 +44,10 @@ def generate_mock_pod(index: int, i: int, j: int):
             if j % 13 == 0:
                 container.update(**{'ready': False, 'state': {'waiting': {'reason': 'CrashLoopBackOff'}}})
             elif j % 7 == 0:
-                container.update(**{'ready': True, 'state': {'running': {}}, 'restartCount': 3})
+                container.update(**{'ready': False, 'state': {'running': {}}, 'restartCount': 3})
+        elif phase == 'Failed':
+            del container['state']
+            del container['ready']
         containers.append(container)
     pod = {
         'name': '{}-{}-{}'.format(names[hash_int((i + 1) * (j + 1)) % len(names)], i, j),
