@@ -97,7 +97,7 @@ The app can be started in "mock mode" to work on UI features without running any
 
 .. code-block:: bash
 
-    $ pip3 install -r requirements.txt
+    $ pipenv install
     $ (cd app && npm start &)  # watch and compile JS bundle
     $ python3 -m kube_ops_view --mock --debug
 
