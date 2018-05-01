@@ -141,7 +141,7 @@ class KubeconfigDiscoverer:
             if self._contexts and context['name'] not in self._contexts:
                 # filter out
                 continue
-            config = kubernetes.client.ConfigurationObject()
+            config = kubernetes.client.configuration.Configuration()
             kubernetes.config.load_kube_config(config_file, context=context['name'], client_configuration=config)
             authorization = config.api_key.get('authorization')
             if authorization:

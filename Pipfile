@@ -1,0 +1,30 @@
+[[source]]
+
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+
+[packages]
+
+click = "*"
+gevent = "*"
+requests = "*"
+stups-tokens = ">=1.1.19"
+redlock-py = "*"
+json-delta = ">=2.0"
+kubernetes = "*"
+flask = "*"
+flask-oauthlib = "*"
+
+
+[dev-packages]
+
+"flake8" = "*"
+pytest = "*"
+pipenv = "*"
+
+
+[requires]
+
+python_version = "3.6"
