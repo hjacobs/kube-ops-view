@@ -2,7 +2,7 @@ language: python
 python:
   - "3.6"
 install:
-  - pip install tox tox-travis tox-pipenv coveralls
+  - pip install tox tox-travis coveralls
   - nvm install 7.4
   - npm install -g eslint
 script:
