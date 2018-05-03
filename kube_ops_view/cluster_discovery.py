@@ -75,7 +75,8 @@ class StaticClusterDiscoverer:
                 # => assume default kubectl proxy URL
                 cluster = Cluster(generate_cluster_id(DEFAULT_CLUSTERS), DEFAULT_CLUSTERS)
             else:
-                config = kubernetes.client.configuration
+                # "load_incluster_config" set defaults in the config class
+                config = kubernetes.client.configuration.Configuration()
                 cluster = Cluster(
                     generate_cluster_id(config.host),
                     config.host,
