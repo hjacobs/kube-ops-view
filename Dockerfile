@@ -16,7 +16,10 @@ COPY Pipfile /
 COPY Pipfile.lock /
 
 WORKDIR /
-RUN pipenv install --system --deploy --ignore-pipfile
+RUN apk add --no-cache python3 python3-dev gcc musl-dev zlib-dev libffi-dev openssl-dev ca-certificates && \
+    pipenv install --system --deploy --ignore-pipfile && \
+    apk del python3-dev gcc musl-dev zlib-dev libffi-dev openssl-dev && \
+    rm -rf /var/cache/apk/* /root/.cache /tmp/* 
 
 COPY kube_ops_view /kube_ops_view
 
