@@ -103,7 +103,7 @@ export default class Node extends PIXI.Graphics {
 
     addPods(sorterFn) {
         const nodeBox = this
-        let px = 24
+        let px = 33
         let py = 20
         const pods = Object.values(this.node.pods).sort(sorterFn)
         for (const pod of pods) {
@@ -113,12 +113,12 @@ export default class Node extends PIXI.Graphics {
                 nodeBox.addChild(podBox.draw())
                 px += 13
                 if (px > 90) {
-                    px = 24
+                    px = 33
                     py += 13
                 }
             }
         }
-        px = 24
+        px = 33
         py = 100
         for (const pod of pods) {
             if (pod.namespace == 'kube-system') {
@@ -127,7 +127,7 @@ export default class Node extends PIXI.Graphics {
                 nodeBox.addChild(podBox.draw())
                 px += 13
                 if (px > 90) {
-                    px = 24
+                    px = 33
                     py -= 13
                 }
             }

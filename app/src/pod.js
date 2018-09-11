@@ -91,6 +91,7 @@ export class Pod extends PIXI.Graphics {
 
         const podCpu = podResource('cpu')
         const podMem = podResource('memory')
+        const podGpu = podResource('nvidia.com/gpu')
 
         const cpuLimits = podCpu(this.pod.containers, 'limits')
         const cpuUsage = podCpu(this.pod.containers, 'usage')
@@ -99,6 +100,10 @@ export class Pod extends PIXI.Graphics {
         const memLimits = podMem(this.pod.containers, 'limits')
         const memUsage = podMem(this.pod.containers, 'usage')
         const memRequests = podMem(this.pod.containers, 'requests')
+
+        const gpuLimits = podGpu(this.pod.containers, 'limits')
+        const gpuUsage = podGpu(this.pod.containers, 'usage')
+        const gpuRequests = podGpu(this.pod.containers, 'requests')
 
         return {
             memory: {
@@ -110,6 +115,11 @@ export class Pod extends PIXI.Graphics {
                 limit: cpuLimits,
                 requested: cpuRequests,
                 used: cpuUsage
+            },
+            gpu: {
+                limit: gpuLimits,
+                requested: gpuRequests,
+                used: gpuUsage
             }
         }
     }
@@ -197,6 +207,10 @@ export class Pod extends PIXI.Graphics {
             s += '\n  Requested: ' + (resources.memory.requested / FACTORS.Mi).toFixed(0) + ' MiB'
             s += '\n  Limit:     ' + (resources.memory.limit / FACTORS.Mi).toFixed(0) + ' MiB'
             s += '\n  Used:      ' + (resources.memory.used / FACTORS.Mi).toFixed(0) + ' MiB'
+            s += '\nGPU:'
+            s += '\n  Requested: ' + (resources.gpu.requested).toFixed(0) + ''
+            s += '\n  Limit:     ' + (resources.gpu.limit).toFixed(0) + ''
+            s += '\n  Used:      ' + (resources.gpu.used).toFixed(0) + ''
 
             this.tooltip.setText(s)
             this.tooltip.position = this.toGlobal(new PIXI.Point(10, 10))
@@ -289,6 +303,15 @@ export class Pod extends PIXI.Graphics {
         podBox.drawRect(3, 9 - scaledMemReq, 1, scaledMemReq)
         podBox.beginFill(getBarColor(resources.memory.used, resources.memory.limit), 1)
         podBox.drawRect(4, 9 - scaledMemUsed, 1, scaledMemUsed)
+        podBox.endFill()
+
+        
+        const gpuHeight = resources.gpu.limit !== 0 ? 8 / resources.gpu.limit : 0
+        podBox.lineStyle()
+        podBox.beginFill(getBarColor(resources.gpu.requested, resources.gpu.limit), 1)
+        podBox.drawRect(5, 9 - resources.gpu.requested * gpuHeight, 1, resources.gpu.requested * gpuHeight)
+        podBox.beginFill(getBarColor(resources.gpu.used, resources.gpu.limit), 1)
+        podBox.drawRect(6, 9 - resources.gpu.used * gpuHeight, 1, resources.gpu.used * gpuHeight)
         podBox.endFill()
 
         return this
