@@ -1,6 +1,7 @@
 const PIXI = require('pixi.js')
 
 const FACTORS = {
+    'n': 1 / 1000 / 1000 / 1000,
     'm': 1 / 1000,
     'K': 1000,
     'M': Math.pow(1000, 2),
