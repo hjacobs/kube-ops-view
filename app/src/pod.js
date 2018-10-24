@@ -281,7 +281,7 @@ export class Pod extends PIXI.Graphics {
         podBox.endFill()
 
         // Memory
-        const scale = resources.memory.limit / 8
+        const scale = resources.memory.requested <= resources.memory.limit ? resources.memory.limit / 8 : resources.memory.requested / 8
         const scaledMemReq = resources.memory.requested !== 0 && scale !== 0 ? resources.memory.requested / scale : 0
         const scaledMemUsed = resources.memory.used !== 0 && scale !== 0 ? resources.memory.used / scale : 0
         podBox.lineStyle()
