@@ -83,7 +83,7 @@ Afterwards you can open "kube-ops-view" via the kubectl proxy:
 
     $ kubectl proxy
 
-Now direct your browser to http://localhost:8001/api/v1/proxy/namespaces/default/services/kube-ops-view/
+Now direct your browser to http://localhost:8001/api/v1/namespaces/default/services/kube-ops-view/proxy/
 
 `Kubernetes Operational View is also available as a Helm Chart`_.
 
