@@ -8,7 +8,7 @@ import click
 import flask
 import functools
 import gevent
-import gevent.wsgi
+import gevent.pywsgi
 import json
 import logging
 import os
@@ -236,6 +236,6 @@ def main(port, debug, mock, secret_key, redis_url, clusters: list, cluster_regis
     gevent.spawn(update_clusters, cluster_discoverer=discoverer, query_cluster=cluster_query, store=store, query_interval=query_interval, debug=debug)
 
     signal.signal(signal.SIGTERM, exit_gracefully)
-    http_server = gevent.wsgi.WSGIServer(('0.0.0.0', port), app)
+    http_server = gevent.pywsgi.WSGIServer(('0.0.0.0', port), app)
     logger.info('Listening on :{}..'.format(port))
     http_server.serve_forever()
