@@ -13,7 +13,7 @@ requests = "*"
 stups-tokens = ">=1.1.19"
 redlock-py = "*"
 json-delta = ">=2.0"
-kubernetes = "*"
+kubernetes = "==7.0.0a1"
 flask = "*"
 flask-oauthlib = "*"
 
@@ -24,7 +24,12 @@ flask-oauthlib = "*"
 pytest = "*"
 pipenv = "*"
 
+pytest-cov = "*"
+coveralls = "*"
 
 [requires]
 
-python_version = "3.6"
+python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true

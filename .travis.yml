@@ -1,11 +1,17 @@
+dist: xenial
+sudo: yes
 language: python
 python:
-  - "3.6"
+  - "3.7"
+services:
+  - docker
 install:
   - pip install tox tox-travis coveralls
+  - pip install pipenv
+  - pipenv install --dev
   - nvm install 7.4
   - npm install -g eslint
 script:
-  - tox
+  - make test docker
 after_success:
   - coveralls
