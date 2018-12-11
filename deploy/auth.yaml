@@ -13,11 +13,11 @@ rules:
   resources: ["nodes", "pods"]
   verbs:
     - list
-- apiGroups: [""]
-  resources: ["services/proxy"]
-  resourceNames: ["heapster"]
+- apiGroups: ["metrics.k8s.io"]
+  resources: ["nodes", "pods"]
   verbs:
     - get
+    - list
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
