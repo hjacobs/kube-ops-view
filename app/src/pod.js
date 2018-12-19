@@ -272,12 +272,14 @@ export class Pod extends PIXI.Graphics {
         }
 
         // CPU
-        const cpuHeight = resources.cpu.limit !== 0 ? 8 / resources.cpu.limit : 0
+        const scaleCpu = resources.cpu.requested <= resources.cpu.limit ? resources.cpu.limit / 8 : resources.cpu.requested / 8
+        const scaledCpuReq = resources.cpu.requested !== 0 && scaleCpu !== 0 ? resources.cpu.requested / scaleCpu : 0
+        const scaledCpuUsed = resources.cpu.used !== 0 && scaleCpu !== 0 ? resources.cpu.used / scaleCpu : 0
         podBox.lineStyle()
         podBox.beginFill(getBarColor(resources.cpu.requested, resources.cpu.limit), 1)
-        podBox.drawRect(1, 9 - resources.cpu.requested * cpuHeight, 1, resources.cpu.requested * cpuHeight)
+        podBox.drawRect(1, 9 - scaledCpuReq, 1, scaledCpuReq)
         podBox.beginFill(getBarColor(resources.cpu.used, resources.cpu.limit), 1)
-        podBox.drawRect(2, 9 - resources.cpu.used * cpuHeight, 1, resources.cpu.used * cpuHeight)
+        podBox.drawRect(2, 9 - scaledCpuUsed, 1, scaledCpuUsed)
         podBox.endFill()
 
         // Memory
