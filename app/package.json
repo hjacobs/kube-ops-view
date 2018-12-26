@@ -8,9 +8,11 @@
   },
   "scripts": {
     "prestart": "npm install",
-    "start": "NODE_ENV=development webpack --watch",
+    "start": "NODE_ENV=development webpack --watch --info-verbosity verbose",
+    "startwin": "SET NODE_ENV=development & webpack --watch --info-verbosity verbose",
     "webpack": "webpack -p --config ./webpack.config.js",
     "build": "NODE_ENV=production npm run webpack",
+    "buildwin": "SET NODE_ENV=production & npm run webpack",
     "prewebpack": "npm run clean",
     "lint": "eslint ./src/**/*.js",
     "clean": "rimraf $npm_package_config_buildDir && mkdir $npm_package_config_buildDir"
