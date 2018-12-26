@@ -365,7 +365,7 @@ export default class App {
             this.drawMenuBar()
         }
 
-        const tooltip = new Tooltip()
+        const tooltip = this.tooltip || new Tooltip()
         tooltip.draw()
         this.stage.addChild(tooltip)
 
