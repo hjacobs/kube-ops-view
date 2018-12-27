@@ -12,3 +12,16 @@ Frontend development is supported by watching the source code and continuously r
 .. code-block:: bash
 
     $ npm start
+
+Windows uses slightly different scripts. This will build the JavaScript app in Windows:
+
+.. code-block:: powershell
+
+    $ npm install
+    $ npm run buildwin
+
+This will start the code watch and rebuild script in Windows:
+
+.. code-block:: powershell
+
+    $ npm run startwin
