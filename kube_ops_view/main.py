@@ -45,7 +45,8 @@ auth = OAuthRemoteAppWithRefresh(
     request_token_url=None,
     access_token_method='POST',
     access_token_url=os.getenv('ACCESS_TOKEN_URL'),
-    authorize_url=AUTHORIZE_URL
+    authorize_url=AUTHORIZE_URL,
+    request_token_params={'scope': os.getenv('SCOPE')}
 )
 oauth.remote_apps['auth'] = auth
 
