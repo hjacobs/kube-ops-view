@@ -1,6 +1,6 @@
 import Tooltip from './tooltip.js'
 import Cluster from './cluster.js'
-import {Pod, ALL_PODS, sortByName, sortByMemory, sortByCPU, sortByAge} from './pod.js'
+import {Pod, ALL_PODS, sortByName, sortByMemory, sortByCPU, sortByAge, sortByStatus} from './pod.js'
 import SelectBox from './selectbox'
 import {Theme, ALL_THEMES} from './themes.js'
 import {DESATURATION_FILTER} from './filters.js'
@@ -324,6 +324,9 @@ export default class App {
             },
             {
                 text: 'SORT: CPU', value: sortByCPU
+            },
+            {
+                text: 'SORT: STATUS', value: sortByStatus
             }
         ]
         //setting default sort

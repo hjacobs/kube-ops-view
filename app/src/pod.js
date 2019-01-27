@@ -34,7 +34,11 @@ const sortByCPU = (a, b) => {
     return bCpu - aCpu
 }
 
-export {ALL_PODS, sortByAge, sortByCPU, sortByMemory, sortByName}
+const sortByStatus = (a, b) => {
+    return (a.phase).localeCompare(b.phase)
+}
+
+export {ALL_PODS, sortByAge, sortByCPU, sortByMemory, sortByName, sortByStatus}
 
 export class Pod extends PIXI.Graphics {
 
