@@ -98,7 +98,7 @@ def query_mock_cluster(cluster):
             else:
                 pod = generate_mock_pod(index, i, j)
                 pods['{}/{}'.format(pod['namespace'], pod['name'])] = pod
-        
+
         # use data from containers (usage)
         usage_cpu = 0
         usage_memory = 0
