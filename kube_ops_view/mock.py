@@ -1,4 +1,5 @@
 import time
+import random
 
 
 def hash_int(x: int):
@@ -35,8 +36,19 @@ def generate_mock_pod(index: int, i: int, j: int):
     phase = pod_phases[hash_int((index + 1) * (i + 1) * (j + 1)) % len(pod_phases)]
     containers = []
     for k in range(1 + j % 2):
+        # generate "more real data"
+        requests_cpu = random.randint(50, 100)
+        requests_memory = random.randint(256, 512)
+        usage_cpu = requests_cpu + random.randint(-45, 50)
+        usage_memory = requests_memory + random.randint(-128, 128)
         container = {
-            'name': 'myapp', 'image': 'foo/bar/{}'.format(j), 'resources': {'requests': {'cpu': '100m', 'memory': '100Mi'}, 'limits': {}},
+            'name': 'myapp',
+            'image': 'foo/bar/{}'.format(j),
+            'resources': {
+                'requests': {'cpu': f'{requests_cpu}m', 'memory': f'{requests_memory}Mi'},
+                'limits': {},
+                'usage': {'cpu': f'{usage_cpu}m', 'memory': f'{usage_memory}Mi'},
+            },
             'ready': True,
             'state': {'running': {}}
         }
@@ -86,9 +98,26 @@ def query_mock_cluster(cluster):
             else:
                 pod = generate_mock_pod(index, i, j)
                 pods['{}/{}'.format(pod['namespace'], pod['name'])] = pod
-        node = {'name': 'node-{}'.format(i), 'labels': labels, 'status': {
-            'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'},
-            'allocatable': {'cpu': '3800m', 'memory': '31Gi'}}, 'pods': pods}
+
+        # use data from containers (usage)
+        usage_cpu = 0
+        usage_memory = 0
+        for p in pods.values():
+            for c in p["containers"]:
+                usage_cpu += int(c["resources"]["usage"]["cpu"].split("m")[0])
+                usage_memory += int(c["resources"]["usage"]["memory"].split("Mi")[0])
+
+        node = {
+            'name': 'node-{}'.format(i),
+            'labels': labels,
+            'status': {
+                'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'},
+                'allocatable': {'cpu': '3800m', 'memory': '31Gi'}
+            },
+            'pods': pods,
+            # get data from containers (usage)
+            'usage': {'cpu': f'{usage_cpu}m', 'memory': f'{usage_memory}Mi'}
+        }
         nodes[node['name']] = node
     pod = generate_mock_pod(index, 11, index)
     unassigned_pods = {'{}/{}'.format(pod['namespace'], pod['name']): pod}
