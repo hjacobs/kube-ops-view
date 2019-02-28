@@ -26,7 +26,7 @@ export default class App {
         this.connectTime = null
         this.keepAliveTimer = null
         this.clusters = new Map()
-        this.clusterStatuses = new Map()
+        //this.clusterStatuses = new Map()
         this.viewContainerTargetPosition = new PIXI.Point()
         this.bootstrapping = true
     }
@@ -130,7 +130,7 @@ export default class App {
         this.stage = new PIXI.Container()
 
         this.registerEventListeners()
-        setInterval(this.pruneUnavailableClusters.bind(this), 5 * 1000)
+        // setInterval(this.pruneUnavailableClusters.bind(this), 5 * 1000)
 
         if (this.config.reloadIntervalSeconds) {
             setTimeout(function () {
@@ -205,6 +205,8 @@ export default class App {
         }
 
         function mouseUpHandler(_event) {
+            // eslint-disable-next-line no-console 
+            console.log('app.mouseUpHandler')
             isDragging = false
             this.renderer.view.style.cursor = 'default'
         }
@@ -492,19 +494,19 @@ export default class App {
         for (const cluster of clusters) {
             if (!this.selectedClusters.size || this.selectedClusters.has(cluster.id)) {
                 clusterIds.add(cluster.id)
-                const status = this.clusterStatuses.get(cluster.id)
+                //const status = this.clusterStatuses.get(cluster.id)
                 let clusterBox = clusterComponentById[cluster.id]
                 if (!clusterBox) {
-                    clusterBox = new Cluster(cluster, status, this.tooltip)
+                    clusterBox = new Cluster(cluster, /*status,*/ this.tooltip)
                     this.viewContainer.addChild(clusterBox)
+                    clusterBox.x = 0
+                    clusterBox.y = y
+                    y += clusterBox.height + 10
                 } else {
                     clusterBox.cluster = cluster
-                    clusterBox.status = status
+                    //clusterBox.status = status
                 }
                 clusterBox.draw()
-                clusterBox.x = 0
-                clusterBox.y = y
-                y += clusterBox.height + 10
             }
         }
         for (const component of this.viewContainer.children) {
@@ -585,23 +587,6 @@ export default class App {
         }
     }
 
-    pruneUnavailableClusters() {
-        let updateNeeded = false
-        const nowSeconds = Date.now() / 1000
-        for (const [clusterId, statusObj] of this.clusterStatuses.entries()) {
-            const lastQueryTime = statusObj.last_query_time || 0
-            if (lastQueryTime < nowSeconds - this.config.maxDataAgeSeconds) {
-                this.clusters.delete(clusterId)
-                updateNeeded = true
-            } else if (lastQueryTime < nowSeconds - 20) {
-                updateNeeded = true
-            }
-        }
-        if (updateNeeded) {
-            this.update()
-        }
-    }
-
     disconnect() {
         if (this.eventSource != null) {
             this.eventSource.close()
@@ -610,79 +595,61 @@ export default class App {
         }
     }
 
-    refreshLastQueryTime(clusterId) {
-        let statusObj = this.clusterStatuses.get(clusterId)
-        if (!statusObj) {
-            statusObj = {}
-        }
-        statusObj.last_query_time = Date.now() / 1000
-        this.clusterStatuses.set(clusterId, statusObj)
-    }
-
     connect() {
         // first close the old connection
         this.disconnect()
-        const that = this
         // NOTE: path must be relative to work with kubectl proxy out of the box
-        let url = 'events'
-        const clusterIds = Array.from(this.selectedClusters).join(',')
-        if (clusterIds) {
-            url += '?cluster_ids=' + clusterIds
-        }
-        const eventSource = this.eventSource = new EventSource(url, {credentials: 'include'})
-        this.keepAlive()
-        eventSource.onerror = function (_event) {
-            that._errors++
-            if (that._errors <= 1) {
-                // immediately reconnect on first error
-                that.connect()
-            } else {
-                // rely on keep-alive timer to reconnect
-                that.disconnect()
-            }
-        }
-        eventSource.addEventListener('clusterupdate', function (event) {
-            that._errors = 0
-            that.keepAlive()
-            const cluster = JSON.parse(event.data)
-            const status = that.clusterStatuses.get(cluster.id)
-            const nowSeconds = Date.now() / 1000
-            if (status && status.last_query_time < nowSeconds - that.config.maxDataAgeSeconds) {
-                // outdated data => ignore
-            } else {
-                that.clusters.set(cluster.id, cluster)
-                that.update()
-            }
+        const url = 'ws://localhost:8081/ws'
+        // const clusterIds = Array.from(this.selectedClusters).join(',')
+        // if (clusterIds) {
+        //     url += '?cluster_ids=' + clusterIds
+        // }
+        const socket = this.socket = new WebSocket(url)
+        const that = this
+        this.bootstrapping = false
+        socket.addEventListener('message', function(event){
+            that.handleEvent(event.data)
         })
-        eventSource.addEventListener('clusterdelta', function (event) {
-            that._errors = 0
-            that.keepAlive()
-            const data = JSON.parse(event.data)
-            // we received some delta => we know that the cluster query succeeded!
-            that.refreshLastQueryTime(data.cluster_id)
-            let cluster = that.clusters.get(data.cluster_id)
-            if (cluster && data.delta) {
-                // deep copy cluster object (patch function mutates inplace!)
-                cluster = JSON.parse(JSON.stringify(cluster))
-                cluster = JSON_delta.patch(cluster, data.delta)
-                that.clusters.set(cluster.id, cluster)
-                that.update()
-            }
-        })
-        eventSource.addEventListener('clusterstatus', function (event) {
-            that._errors = 0
-            that.keepAlive()
-            const data = JSON.parse(event.data)
-            that.clusterStatuses.set(data.cluster_id, data.status)
-        })
-        eventSource.addEventListener('bootstrapend', function (_event) {
-            that._errors = 0
-            that.keepAlive()
-            that.bootstrapping = false
-        })
+        // eventSource.onerror = function (_event) {
+        //     that._errors++
+        //     if (that._errors <= 1) {
+        //         // immediately reconnect on first error
+        //         that.connect()
+        //     } else {
+        //         // rely on keep-alive timer to reconnect
+        //         that.disconnect()
+        //     }
+        // }
         this.connectTime = Date.now()
     }
 
+    handleEvent(event) {
+        const parsedEvent = JSON.parse(event)
+        switch(parsedEvent.type) {
+        case 'clusterupdate': {
+            this.clusters.set(parsedEvent.id, parsedEvent.data)
+            this.update()
+            break
+        }
+        case 'clusterdelta': {
+            let cluster = this.clusters.get(parsedEvent.cluster_id)
+            if (cluster && parsedEvent.data.delta) {
+                // deep copy cluster object (patch function mutates inplace!)
+                cluster = JSON.parse(JSON.stringify(cluster))
+                cluster = JSON_delta.patch(cluster, parsedEvent.data.delta)
+                this.clusters.set(cluster.id, cluster)
+                this.update()
+            }
+            break
+        }
+        }
+        // eventSource.addEventListener('clusterstatus', function (event) {
+        //     that._errors = 0
+        //     that.keepAlive()
+        //     const data = JSON.parse(event.data)
+        //     that.clusterStatuses.set(data.cluster_id, data.status)
+        // })
+    }
     run() {
         this.initialize()
         this.draw()

@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Kubernetes Operational View {{ version }}</title>
-        <link rel="shortcut icon" href="static/favicon.ico">
+        <link rel="shortcut icon" href="favicon.ico">
 <style>* {padding: 0; margin: 0} body { color: #aaaaff; background: #000; }</style>
 <style>
 /* latin */
@@ -14,7 +14,7 @@
   font-weight: 400;
   /* ShareTechMono-Regular.ttf: Copyright (c) 2012, Carrois Type Design, Ralph du Carrois (www.carrois.com post@carrois.com), with Reserved Font Name 'Share'
      License: SIL Open Font License, 1.1 */
-  src: local('Share Tech Mono'), local('ShareTechMono-Regular'), url(static/sharetechmono.woff2) format('woff2');
+  src: local('Share Tech Mono'), local('ShareTechMono-Regular'), url(sharetechmono.woff2) format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2212, U+2215, U+E0FF, U+EFFD, U+F000;
 }
 </style>
@@ -22,7 +22,7 @@
     <body>
         <!-- make sure the font is loaded -->
         <div id="loading" style="font-family: ShareTechMono">Loading..</div>
-        <script src="static/build/{{ app_js }}"></script>
+        <script src="build/app.js"></script>
         <script>document.getElementById('loading').style.display = 'none'; const app = new App(); app.run()</script>
     </body>
 </html>

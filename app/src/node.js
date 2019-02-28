@@ -13,10 +13,10 @@ export default class Node extends PIXI.Graphics {
     }
 
     isMaster() {
-        for (var key in this.node.labels) {
+        for (var key in this.node.metadata.labels) {
             if (key == 'node-role.kubernetes.io/master' ||
-                key == 'kubernetes.io/role' && this.node.labels[key] == 'master' ||
-                key == 'master' && this.node.labels[key] == 'true' ) {
+                key == 'kubernetes.io/role' && this.node.metadata.labels[key] == 'master' ||
+                key == 'master' && this.node.metadata.labels[key] == 'true' ) {
                 return true
             }
         }
@@ -46,7 +46,7 @@ export default class Node extends PIXI.Graphics {
             numberOfPods++
             // do not account for completed jobs
             if (pod.phase != 'Succeeded') {
-                for (const container of pod.containers) {
+                for (const container of pod.spec.containers) {
                     if (container.resources && container.resources.requests) {
                         for (const key of Object.keys(container.resources.requests)) {
                             resources[key].requested += parseResource(container.resources.requests[key])
@@ -66,7 +66,7 @@ export default class Node extends PIXI.Graphics {
         topHandle.beginFill(App.current.theme.primaryColor, 1)
         topHandle.drawRect(0, 0, 105, 15)
         topHandle.endFill()
-        const ellipsizedNodeName = this.node.name.length > 17 ? this.node.name.substring(0, 17).concat('…') : this.node.name
+        const ellipsizedNodeName = this.node.metadata.name.length > 17 ? this.node.metadata.name.substring(0, 17).concat('…') : this.node.metadata.name
         const text = new PIXI.Text(ellipsizedNodeName, {fontFamily: 'ShareTechMono', fontSize: 10, fill: 0x000000})
         text.x = 2
         text.y = 2
@@ -81,8 +81,8 @@ export default class Node extends PIXI.Graphics {
         topHandle.on('mouseover', function () {
             let s = nodeBox.node.name
             s += '\nLabels:'
-            for (const key of Object.keys(nodeBox.node.labels).sort()) {
-                s += '\n  ' + key + ': ' + nodeBox.node.labels[key]
+            for (const key of Object.keys(nodeBox.node.metadata.labels).sort()) {
+                s += '\n  ' + key + ': ' + nodeBox.node.metadata.labels[key]
             }
             nodeBox.tooltip.setText(s)
             nodeBox.tooltip.position = nodeBox.toGlobal(new PIXI.Point(0, 15))
@@ -107,7 +107,7 @@ export default class Node extends PIXI.Graphics {
         let py = 20
         const pods = Object.values(this.node.pods).sort(sorterFn)
         for (const pod of pods) {
-            if (pod.namespace != 'kube-system') {
+            if (pod.metadata.namespace != 'kube-system') {
                 const podBox = Pod.getOrCreate(pod, this.cluster, this.tooltip)
                 podBox.movePodTo(new PIXI.Point(px, py))
                 nodeBox.addChild(podBox.draw())
@@ -121,7 +121,7 @@ export default class Node extends PIXI.Graphics {
         px = 24
         py = 100
         for (const pod of pods) {
-            if (pod.namespace == 'kube-system') {
+            if (pod.metadata.namespace == 'kube-system') {
                 const podBox = Pod.getOrCreate(pod, this.cluster, this.tooltip)
                 podBox.movePodTo(new PIXI.Point(px, py))
                 nodeBox.addChild(podBox.draw())

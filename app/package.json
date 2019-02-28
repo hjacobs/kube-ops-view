@@ -4,7 +4,7 @@
   "description": "=========================== Kubernetes Operational View ===========================",
   "main": "src/app.js",
   "config": {
-    "buildDir": "../kube_ops_view/static/build"
+    "buildDir": "../static/build"
   },
   "scripts": {
     "prestart": "npm install",

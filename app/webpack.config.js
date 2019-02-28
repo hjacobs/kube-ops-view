@@ -10,12 +10,12 @@ module.exports = {
     context: path.join(__dirname, './'),
     entry: entry,
     target: 'web',
-    devtool: DEBUG ? 'inline-source-map' : false,
+    devtool: 'inline-source-map',
     output: {
         library: 'App',
         path: path.resolve(pkg.config.buildDir),
         publicPath: DEBUG ? '/' : './',
-        filename: DEBUG ? 'app.js' : 'app-[hash].js'
+        filename: 'app.js'
     },
     node: {
         fs: 'empty'

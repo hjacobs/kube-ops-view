@@ -52,7 +52,7 @@ export class Pod extends PIXI.Graphics {
         this._targetPosition = null
 
         if (cluster) {
-            ALL_PODS[cluster.cluster.id + '/' + pod.namespace + '/' + pod.name] = this
+            ALL_PODS[cluster.cluster.id + '/' + pod.metadata.namespace + '/' + pod.metadata.name] = this
         }
     }
 
@@ -96,13 +96,13 @@ export class Pod extends PIXI.Graphics {
         const podCpu = podResource('cpu')
         const podMem = podResource('memory')
 
-        const cpuLimits = podCpu(this.pod.containers, 'limits')
-        const cpuUsage = podCpu(this.pod.containers, 'usage')
-        const cpuRequests = podCpu(this.pod.containers, 'requests')
+        const cpuLimits = podCpu(this.pod.spec.containers, 'limits')
+        const cpuUsage = podCpu(this.pod.spec.containers, 'usage')
+        const cpuRequests = podCpu(this.pod.spec.containers, 'requests')
 
-        const memLimits = podMem(this.pod.containers, 'limits')
-        const memUsage = podMem(this.pod.containers, 'usage')
-        const memRequests = podMem(this.pod.containers, 'requests')
+        const memLimits = podMem(this.pod.spec.containers, 'limits')
+        const memUsage = podMem(this.pod.spec.containers, 'usage')
+        const memRequests = podMem(this.pod.spec.containers, 'requests')
 
         return {
             memory: {
@@ -119,7 +119,7 @@ export class Pod extends PIXI.Graphics {
     }
 
     static getOrCreate(pod, cluster, tooltip) {
-        const existingPod = ALL_PODS[cluster.cluster.id + '/' + pod.namespace + '/' + pod.name]
+        const existingPod = ALL_PODS[cluster.cluster.id + '/' + pod.metadata.namespace + '/' + pod.metadata.name]
         if (existingPod) {
             existingPod.pod = pod
             existingPod.clear()
@@ -149,17 +149,21 @@ export class Pod extends PIXI.Graphics {
         let ready = 0
         let running = 0
         let restarts = 0
-        for (const container of this.pod.containers) {
-            if (container.ready) {
+        for (const [i, container] of this.pod.spec.containers.entries()) {
+            if (!this.pod.status.containerStatuses) {
+                continue
+            }
+            const status = this.pod.status.containerStatuses[i]
+            if (status.ready) {
                 ready++
             }
-            if (container.state && container.state.running) {
+            if (status.state && status.state.running) {
                 running++
             }
-            restarts += container.restartCount || 0
+            restarts += status.restartCount || 0
         }
-        const allReady = ready >= this.pod.containers.length
-        const allRunning = running >= this.pod.containers.length
+        const allReady = ready >= this.pod.spec.containers.length
+        const allRunning = running >= this.pod.spec.containers.length
         const resources = this.getResourceUsage()
 
         let newTick = null
@@ -168,30 +172,30 @@ export class Pod extends PIXI.Graphics {
         podBox.interactive = true
         podBox.on('mouseover', function () {
             podBox.filters = podBox.filters.filter(x => x != BRIGHTNESS_FILTER).concat([BRIGHTNESS_FILTER])
-            let s = this.pod.name
-            s += '\nNamespace : ' + this.pod.namespace
-            s += '\nStatus    : ' + this.pod.phase + ' (' + ready + '/' + this.pod.containers.length + ' ready)'
-            s += '\nStart Time: ' + this.pod.startTime
+            let s = this.pod.metadata.name
+            s += '\nNamespace : ' + this.pod.metadata.namespace
+            s += '\nStatus    : ' + this.pod.status.phase + ' (' + ready + '/' + this.pod.spec.containers.length + ' ready)'
+            s += '\nStart Time: ' + this.pod.status.startTime
             s += '\nLabels    :'
-            for (var key of Object.keys(this.pod.labels).sort()) {
+            for (var key of Object.keys(this.pod.metadata.labels).sort()) {
                 if (key !== 'pod-template-hash') {
-                    s += '\n  ' + key + ': ' + this.pod.labels[key]
+                    s += '\n  ' + key + ': ' + this.pod.metadata.labels[key]
                 }
             }
             s += '\nContainers:'
-            for (const container of this.pod.containers) {
+            for (const [i, container] of this.pod.spec.containers.entries()) {
                 s += '\n  ' + container.name + ': '
-                if (container.state) {
-                    const key = Object.keys(container.state)[0]
-                    s += key
-                    if (container.state[key].reason) {
-                        // "CrashLoopBackOff"
-                        s += ': ' + container.state[key].reason
-                    }
+                if (!this.pod.status.containerStatuses) {
+                    continue
                 }
-                if (container.restartCount) {
-                    s += ' (' + container.restartCount + ' restarts)'
+                const status = this.pod.status.containerStatuses[i]
+                const stateKey = Object.keys(status.state)[0]
+                s += stateKey
+                if (status.state[stateKey].reason) {
+                    // "CrashLoopBackOff"
+                    s += ': ' + status.state[stateKey].reason
                 }
+                s += ' (' + status.restartCount + ' restarts)'
             }
             s += '\nCPU:'
             s += '\n  Requested: ' + (resources.cpu.requested / FACTORS.m).toFixed(0) + ' m'
@@ -211,21 +215,21 @@ export class Pod extends PIXI.Graphics {
             this.tooltip.visible = false
         })
         podBox.lineStyle(1, App.current.theme.primaryColor, 1)
-        const w = 10 / this.pod.containers.length
-        for (let i = 0; i < this.pod.containers.length; i++) {
+        const w = 10 / this.pod.spec.containers.length
+        for (let i = 0; i < this.pod.spec.containers.length; i++) {
             podBox.drawRect(i * w, 0, w, 10)
         }
         let color
-        if (this.pod.phase == 'Succeeded') {
+        if (this.pod.status.phase == 'Succeeded') {
             // completed Job
             color = 0xaaaaff
-        } else if (this.pod.phase == 'Running' && allReady) {
+        } else if (this.pod.status.phase == 'Running' && allReady) {
             color = 0xaaffaa
-        } else if (this.pod.phase == 'Running' && allRunning && !allReady) {
+        } else if (this.pod.status.phase == 'Running' && allRunning && !allReady) {
             // all containers running, but some not ready (readinessProbe)
             newTick = this.pulsate
             color = 0xaaffaa
-        } else if (this.pod.phase == 'Pending') {
+        } else if (this.pod.status.phase == 'Pending') {
             newTick = this.pulsate
             color = 0xffffaa
         } else {
@@ -236,7 +240,7 @@ export class Pod extends PIXI.Graphics {
         podBox.lineStyle(2, color, 1)
         podBox.beginFill(color, 0.2)
         podBox.drawRect(0, 0, 10, 10)
-        if (this.pod.deleted) {
+        if (this.pod.metadata.deletionTimestamp) {
             if (!this.cross) {
                 const cross = new PIXI.Graphics()
                 cross.lineStyle(3, 0xff0000, 1)

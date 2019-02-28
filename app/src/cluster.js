@@ -4,10 +4,10 @@ import App from './app.js'
 const PIXI = require('pixi.js')
 
 export default class Cluster extends PIXI.Graphics {
-    constructor (cluster, status, tooltip) {
+    constructor (cluster, /*status,*/ tooltip) {
         super()
         this.cluster = cluster
-        this.status = status
+        //this.status = status
         this.tooltip = tooltip
     }
 
@@ -103,15 +103,15 @@ export default class Cluster extends PIXI.Graphics {
         topHandle.on('click', function(_event) {
             App.current.toggleCluster(that.cluster.id)
         })
-        const text = new PIXI.Text(this.cluster.api_server_url, {fontFamily: 'ShareTechMono', fontSize: 10, fill: 0x000000})
+        const text = new PIXI.Text(this.cluster.id, {fontFamily: 'ShareTechMono', fontSize: 10, fill: 0x000000})
         text.x = 2
         text.y = 2
         topHandle.addChild(text)
         this.addChild(topHandle)
 
-        let newTick = null
+        /*let newTick = null
         const nowSeconds = Date.now() / 1000
-        if (this.status && this.status.last_query_time < nowSeconds - 20) {
+        /*if (this.status && this.status.last_query_time < nowSeconds - 20) {
             newTick = this.pulsate
         }
 
@@ -125,7 +125,7 @@ export default class Cluster extends PIXI.Graphics {
             this.tick = null
             this.alpha = 1
             this.tint = 0xffffff
-        }
+        }*/
     }
 
 }
