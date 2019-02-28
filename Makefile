@@ -16,8 +16,8 @@ test:
 	pipenv run coverage report
 
 appjs:
-	docker run $(TTYFLAGS) -u $$(id -u) -v $$(pwd):/workdir -w /workdir/app -e NPM_CONFIG_CACHE=/tmp artprod.dev.bloomberg.com/node:10.13.0-ubuntu18 npm install
-	docker run $(TTYFLAGS) -u $$(id -u) -v $$(pwd):/workdir -w /workdir/app -e NPM_CONFIG_CACHE=/tmp artprod.dev.bloomberg.com/node:10.13.0-ubuntu18 npm run build
+	# docker run -v $$(pwd):/workdir -w /workdir/app -e NPM_CONFIG_CACHE=/tmp artprod.dev.bloomberg.com/node:10.13.0-ubuntu18 npm install
+	docker run -v $$(pwd):/workdir -w /workdir/app -e NPM_CONFIG_CACHE=/tmp artprod.dev.bloomberg.com/node:10.13.0-ubuntu18 npm run build
 
 docker: appjs
 	docker build --build-arg "VERSION=$(VERSION)" -t "$(IMAGE):$(TAG)" .

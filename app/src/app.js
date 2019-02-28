@@ -568,59 +568,30 @@ export default class App {
             this.selectedClusters.add(clusterId)
         }
         this.changeLocationHash('clusters', Array.from(this.selectedClusters).join(','))
-        // make sure we are updating our EventSource filter
-        this.connect()
         this.update()
     }
 
-    keepAlive() {
-        if (this.keepAliveTimer != null) {
-            clearTimeout(this.keepAliveTimer)
-        }
-        this.keepAliveTimer = setTimeout(this.connect.bind(this), this.config.keepAliveSeconds * 1000)
-        if (this.connectTime != null) {
-            const now = Date.now()
-            if (now - this.connectTime > this.config.maxConnectionLifetimeSeconds * 1000) {
-                // maximum connection lifetime exceeded => reconnect
-                this.connect()
-            }
-        }
-    }
-
-    disconnect() {
-        if (this.eventSource != null) {
-            this.eventSource.close()
-            this.eventSource = null
-            this.connectTime = null
-        }
-    }
-
     connect() {
-        // first close the old connection
-        this.disconnect()
-        // NOTE: path must be relative to work with kubectl proxy out of the box
-        const url = 'ws://localhost:8081/ws'
-        // const clusterIds = Array.from(this.selectedClusters).join(',')
-        // if (clusterIds) {
-        //     url += '?cluster_ids=' + clusterIds
-        // }
+        const url = this.build_ws_url()
         const socket = this.socket = new WebSocket(url)
         const that = this
         this.bootstrapping = false
         socket.addEventListener('message', function(event){
             that.handleEvent(event.data)
         })
-        // eventSource.onerror = function (_event) {
-        //     that._errors++
-        //     if (that._errors <= 1) {
-        //         // immediately reconnect on first error
-        //         that.connect()
-        //     } else {
-        //         // rely on keep-alive timer to reconnect
-        //         that.disconnect()
-        //     }
-        // }
         this.connectTime = Date.now()
+    }
+
+    build_ws_url() {
+        const loc = window.location
+        let new_uri = ''
+        if (loc.protocol === 'https:') {
+            new_uri = 'wss:'
+        } else {
+            new_uri = 'ws:'
+        }
+        new_uri += '//' + loc.host + '/ws'
+        return new_uri
     }
 
     handleEvent(event) {
@@ -643,12 +614,6 @@ export default class App {
             break
         }
         }
-        // eventSource.addEventListener('clusterstatus', function (event) {
-        //     that._errors = 0
-        //     that.keepAlive()
-        //     const data = JSON.parse(event.data)
-        //     that.clusterStatuses.set(data.cluster_id, data.status)
-        // })
     }
     run() {
         this.initialize()

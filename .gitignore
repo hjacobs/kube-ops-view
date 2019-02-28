@@ -13,3 +13,5 @@ scm-source.json
 .cache/
 .coverage
 .pytest_cache/
+
+static/build
