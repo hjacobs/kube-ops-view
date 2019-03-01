@@ -600,7 +600,7 @@ export default class App {
             break
         }
         case 'clusterdelta': {
-            let cluster = this.clusters.get(parsedEvent.cluster_id)
+            let cluster = this.clusters.get(parsedEvent.data.cluster_id)
             if (cluster && parsedEvent.data.delta) {
                 // deep copy cluster object (patch function mutates inplace!)
                 cluster = JSON.parse(JSON.stringify(cluster))

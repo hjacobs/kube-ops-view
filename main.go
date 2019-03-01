@@ -57,7 +57,8 @@ func (w watchError) Error() string {
 }
 
 func main() {
-	ctx := context.Background()
+	// TODO: handle SIGINT/SIGEXIT
+	ctx, _ := context.WithCancel(context.Background())
 	clientsets := make(map[string]*kubernetes.Clientset)
 	connEventChans = make(map[chan *clientMessage]struct{})
 	for _, config := range getConfigs() {
@@ -67,6 +68,7 @@ func main() {
 			continue
 		}
 		clientsets[config.Host] = cli
+		startWatch(ctx, config.Host, cli)
 	}
 	if len(clientsets) == 0 {
 		log.Fatalln("No clients available, see previous errors")
