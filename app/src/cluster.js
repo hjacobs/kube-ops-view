@@ -4,11 +4,12 @@ import App from './app.js'
 const PIXI = require('pixi.js')
 
 export default class Cluster extends PIXI.Graphics {
-    constructor (cluster, /*status,*/ tooltip) {
+    constructor (cluster, tooltip, yPos) {
         super()
         this.cluster = cluster
-        //this.status = status
+        this.name = cluster.id
         this.tooltip = tooltip
+        this.position.y = yPos
     }
 
     destroy() {
@@ -109,23 +110,6 @@ export default class Cluster extends PIXI.Graphics {
         topHandle.addChild(text)
         this.addChild(topHandle)
 
-        /*let newTick = null
-        const nowSeconds = Date.now() / 1000
-        /*if (this.status && this.status.last_query_time < nowSeconds - 20) {
-            newTick = this.pulsate
-        }
-
-        if (newTick && newTick != this.tick) {
-            this.tick = newTick
-            // important: only register new listener if it does not exist yet!
-            // (otherwise we leak listeners)
-            PIXI.ticker.shared.add(this.tick, this)
-        } else if (!newTick && this.tick) {
-            PIXI.ticker.shared.remove(this.tick, this)
-            this.tick = null
-            this.alpha = 1
-            this.tint = 0xffffff
-        }*/
     }
 
 }

@@ -26,7 +26,6 @@ export default class App {
         this.connectTime = null
         this.keepAliveTimer = null
         this.clusters = new Map()
-        //this.clusterStatuses = new Map()
         this.viewContainerTargetPosition = new PIXI.Point()
         this.bootstrapping = true
     }
@@ -205,8 +204,6 @@ export default class App {
         }
 
         function mouseUpHandler(_event) {
-            // eslint-disable-next-line no-console 
-            console.log('app.mouseUpHandler')
             isDragging = false
             this.renderer.view.style.cursor = 'default'
         }
@@ -494,19 +491,16 @@ export default class App {
         for (const cluster of clusters) {
             if (!this.selectedClusters.size || this.selectedClusters.has(cluster.id)) {
                 clusterIds.add(cluster.id)
-                //const status = this.clusterStatuses.get(cluster.id)
                 let clusterBox = clusterComponentById[cluster.id]
                 if (!clusterBox) {
-                    clusterBox = new Cluster(cluster, /*status,*/ this.tooltip)
+                    clusterBox = new Cluster(cluster, this.tooltip, y)
                     this.viewContainer.addChild(clusterBox)
-                    clusterBox.x = 0
-                    clusterBox.y = y
+                    clusterBox.draw()
                     y += clusterBox.height + 10
                 } else {
                     clusterBox.cluster = cluster
-                    //clusterBox.status = status
+                    clusterBox.draw()
                 }
-                clusterBox.draw()
             }
         }
         for (const component of this.viewContainer.children) {
@@ -598,8 +592,11 @@ export default class App {
         const parsedEvent = JSON.parse(event)
         switch(parsedEvent.type) {
         case 'clusterupdate': {
-            this.clusters.set(parsedEvent.id, parsedEvent.data)
-            this.update()
+            this.clusters.set(parsedEvent.data.id, parsedEvent.data)
+            // there should be a better way to handle this
+            sleep(500).then(() => {
+                this.update()
+            })
             break
         }
         case 'clusterdelta': {
@@ -622,6 +619,10 @@ export default class App {
 
         PIXI.ticker.shared.add(this.tick, this)
     }
+}
+
+function sleep (time) {
+    return new Promise((resolve) => setTimeout(resolve, time))
 }
 
 module.exports = App
