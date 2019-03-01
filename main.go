@@ -272,11 +272,11 @@ func constructDeltaMessage(apiEndpoint string, podEvent watch.Event) (*clientMes
 		return nil, watchError{Object: podEvent.Object}
 	}
 	pod, ok := podEvent.Object.(*corev1.Pod)
-	log.Println("got event for pod:", pod.Name)
 	if !ok {
 		log.Println("got non-pod type in event:", podEvent.Object.GetObjectKind().GroupVersionKind())
 		return nil, nil
 	}
+	log.Println("got event for pod:", pod.Name)
 	response := make([]interface{}, 0, 2)
 	if pod.Spec.NodeName == "" {
 		response = append(response,
