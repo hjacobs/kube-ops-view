@@ -1,5 +1,6 @@
 import time
 import random
+import string
 
 
 def hash_int(x: int):
@@ -37,10 +38,11 @@ def generate_mock_pod(index: int, i: int, j: int):
     containers = []
     for k in range(1 + j % 2):
         # generate "more real data"
-        requests_cpu = random.randint(50, 100)
-        requests_memory = random.randint(256, 512)
-        usage_cpu = requests_cpu + random.randint(-45, 50)
-        usage_memory = requests_memory + random.randint(-128, 128)
+        requests_cpu = random.randint(10, 50)
+        requests_memory = random.randint(64, 256)
+        # with max, we defend ourselves against negative cpu/memory ;)
+        usage_cpu = max(requests_cpu + random.randint(-30, 30), 1)
+        usage_memory = max(requests_memory + random.randint(-64, 128), 1)
         container = {
             'name': 'myapp',
             'image': 'foo/bar/{}'.format(j),
@@ -106,13 +108,18 @@ def query_mock_cluster(cluster):
             for c in p["containers"]:
                 usage_cpu += int(c["resources"]["usage"]["cpu"].split("m")[0])
                 usage_memory += int(c["resources"]["usage"]["memory"].split("Mi")[0])
+        
+        # generate longer name for a node
+        suffix = ''.join(
+            [random.choice(string.ascii_letters) for n in range(random.randint(1, 20))]
+        )
 
         node = {
-            'name': 'node-{}'.format(i),
+            'name': f'node-{i}-{suffix}',
             'labels': labels,
             'status': {
-                'capacity': {'cpu': '4', 'memory': '32Gi', 'pods': '110'},
-                'allocatable': {'cpu': '3800m', 'memory': '31Gi'}
+                'capacity': {'cpu': '8', 'memory': '64Gi', 'pods': '110'},
+                'allocatable': {'cpu': '7800m', 'memory': '62Gi'}
             },
             'pods': pods,
             # get data from containers (usage)

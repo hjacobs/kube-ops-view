@@ -38,7 +38,34 @@ export default class Cluster extends PIXI.Graphics {
         let workerWidth = 0
         let workerHeight = 0
         const workerNodes = []
-        const maxWidth = window.innerWidth - 130
+        
+        let maxPods = 0
+        // get the largest number of pods
+        for (const n of Object.values(this.cluster.nodes)) {
+            const podsInNode = Object.values(n.pods).length
+            if (podsInNode >= maxPods) {
+                maxPods = podsInNode
+            }
+        }
+        
+        // with maxPods we can calculate the size of all nodes in the cluster
+        this.podsPerRow = Math.max(
+            App.current.defaultPodsPerRow,
+            Math.ceil(Math.sqrt(maxPods))
+        )
+
+        this.widthOfNodePx = Math.max(
+            App.current.defaultWidthOfNodePx,
+            Math.floor(this.podsPerRow * App.current.sizeOfPodPx + App.current.startDrawingPodsAt + 2)
+        )
+
+        this.heightOfNodePx = Math.max(
+            App.current.defaultHeightOfNodePx,
+            Math.floor(this.podsPerRow * App.current.sizeOfPodPx + App.current.heightOfTopHandlePx + (App.current.sizeOfPodPx * 2) + 2)
+        )
+
+        const maxWidth = window.innerWidth - (this.widthOfNodePx * 1.2)
+
         for (const nodeName of Object.keys(this.cluster.nodes).sort()) {
             const node = this.cluster.nodes[nodeName]
             var nodeBox = new Node(node, this, this.tooltip)
@@ -47,29 +74,29 @@ export default class Cluster extends PIXI.Graphics {
                 if (masterX > maxWidth) {
                     masterWidth = masterX
                     masterX = left
-                    masterY += nodeBox.height + padding
-                    masterHeight += nodeBox.height + padding
+                    masterY += this.heightOfNodePx + padding
+                    masterHeight += this.heightOfNodePx + padding
                 }
                 if (masterHeight == 0) {
-                    masterHeight = nodeBox.height + padding
+                    masterHeight = this.heightOfNodePx + padding
                 }
                 nodeBox.x = masterX
                 nodeBox.y = masterY
-                masterX += nodeBox.width + padding
+                masterX += this.widthOfNodePx + padding
             } else {
                 if (workerX > maxWidth) {
                     workerWidth = workerX
                     workerX = left
-                    workerY += nodeBox.height + padding
-                    workerHeight += nodeBox.height + padding
+                    workerY += this.heightOfNodePx + padding
+                    workerHeight += this.heightOfNodePx + padding
                 }
                 workerNodes.push(nodeBox)
                 if (workerHeight == 0) {
-                    workerHeight = nodeBox.height + padding
+                    workerHeight = this.heightOfNodePx + padding
                 }
                 nodeBox.x = workerX
                 nodeBox.y = workerY
-                workerX += nodeBox.width + padding
+                workerX += this.widthOfNodePx + padding
             }
             this.addChild(nodeBox)
         }
@@ -95,7 +122,7 @@ export default class Cluster extends PIXI.Graphics {
 
         const topHandle = this.topHandle = new PIXI.Graphics()
         topHandle.beginFill(App.current.theme.primaryColor, 1)
-        topHandle.drawRect(0, 0, width, 15)
+        topHandle.drawRect(0, 0, width, App.current.heightOfTopHandlePx)
         topHandle.endFill()
         topHandle.interactive = true
         topHandle.buttonMode = true
