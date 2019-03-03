@@ -108,7 +108,7 @@ def query_mock_cluster(cluster):
             for c in p["containers"]:
                 usage_cpu += int(c["resources"]["usage"]["cpu"].split("m")[0])
                 usage_memory += int(c["resources"]["usage"]["memory"].split("Mi")[0])
-        
+
         # generate longer name for a node
         suffix = ''.join(
             [random.choice(string.ascii_letters) for n in range(random.randint(1, 20))]
