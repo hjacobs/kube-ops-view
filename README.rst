@@ -9,6 +9,10 @@ Kubernetes Operational View
 .. image:: https://readthedocs.org/projects/kubernetes-operational-view/badge/?version=latest
    :target: http://kubernetes-operational-view.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
+   
+.. image:: 	https://img.shields.io/docker/pulls/hjacobs/kube-ops-view.svg
+   :target: https://hub.docker.com/r/hjacobs/kube-ops-view
+   :alt: Docker pulls
 
 **This project is in a very early state, but it might already be useful.**
 
