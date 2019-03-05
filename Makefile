@@ -1,30 +1,27 @@
-.PHONY: clean test appjs docker push mock
+IMAGE ?= hjacobs/kube-ops-view
+VERSION ?= $(shell git describe --tags --always --dirty)
+TAG ?= $(VERSION)
+BUILD_ARGS ?=
 
-IMAGE            ?= hjacobs/kube-ops-view
-VERSION          ?= $(shell git describe --tags --always --dirty)
-TAG              ?= $(VERSION)
-TTYFLAGS         = $(shell test -t 0 && echo "-it")
+DEP = $(GOPATH)/bin/dep
 
-default: docker
+$(DEP):
+	go get github.com/golang/dep/cmd/dep
 
+all: docker
+
+vendor: $(DEP) Gopkg.lock
+	$(DEP) ensure
+
+.PHONY: ckeab
 clean:
-	rm -fr kube_ops_view/static/build
+	rm -fr app/build vendor
 
-test:
-	pipenv run flake8
-	pipenv run coverage run --source=kube_ops_view -m py.test
-	pipenv run coverage report
-
-appjs:
-	# docker run -v $$(pwd):/workdir -w /workdir/app -e NPM_CONFIG_CACHE=/tmp artprod.dev.bloomberg.com/node:10.13.0-ubuntu18 npm install
-	docker run -v $$(pwd):/workdir -w /workdir/app -e NPM_CONFIG_CACHE=/tmp artprod.dev.bloomberg.com/node:10.13.0-ubuntu18 npm run build
-
-docker: appjs
-	docker build --build-arg "VERSION=$(VERSION)" -t "$(IMAGE):$(TAG)" .
+.PHONY: docker
+docker: vendor
+	docker build $(BUILD_ARGS) --build-arg "VERSION=$(VERSION)" -t "$(IMAGE):$(TAG)" .
 	@echo 'Docker image $(IMAGE):$(TAG) can now be used.'
 
+.PHONY: push
 push: docker
 	docker push "$(IMAGE):$(TAG)"
-
-mock:
-	docker run $(TTYFLAGS) -p 8080:8080 "$(IMAGE):$(TAG)" --mock

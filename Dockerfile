@@ -1,27 +1,29 @@
-FROM python:3.7-alpine3.8
+ARG NODE_IMAGE=node:11
+ARG GO_IMAGE=golang:1.11-stretch
+ARG SCRATCH_IMAGE=scratch
+ARG HTTP_PROXY
+ARG NO_PROXY
 
-WORKDIR /
+ARG VERSION
 
-RUN apk add --no-cache python3 python3-dev gcc musl-dev zlib-dev libffi-dev openssl-dev ca-certificates
+FROM ${NODE_IMAGE} as jsbuild
 
-COPY Pipfile.lock /
-COPY pipenv-install.py /
+WORKDIR /app
 
-RUN /pipenv-install.py && \
-    rm -fr /usr/local/lib/python3.7/site-packages/pip && \
-    rm -fr /usr/local/lib/python3.7/site-packages/setuptools && \
-    apk del python3-dev gcc musl-dev zlib-dev libffi-dev openssl-dev && \
-    rm -rf /var/cache/apk/* /root/.cache /tmp/* 
+COPY app .
+RUN npm install
+RUN npm run webpack
 
-FROM python:3.7-alpine3.8
+FROM ${GO_IMAGE} as gobuild
+WORKDIR /go/src/github.com/hjacobs/kube-ops-view
+COPY vendor/ vendor
+COPY main.go .
+RUN go build -ldflags='-X main.verison=${VERSION}' -o kube-ops-view main.go
 
-WORKDIR /
-
-COPY --from=0 /usr/local/lib/python3.7/site-packages /usr/local/lib/python3.7/site-packages
-
-COPY kube_ops_view /kube_ops_view
-
-ARG VERSION=dev
-RUN sed -i "s/__version__ = .*/__version__ = '${VERSION}'/" /kube_ops_view/__init__.py
-
-ENTRYPOINT ["/usr/local/bin/python", "-m", "kube_ops_view"]
+FROM ${SCRATCH_IMAGE}
+WORKDIR /app
+COPY static/ .
+COPY --from=jsbuild /app/build/app.js static/
+COPY --from=gobuild /go/src/github.com/hjacobs/kube-ops-view/kube-ops-view .
+EXPOSE 8081
+ENTRYPOINT ["/app/kube-ops-view"]
