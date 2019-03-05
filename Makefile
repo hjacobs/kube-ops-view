@@ -13,7 +13,7 @@ all: docker
 vendor: $(DEP) Gopkg.lock
 	$(DEP) ensure
 
-.PHONY: ckeab
+.PHONY: clean
 clean:
 	rm -fr app/build vendor
 
