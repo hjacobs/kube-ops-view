@@ -20,7 +20,7 @@ export default class App {
         this.filterString = (params.get('q') && decodeURIComponent(params.get('q'))) || ''
         this.selectedClusters = new Set((params.get('clusters') || '').split(',').filter(x => x))
         this.seenPods = new Set()
-        this.sorterFn = ''
+        this.sorterFn = sortByName
         this.theme = Theme.get(localStorage.getItem('theme'))
         this.eventSource = null
         this.connectTime = null
