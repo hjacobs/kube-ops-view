@@ -64,9 +64,11 @@ export default class Node extends PIXI.Graphics {
         const nodeBox = this
         const topHandle = new PIXI.Graphics()
         topHandle.beginFill(App.current.theme.primaryColor, 1)
-        topHandle.drawRect(0, 0, 105, 15)
+        topHandle.drawRect(0, 0, this.cluster.widthOfNodePx, App.current.heightOfTopHandlePx)
         topHandle.endFill()
-        const ellipsizedNodeName = this.node.name.length > 17 ? this.node.name.substring(0, 17).concat('…') : this.node.name
+        // there is about 2.83 letters per pod
+        const roomForText = Math.floor(2.83 * this.cluster.podsPerRow)
+        const ellipsizedNodeName = this.node.name.length > roomForText ? this.node.name.substring(0, roomForText).concat('…') : this.node.name
         const text = new PIXI.Text(ellipsizedNodeName, {fontFamily: 'ShareTechMono', fontSize: 10, fill: 0x000000})
         text.x = 2
         text.y = 2
@@ -74,7 +76,7 @@ export default class Node extends PIXI.Graphics {
         nodeBox.addChild(topHandle)
         nodeBox.lineStyle(2, App.current.theme.primaryColor, 1)
         nodeBox.beginFill(App.current.theme.secondaryColor, 1)
-        nodeBox.drawRect(0, 0, 105, 115)
+        nodeBox.drawRect(0, 0, this.cluster.widthOfNodePx, this.cluster.heightOfNodePx)
         nodeBox.endFill()
         nodeBox.lineStyle(2, 0xaaaaaa, 1)
         topHandle.interactive = true
@@ -85,7 +87,7 @@ export default class Node extends PIXI.Graphics {
                 s += '\n  ' + key + ': ' + nodeBox.node.labels[key]
             }
             nodeBox.tooltip.setText(s)
-            nodeBox.tooltip.position = nodeBox.toGlobal(new PIXI.Point(0, 15))
+            nodeBox.tooltip.position = nodeBox.toGlobal(new PIXI.Point(0, App.current.heightOfTopHandlePx))
             nodeBox.tooltip.visible = true
         })
         topHandle.on('mouseout', function () {
@@ -103,33 +105,37 @@ export default class Node extends PIXI.Graphics {
 
     addPods(sorterFn) {
         const nodeBox = this
-        let px = 24
-        let py = 20
+        const px = App.current.startDrawingPodsAt
+        const py = App.current.heightOfTopHandlePx + 5
+        let podsCounter = 0
+        let podsKubeSystemCounter = 0
         const pods = Object.values(this.node.pods).sort(sorterFn)
         for (const pod of pods) {
             if (pod.namespace != 'kube-system') {
                 const podBox = Pod.getOrCreate(pod, this.cluster, this.tooltip)
-                podBox.movePodTo(new PIXI.Point(px, py))
+                podBox.movePodTo(
+                    new PIXI.Point(
+                        // we have a room for this.cluster.podsPerRow pods
+                        px + (App.current.sizeOfPodPx * (podsCounter % this.cluster.podsPerRow)),
+                        // we just count when to get to another row
+                        py + (App.current.sizeOfPodPx * Math.floor(podsCounter / this.cluster.podsPerRow))
+                    )
+                )
                 nodeBox.addChild(podBox.draw())
-                px += 13
-                if (px > 90) {
-                    px = 24
-                    py += 13
-                }
-            }
-        }
-        px = 24
-        py = 100
-        for (const pod of pods) {
-            if (pod.namespace == 'kube-system') {
+                podsCounter++
+            } else {
+                // kube-system pods
                 const podBox = Pod.getOrCreate(pod, this.cluster, this.tooltip)
-                podBox.movePodTo(new PIXI.Point(px, py))
+                podBox.movePodTo(
+                    new PIXI.Point(
+                        // we have a room for this.cluster.podsPerRow pods
+                        px + (App.current.sizeOfPodPx * (podsKubeSystemCounter % this.cluster.podsPerRow)),
+                        // like above (for not kube-system pods), but we count from the bottom
+                        this.cluster.heightOfNodePx - App.current.sizeOfPodPx - 2 - (App.current.sizeOfPodPx * Math.floor(podsKubeSystemCounter / this.cluster.podsPerRow))
+                    )
+                )
                 nodeBox.addChild(podBox.draw())
-                px += 13
-                if (px > 90) {
-                    px = 24
-                    py -= 13
-                }
+                podsKubeSystemCounter++
             }
         }
     }

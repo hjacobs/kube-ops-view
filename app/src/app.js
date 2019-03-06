@@ -29,6 +29,13 @@ export default class App {
         this.clusterStatuses = new Map()
         this.viewContainerTargetPosition = new PIXI.Point()
         this.bootstrapping = true
+
+        this.startDrawingPodsAt = 24
+        this.defaultPodsPerRow = 6
+        this.defaultWidthOfNodePx = 105
+        this.defaultHeightOfNodePx = 115
+        this.sizeOfPodPx = 13
+        this.heightOfTopHandlePx = 15
     }
 
     parseLocationHash() {
