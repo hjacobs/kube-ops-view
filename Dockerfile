@@ -1,4 +1,4 @@
-FROM python:3.7-alpine3.8
+FROM python:3.7-alpine3.9
 
 WORKDIR /
 
@@ -13,7 +13,7 @@ RUN /pipenv-install.py && \
     apk del python3-dev gcc musl-dev zlib-dev libffi-dev openssl-dev && \
     rm -rf /var/cache/apk/* /root/.cache /tmp/* 
 
-FROM python:3.7-alpine3.8
+FROM python:3.7-alpine3.9
 
 WORKDIR /
 
