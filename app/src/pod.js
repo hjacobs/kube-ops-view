@@ -276,7 +276,7 @@ export class Pod extends PIXI.Graphics {
         }
 
         // CPU
-        const scaleCpu = resources.cpu.requested <= resources.cpu.limit ? resources.cpu.limit / 8 : resources.cpu.requested / 8
+        const scaleCpu = Math.max(resources.cpu.requested, resources.cpu.limit, resources.cpu.used) / 8
         const scaledCpuReq = resources.cpu.requested !== 0 && scaleCpu !== 0 ? resources.cpu.requested / scaleCpu : 0
         const scaledCpuUsed = resources.cpu.used !== 0 && scaleCpu !== 0 ? resources.cpu.used / scaleCpu : 0
         podBox.lineStyle()
@@ -287,7 +287,7 @@ export class Pod extends PIXI.Graphics {
         podBox.endFill()
 
         // Memory
-        const scale = resources.memory.requested <= resources.memory.limit ? resources.memory.limit / 8 : resources.memory.requested / 8
+        const scale = Math.max(resources.memory.requested, resources.memory.limit, resources.memory.used) / 8
         const scaledMemReq = resources.memory.requested !== 0 && scale !== 0 ? resources.memory.requested / scale : 0
         const scaledMemUsed = resources.memory.used !== 0 && scale !== 0 ? resources.memory.used / scale : 0
         podBox.lineStyle()
