@@ -74,11 +74,22 @@ export default class App {
         return labels && labels[name] === value
     }
 
+    namespaceMatches(pod, value) {
+        return pod.namespace === value
+    }
+
     createMatchesFunctionForQuery(query) {
-        if (query.includes('=')) {
-            const labelAndValue = query.split('=', 2)
-            return pod => this.labelMatches(pod, labelAndValue[0], labelAndValue[1])
-        } else {
+        if (query.startsWith('namespace=')) {
+            // filter by namespace
+            const value = query.split('namespace=', 2)[1]
+            return pod => this.namespaceMatches(pod, value)
+        } else if (query.includes('=')) {
+            // filter by label
+            const [label, value] = query.split('=', 2)
+            return pod => this.labelMatches(pod, label, value)
+        }
+        else {
+            // filter by name
             return pod => this.nameMatches(pod, query)
         }
     }
