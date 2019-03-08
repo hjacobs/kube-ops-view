@@ -35,6 +35,7 @@ You can filter by:
 
 * name
 * labels - when query includes ``=``, e.g. ``env=prod``
+* namespace - when query starts with ``namespace``, e.g. ``namespace=default``
 
 The pod filter is persisted in the location bar (``#q=..`` query parameter) which allows to conveniently send the filtered view to other users (e.g. for troubleshooting).
 
