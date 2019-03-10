@@ -1,4 +1,5 @@
 const PIXI = require('pixi.js')
+import {CRTFilter} from '@pixi/filter-crt'
 
 export const ALL_THEMES = {}
 
@@ -101,3 +102,17 @@ class HighContrastTheme extends DefaultTheme {
     }
 }
 new HighContrastTheme().register()
+
+class CRTTheme extends DefaultTheme {
+    constructor() {
+        super()
+        this.name = 'crt'
+        this.primaryColor = 0xaaaaff
+        this.secondaryColor = 0x222233
+    }
+    apply(stage) {
+        const filter = new CRTFilter({time: 0.5})
+        stage.filters = [filter]
+    }
+}
+new CRTTheme().register()
