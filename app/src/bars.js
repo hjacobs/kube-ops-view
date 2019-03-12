@@ -14,8 +14,8 @@ export default class Bars extends PIXI.Graphics {
     draw() {
         const bars = this
 
-        const barHeightPx = bars.entity.cluster.heightOfNodePx - (App.current.heightOfTopHandlePx + 5 + 3)
-        const heightOfNodeWoPaddingPx = bars.entity.cluster.heightOfNodePx - 5
+        const barHeightPx = bars.entity.heightOfNodePx - (App.current.heightOfTopHandlePx + 5 + 3)
+        const heightOfNodeWoPaddingPx = bars.entity.heightOfNodePx - 5
 
         bars.beginFill(App.current.theme.primaryColor, 0.1)
         bars.drawRect(5, heightOfNodeWoPaddingPx - barHeightPx, 15, barHeightPx)

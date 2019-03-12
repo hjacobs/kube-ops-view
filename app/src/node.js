@@ -4,22 +4,26 @@ import {parseResource} from './utils.js'
 import App from './app'
 const PIXI = require('pixi.js')
 
-export default class Node extends PIXI.Graphics {
-    constructor(node, cluster, tooltip) {
+
+export const isMaster = (labels) => {
+    for (var key in labels) {
+        if (key == 'node-role.kubernetes.io/master' ||
+            key == 'kubernetes.io/role' && labels[key] == 'master' ||
+            key == 'master' && labels[key] == 'true' ) {
+            return true
+        }
+    }
+}
+
+export class Node extends PIXI.Graphics {
+    constructor(node, cluster, tooltip, podsPerRow, widthOfNodePx, heightOfNodePx) {
         super()
         this.node = node
         this.cluster = cluster
         this.tooltip = tooltip
-    }
-
-    isMaster() {
-        for (var key in this.node.labels) {
-            if (key == 'node-role.kubernetes.io/master' ||
-                key == 'kubernetes.io/role' && this.node.labels[key] == 'master' ||
-                key == 'master' && this.node.labels[key] == 'true' ) {
-                return true
-            }
-        }
+        this.podsPerRow = podsPerRow
+        this.widthOfNodePx = widthOfNodePx
+        this.heightOfNodePx = heightOfNodePx
     }
 
     getResourceUsage() {
@@ -64,10 +68,10 @@ export default class Node extends PIXI.Graphics {
         const nodeBox = this
         const topHandle = new PIXI.Graphics()
         topHandle.beginFill(App.current.theme.primaryColor, 1)
-        topHandle.drawRect(0, 0, this.cluster.widthOfNodePx, App.current.heightOfTopHandlePx)
+        topHandle.drawRect(0, 0, this.widthOfNodePx, App.current.heightOfTopHandlePx)
         topHandle.endFill()
         // there is about 2.83 letters per pod
-        const roomForText = Math.floor(2.83 * this.cluster.podsPerRow)
+        const roomForText = Math.floor(2.83 * this.podsPerRow)
         const ellipsizedNodeName = this.node.name.length > roomForText ? this.node.name.substring(0, roomForText).concat('…') : this.node.name
         const text = new PIXI.Text(ellipsizedNodeName, {fontFamily: 'ShareTechMono', fontSize: 10, fill: 0x000000})
         text.x = 2
@@ -76,7 +80,7 @@ export default class Node extends PIXI.Graphics {
         nodeBox.addChild(topHandle)
         nodeBox.lineStyle(2, App.current.theme.primaryColor, 1)
         nodeBox.beginFill(App.current.theme.secondaryColor, 1)
-        nodeBox.drawRect(0, 0, this.cluster.widthOfNodePx, this.cluster.heightOfNodePx)
+        nodeBox.drawRect(0, 0, this.widthOfNodePx, this.heightOfNodePx)
         nodeBox.endFill()
         nodeBox.lineStyle(2, 0xaaaaaa, 1)
         topHandle.interactive = true
@@ -116,9 +120,9 @@ export default class Node extends PIXI.Graphics {
                 podBox.movePodTo(
                     new PIXI.Point(
                         // we have a room for this.cluster.podsPerRow pods
-                        px + (App.current.sizeOfPodPx * (podsCounter % this.cluster.podsPerRow)),
+                        px + (App.current.sizeOfPodPx * (podsCounter % this.podsPerRow)),
                         // we just count when to get to another row
-                        py + (App.current.sizeOfPodPx * Math.floor(podsCounter / this.cluster.podsPerRow))
+                        py + (App.current.sizeOfPodPx * Math.floor(podsCounter / this.podsPerRow))
                     )
                 )
                 nodeBox.addChild(podBox.draw())
@@ -129,9 +133,9 @@ export default class Node extends PIXI.Graphics {
                 podBox.movePodTo(
                     new PIXI.Point(
                         // we have a room for this.cluster.podsPerRow pods
-                        px + (App.current.sizeOfPodPx * (podsKubeSystemCounter % this.cluster.podsPerRow)),
+                        px + (App.current.sizeOfPodPx * (podsKubeSystemCounter % this.podsPerRow)),
                         // like above (for not kube-system pods), but we count from the bottom
-                        this.cluster.heightOfNodePx - App.current.sizeOfPodPx - 2 - (App.current.sizeOfPodPx * Math.floor(podsKubeSystemCounter / this.cluster.podsPerRow))
+                        this.heightOfNodePx - App.current.sizeOfPodPx - 2 - (App.current.sizeOfPodPx * Math.floor(podsKubeSystemCounter / this.podsPerRow))
                     )
                 )
                 nodeBox.addChild(podBox.draw())
