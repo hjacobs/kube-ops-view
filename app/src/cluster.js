@@ -77,10 +77,6 @@ export default class Cluster extends PIXI.Graphics {
             nodeBox.y += masterHeight
         }
 
-        if (masterX === left) {
-            masterX = workerX
-        }
-
         /*
             Place unassigned pods to the left of the master nodes, or
             to the left of the worker nodes if there were no masters.
