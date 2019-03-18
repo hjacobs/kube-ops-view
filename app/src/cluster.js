@@ -78,8 +78,8 @@ export default class Cluster extends PIXI.Graphics {
         }
 
         /*
-            Place unassigned pods to the left of the master nodes, or
-            to the left of the worker nodes if there were no masters.
+            Place unassigned pods to the right of the master nodes, or
+            to the right of the worker nodes if there were no masters.
          */
         var unassignedX = masterX === left ? workerX : masterX
 
