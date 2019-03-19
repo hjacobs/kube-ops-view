@@ -93,7 +93,7 @@ export default class Cluster extends PIXI.Graphics {
         }
 
         this.lineStyle(2, App.current.theme.primaryColor, 1)
-        const width = Math.max(masterX, workerX, unassignedX)
+        const width = Math.max(masterX, masterWidth, workerX, workerWidth, unassignedX)
         this.drawRect(0, 0, width, top + masterHeight + workerHeight)
 
         const topHandle = this.topHandle = new PIXI.Graphics()
