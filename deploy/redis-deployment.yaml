@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: redis
-        image: redis:3.2-alpine
+        image: redis:5-alpine
         ports:
         - containerPort: 6379
           protocol: TCP
@@ -35,4 +35,5 @@ spec:
         securityContext:
           readOnlyRootFilesystem: true
           runAsNonRoot: true
-          runAsUser: 1000
+          # we need to use the "redis" uid
+          runAsUser: 100

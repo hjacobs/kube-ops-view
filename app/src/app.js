@@ -1,6 +1,6 @@
 import Tooltip from './tooltip.js'
 import Cluster from './cluster.js'
-import {Pod, ALL_PODS, sortByName, sortByMemory, sortByCPU, sortByAge} from './pod.js'
+import {Pod, ALL_PODS, sortByName, sortByMemory, sortByCPU, sortByAge, sortByStatus} from './pod.js'
 import SelectBox from './selectbox'
 import {Theme, ALL_THEMES} from './themes.js'
 import {DESATURATION_FILTER} from './filters.js'
@@ -20,7 +20,7 @@ export default class App {
         this.filterString = (params.get('q') && decodeURIComponent(params.get('q'))) || ''
         this.selectedClusters = new Set((params.get('clusters') || '').split(',').filter(x => x))
         this.seenPods = new Set()
-        this.sorterFn = ''
+        this.sorterFn = sortByName
         this.theme = Theme.get(localStorage.getItem('theme'))
         this.eventSource = null
         this.connectTime = null
@@ -29,6 +29,13 @@ export default class App {
         this.clusterStatuses = new Map()
         this.viewContainerTargetPosition = new PIXI.Point()
         this.bootstrapping = true
+
+        this.startDrawingPodsAt = 24
+        this.defaultPodsPerRow = 6
+        this.defaultWidthOfNodePx = 105
+        this.defaultHeightOfNodePx = 115
+        this.sizeOfPodPx = 13
+        this.heightOfTopHandlePx = 15
     }
 
     parseLocationHash() {
@@ -67,11 +74,22 @@ export default class App {
         return labels && labels[name] === value
     }
 
+    namespaceMatches(pod, value) {
+        return pod.namespace === value
+    }
+
     createMatchesFunctionForQuery(query) {
-        if (query.includes('=')) {
-            const labelAndValue = query.split('=', 2)
-            return pod => this.labelMatches(pod, labelAndValue[0], labelAndValue[1])
-        } else {
+        if (query.startsWith('namespace=')) {
+            // filter by namespace
+            const value = query.split('namespace=', 2)[1]
+            return pod => this.namespaceMatches(pod, value)
+        } else if (query.includes('=')) {
+            // filter by label
+            const [label, value] = query.split('=', 2)
+            return pod => this.labelMatches(pod, label, value)
+        }
+        else {
+            // filter by name
             return pod => this.nameMatches(pod, query)
         }
     }
@@ -324,6 +342,9 @@ export default class App {
             },
             {
                 text: 'SORT: CPU', value: sortByCPU
+            },
+            {
+                text: 'SORT: STATUS', value: sortByStatus
             }
         ]
         //setting default sort

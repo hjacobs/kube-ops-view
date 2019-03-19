@@ -14,41 +14,42 @@ export default class Bars extends PIXI.Graphics {
     draw() {
         const bars = this
 
-        const barHeight = 92
+        const barHeightPx = bars.entity.cluster.heightOfNodePx - (App.current.heightOfTopHandlePx + 5 + 3)
+        const heightOfNodeWoPaddingPx = bars.entity.cluster.heightOfNodePx - 5
 
         bars.beginFill(App.current.theme.primaryColor, 0.1)
-        bars.drawRect(5, 110 - barHeight, 15, barHeight)
+        bars.drawRect(5, heightOfNodeWoPaddingPx - barHeightPx, 15, barHeightPx)
         bars.endFill()
 
         // CPU
-        const cpuHeight = barHeight / bars.resources.cpu.capacity
+        const cpuHeight = barHeightPx / bars.resources.cpu.capacity
         bars.interactive = true
         bars.lineStyle(0, 0xaaffaa, 1)
         bars.beginFill(getBarColor(bars.resources.cpu.requested, bars.resources.cpu.capacity - bars.resources.cpu.reserved), 1)
-        bars.drawRect(5, 110 - (bars.resources.cpu.requested + bars.resources.cpu.reserved) * cpuHeight, 2.5, (bars.resources.cpu.requested + bars.resources.cpu.reserved) * cpuHeight)
+        bars.drawRect(5, heightOfNodeWoPaddingPx - (bars.resources.cpu.requested + bars.resources.cpu.reserved) * cpuHeight, 2.5, (bars.resources.cpu.requested + bars.resources.cpu.reserved) * cpuHeight)
         bars.beginFill(getBarColor(bars.resources.cpu.used, bars.resources.cpu.capacity), 1)
-        bars.drawRect(7.5, 110 - bars.resources.cpu.used * cpuHeight, 2.5, bars.resources.cpu.used * cpuHeight)
+        bars.drawRect(7.5, heightOfNodeWoPaddingPx - bars.resources.cpu.used * cpuHeight, 2.5, bars.resources.cpu.used * cpuHeight)
         bars.endFill()
         bars.lineStyle(1, App.current.theme.primaryColor, 1)
-        bars.drawRect(5, 110 - bars.resources.cpu.reserved * cpuHeight, 5, bars.resources.cpu.reserved * cpuHeight)
+        bars.drawRect(5, heightOfNodeWoPaddingPx - bars.resources.cpu.reserved * cpuHeight, 5, bars.resources.cpu.reserved * cpuHeight)
 
         // Memory
-        const scale = bars.resources.memory.capacity / barHeight
+        const scale = bars.resources.memory.capacity / barHeightPx
         bars.lineStyle(0, 0xaaffaa, 1)
         bars.beginFill(getBarColor(bars.resources.memory.requested, bars.resources.memory.capacity - bars.resources.memory.reserved), 1)
-        bars.drawRect(14, 110 - (bars.resources.memory.requested + bars.resources.memory.reserved) / scale, 2.5, (bars.resources.memory.requested + bars.resources.memory.reserved) / scale)
+        bars.drawRect(14, heightOfNodeWoPaddingPx - (bars.resources.memory.requested + bars.resources.memory.reserved) / scale, 2.5, (bars.resources.memory.requested + bars.resources.memory.reserved) / scale)
         bars.beginFill(getBarColor(bars.resources.memory.used, bars.resources.memory.capacity), 1)
-        bars.drawRect(16.5, 110 - bars.resources.memory.used / scale, 2.5, bars.resources.memory.used / scale)
+        bars.drawRect(16.5, heightOfNodeWoPaddingPx - bars.resources.memory.used / scale, 2.5, bars.resources.memory.used / scale)
         bars.endFill()
         bars.lineStyle(1, App.current.theme.primaryColor, 1)
-        bars.drawRect(14, 110 - bars.resources.memory.reserved / scale, 5, bars.resources.memory.reserved / scale)
+        bars.drawRect(14, heightOfNodeWoPaddingPx - bars.resources.memory.reserved / scale, 5, bars.resources.memory.reserved / scale)
 
         bars.lineStyle(1, App.current.theme.primaryColor, 1)
         for (var i = 0; i < bars.resources.cpu.capacity; i++) {
-            bars.drawRect(5, 110 - (i + 1) * cpuHeight, 5, cpuHeight)
+            bars.drawRect(5, heightOfNodeWoPaddingPx - (i + 1) * cpuHeight, 5, cpuHeight)
         }
 
-        bars.drawRect(14, 110 - bars.resources.memory.capacity / scale, 5, bars.resources.memory.capacity / scale)
+        bars.drawRect(14, heightOfNodeWoPaddingPx - bars.resources.memory.capacity / scale, 5, bars.resources.memory.capacity / scale)
 
         bars.on('mouseover', function () {
             let s = 'CPU: \n'

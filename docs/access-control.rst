@@ -12,6 +12,8 @@ Relevant configuration settings (environment variables) for OAuth are:
     OAuth 2 authorization endpoint URL, e.g. https://oauth2.example.org/authorize
 ``ACCESS_TOKEN_URL``
     Token endpoint URL for the OAuth 2 Authorization Code Grant flow, e.g. https://oauth2.example.org/token
+``SCOPE``
+    OAuth 2 scopes provide a way to limit the amount of access that is granted to an access token, e.g. https://oauth2.example.org/authorize/readonly
 ``CREDENTIALS_DIR``
     Folder path to load client credentials from. The folder needs to contain two files: ``authcode-client-id`` and ``authcode-client-secret``.
 

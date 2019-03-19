@@ -9,6 +9,10 @@ Kubernetes Operational View
 .. image:: https://readthedocs.org/projects/kubernetes-operational-view/badge/?version=latest
    :target: http://kubernetes-operational-view.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
+   
+.. image:: 	https://img.shields.io/docker/pulls/hjacobs/kube-ops-view.svg
+   :target: https://hub.docker.com/r/hjacobs/kube-ops-view
+   :alt: Docker pulls
 
 **This project is in a very early state, but it might already be useful.**
 
@@ -131,6 +135,8 @@ The following environment variables are supported:
     Optional OAuth 2 authorization endpoint URL for protecting the UI.
 ``ACCESS_TOKEN_URL``
     Optional token endpoint URL for the OAuth 2 Authorization Code Grant flow.
+``SCOPE``
+    Optional scope specifies level of access that the application is requesting.
 ``CLUSTERS``
     Comma separated list of Kubernetes API server URLs. It defaults to ``http://localhost:8001/`` (default endpoint of ``kubectl proxy``).
 ``CLUSTER_REGISTRY_URL``
