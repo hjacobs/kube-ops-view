@@ -91,11 +91,9 @@ export default class Cluster extends PIXI.Graphics {
             this.addChild(podBox)
             unassignedX += 20
         }
-        masterWidth = Math.max(unassignedX, masterWidth)
-        workerWidth = Math.max(workerX, workerWidth)
 
         this.lineStyle(2, App.current.theme.primaryColor, 1)
-        const width = Math.max(masterWidth, workerWidth)
+        const width = Math.max(masterX, workerX, unassignedX)
         this.drawRect(0, 0, width, top + masterHeight + workerHeight)
 
         const topHandle = this.topHandle = new PIXI.Graphics()
