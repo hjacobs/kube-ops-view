@@ -4,6 +4,8 @@ import time
 
 import requests
 
+import pykube
+
 from pykube import Pod, Node
 from pykube.objects import APIObject, NamespacedAPIObject
 
@@ -80,12 +82,12 @@ def query_kubernetes_cluster(cluster):
         obj = map_node(node.obj)
         nodes[obj['name']] = obj
     now = time.time()
-    for pod in Pod.objects(cluster.client):
+    for pod in Pod.objects(cluster.client, namespace=pykube.all):
         obj = map_pod(pod.obj)
-        if 'deletionTimestamp' in pod['metadata']:
-            obj['deleted'] = parse_time(pod['metadata']['deletionTimestamp'])
-        for cont in pod['spec']['containers']:
-            obj['containers'].append(map_container(cont, pod))
+        if 'deletionTimestamp' in pod.metadata:
+            obj['deleted'] = parse_time(pod.metadata['deletionTimestamp'])
+        for cont in pod.obj['spec']['containers']:
+            obj['containers'].append(map_container(cont, pod.obj))
         if obj['phase'] in ('Succeeded', 'Failed'):
             last_termination_time = 0
             for container in obj['containers']:
@@ -100,8 +102,9 @@ def query_kubernetes_cluster(cluster):
                 continue
         pods_by_namespace_name[(obj['namespace'], obj['name'])] = obj
         pod_key = '{}/{}'.format(obj['namespace'], obj['name'])
-        if 'nodeName' in pod['spec'] and pod['spec']['nodeName'] in nodes:
-            nodes[pod['spec']['nodeName']]['pods'][pod_key] = obj
+        node_name = pod.obj['spec'].get('nodeName')
+        if node_name in nodes:
+            nodes[node_name]['pods'][pod_key] = obj
         else:
             unassigned_pods[pod_key] = obj
 
@@ -112,7 +115,7 @@ def query_kubernetes_cluster(cluster):
     except Exception as e:
         logger.warning('Failed to query node metrics {}: {}'.format(cluster.id, get_short_error_message(e)))
     try:
-        for pod_metrics in PodMetrics.objects(cluster.client):
+        for pod_metrics in PodMetrics.objects(cluster.client, namespace=pykube.all):
             key = (pod_metrics.namespace, pod_metrics.name)
             pod = pods_by_namespace_name.get(key)
             if pod:
