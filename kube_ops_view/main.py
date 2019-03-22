@@ -17,9 +17,8 @@ import time
 import kube_ops_view
 from pathlib import Path
 
-from flask import Flask, redirect
-from flask_oauthlib.client import OAuth
-from .oauth import OAuthRemoteAppWithRefresh
+from flask import Flask, redirect, url_for
+from .oauth import OAuth2ConsumerBlueprintWithClientRefresh
 from urllib.parse import urljoin
 
 from .mock import query_mock_cluster
@@ -38,25 +37,20 @@ SCOPE = os.getenv('SCOPE')
 
 app = Flask(__name__)
 
-oauth = OAuth(app)
-
-auth = OAuthRemoteAppWithRefresh(
-    oauth,
-    'auth',
-    request_token_url=None,
-    access_token_method='POST',
-    access_token_url=os.getenv('ACCESS_TOKEN_URL'),
-    authorize_url=AUTHORIZE_URL,
-    request_token_params={'scope': SCOPE} if SCOPE else None
+oauth_blueprint = OAuth2ConsumerBlueprintWithClientRefresh(
+    "oauth", __name__,
+    authorization_url=AUTHORIZE_URL,
+    token_url=os.getenv('ACCESS_TOKEN_URL'),
+    token_url_params={'scope': SCOPE} if SCOPE else None,
 )
-oauth.remote_apps['auth'] = auth
+app.register_blueprint(oauth_blueprint, url_prefix="/login")
 
 
 def authorize(f):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
-        if AUTHORIZE_URL and 'auth_token' not in flask.session:
-            return redirect(urljoin(APP_URL, '/login'))
+        if AUTHORIZE_URL and 'auth_token' not in flask.session and not oauth_blueprint.session.authorized:
+            return redirect(url_for('oauth.login'))
         return f(*args, **kwargs)
 
     return wrapper
@@ -139,29 +133,9 @@ def redeem_screen_token(token: str):
     return redirect(urljoin(APP_URL, '/'))
 
 
-@app.route('/login')
-def login():
-    redirect_uri = urljoin(APP_URL, '/login/authorized')
-    return auth.authorize(callback=redirect_uri)
-
-
 @app.route('/logout')
 def logout():
     flask.session.pop('auth_token', None)
-    return redirect(urljoin(APP_URL, '/'))
-
-
-@app.route('/login/authorized')
-def authorized():
-    resp = auth.authorized_response()
-    if resp is None:
-        return 'Access denied: reason=%s error=%s' % (
-            flask.request.args['error'],
-            flask.request.args['error_description']
-        )
-    if not isinstance(resp, dict):
-        return 'Invalid auth response'
-    flask.session['auth_token'] = (resp['access_token'], '')
     return redirect(urljoin(APP_URL, '/'))
 
 

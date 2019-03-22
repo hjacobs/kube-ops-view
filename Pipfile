@@ -11,8 +11,8 @@ stups-tokens = ">=1.1.19"
 redlock-py = "*"
 json-delta = ">=2.0"
 flask = "*"
-flask-oauthlib = "*"
 pykube-ng = "*"
+flask-dance = "*"
 
 [dev-packages]
 "flake8" = "*"
@@ -23,6 +23,3 @@ coveralls = "*"
 
 [requires]
 python_version = "3.7"
-
-[pipenv]
-allow_prereleases = true
