@@ -38,7 +38,25 @@ const sortByStatus = (a, b) => {
     return (a.phase).localeCompare(b.phase)
 }
 
-export {ALL_PODS, sortByAge, sortByCPU, sortByMemory, sortByName, sortByStatus}
+const ALL_SORTS = [
+    {
+        text: 'SORT: NAME', value: sortByName
+    },
+    {
+        text: 'SORT: AGE', value: sortByAge
+    },
+    {
+        text: 'SORT: MEMORY', value: sortByMemory
+    },
+    {
+        text: 'SORT: CPU', value: sortByCPU
+    },
+    {
+        text: 'SORT: STATUS', value: sortByStatus
+    }
+]
+
+export {ALL_PODS, ALL_SORTS}
 
 export class Pod extends PIXI.Graphics {
 
