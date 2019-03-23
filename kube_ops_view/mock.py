@@ -85,7 +85,8 @@ def query_mock_cluster(cluster):
         if i == 8 and int(time.time() / 13) % 2 == 0:
             continue
         labels = {}
-        if i < 2:
+        # only the first two clusters have master nodes
+        if i < 2 and index < 2:
             if index == 0:
                 labels['kubernetes.io/role'] = 'master'
             elif index == 1:
