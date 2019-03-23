@@ -45,7 +45,7 @@ export default class SelectBox extends PIXI.Graphics {
         }
         selectBox.text.text = selectBox.items[selectBox.count].text
         this.value = this.items[this.count].value
-        this.onchange(this.value)
+        this.onchange(this.items[this.count].text, this.value)
     }
 
     onBackOver() {
@@ -64,7 +64,7 @@ export default class SelectBox extends PIXI.Graphics {
         }
         selectBox.text.text = selectBox.items[selectBox.count].text
         this.value = this.items[this.count].value
-        this.onchange(this.value)
+        this.onchange(this.items[this.count].text, this.value)
     }
 
     draw() {
