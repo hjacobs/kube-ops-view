@@ -112,7 +112,15 @@ class CRTTheme extends DefaultTheme {
     }
     apply(stage) {
         const filter = new CRTFilter({time: 0.5})
+
         stage.filters = [filter]
+        this.filter = filter
+        PIXI.ticker.shared.add(this.animate, this)
+    }
+
+    animate(_delta) {
+        this.filter.seed = Math.random()
+        this.filter.time += 0.5
     }
 }
 new CRTTheme().register()
