@@ -100,8 +100,8 @@ def query_kubernetes_cluster(cluster):
                 # the job/pod finished more than an hour ago or if it is evicted by cgroup limits
                 # => filter out
                 continue
-        pods_by_namespace_name[(obj['namespace'], obj['name'])] = obj
-        pod_key = '{}/{}'.format(obj['namespace'], obj['name'])
+        pods_by_namespace_name[(pod.namespace, pod.name)] = obj
+        pod_key = f'{pod.namespace}/{pod.name}'
         node_name = pod.obj['spec'].get('nodeName')
         if node_name in nodes:
             nodes[node_name]['pods'][pod_key] = obj
