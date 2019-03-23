@@ -1,4 +1,4 @@
-import Node from './node.js'
+import { Node, isMaster } from './node.js'
 import { Pod } from './pod.js'
 import App from './app.js'
 const PIXI = require('pixi.js')
@@ -39,64 +39,90 @@ export default class Cluster extends PIXI.Graphics {
         let workerHeight = 0
         const workerNodes = []
         
-        let maxPods = 0
-        // get the largest number of pods
+        let maxPodsInWorkers = 0
+        let maxPodsInMasters = 0
+        // get the largest number of pods (workers and masters)
         for (const n of Object.values(this.cluster.nodes)) {
             const podsInNode = Object.values(n.pods).length
-            if (podsInNode >= maxPods) {
-                maxPods = podsInNode
+
+            if (isMaster(n.labels)) {
+                if (podsInNode >= maxPodsInMasters) {
+                    maxPodsInMasters = podsInNode
+                }
+            } else {
+                if (podsInNode >= maxPodsInWorkers) {
+                    maxPodsInWorkers = podsInNode
+                }
             }
         }
         
-        // with maxPods we can calculate the size of all nodes in the cluster
-        this.podsPerRow = Math.max(
+        // with maxPodsInWorkers we can calculate the size of all nodes in the cluster
+        this.podsPerRowWorker = Math.max(
             App.current.defaultPodsPerRow,
-            Math.ceil(Math.sqrt(maxPods))
+            Math.ceil(Math.sqrt(maxPodsInWorkers))
+        )
+        this.podsPerRowMaster = Math.max(
+            App.current.defaultPodsPerRow,
+            Math.ceil(Math.sqrt(maxPodsInMasters))
         )
 
-        this.widthOfNodePx = Math.max(
+        this.widthOfWorkerNodePx = Math.max(
             App.current.defaultWidthOfNodePx,
-            Math.floor(this.podsPerRow * App.current.sizeOfPodPx + App.current.startDrawingPodsAt + 2)
+            Math.floor(this.podsPerRowWorker * App.current.sizeOfPodPx + App.current.startDrawingPodsAt + 2)
+        )
+        this.widthOfMasterNodePx = Math.max(
+            App.current.defaultWidthOfNodePx,
+            Math.floor(this.podsPerRowMaster * App.current.sizeOfPodPx + App.current.startDrawingPodsAt + 2)
         )
 
-        this.heightOfNodePx = Math.max(
+        this.heightOfWorkerNodePx = Math.max(
             App.current.defaultHeightOfNodePx,
-            Math.floor(this.podsPerRow * App.current.sizeOfPodPx + App.current.heightOfTopHandlePx + (App.current.sizeOfPodPx * 2) + 2)
+            Math.floor(this.podsPerRowWorker * App.current.sizeOfPodPx + App.current.heightOfTopHandlePx + (App.current.sizeOfPodPx * 2) + 2)
+        )
+        this.heightOfMasterNodePx = Math.max(
+            App.current.defaultHeightOfNodePx,
+            Math.floor(this.podsPerRowMaster * App.current.sizeOfPodPx + App.current.heightOfTopHandlePx + (App.current.sizeOfPodPx * 2) + 2)
         )
 
-        const maxWidth = window.innerWidth - (this.widthOfNodePx * 1.2)
+        const maxWidth = window.innerWidth - (this.heightOfWorkerNodePx * 1.2)
 
         for (const nodeName of Object.keys(this.cluster.nodes).sort()) {
             const node = this.cluster.nodes[nodeName]
-            var nodeBox = new Node(node, this, this.tooltip)
-            nodeBox.draw()
-            if (nodeBox.isMaster()) {
+            let nodeBox = null
+         
+            if (isMaster(node.labels)) {
+                nodeBox = new Node(node, this, this.tooltip, this.podsPerRowMaster, this.widthOfMasterNodePx, this.heightOfMasterNodePx)
+                nodeBox.draw()
+
                 if (masterX > maxWidth) {
                     masterWidth = masterX
                     masterX = left
-                    masterY += this.heightOfNodePx + padding
-                    masterHeight += this.heightOfNodePx + padding
+                    masterY += this.heightOfMasterNodePx + padding
+                    masterHeight += this.heightOfMasterNodePx + padding
                 }
                 if (masterHeight == 0) {
-                    masterHeight = this.heightOfNodePx + padding
+                    masterHeight = this.heightOfMasterNodePx + padding
                 }
                 nodeBox.x = masterX
                 nodeBox.y = masterY
-                masterX += this.widthOfNodePx + padding
+                masterX += this.widthOfMasterNodePx + padding
             } else {
+                nodeBox = new Node(node, this, this.tooltip, this.podsPerRowWorker, this.widthOfWorkerNodePx, this.heightOfWorkerNodePx)
+                nodeBox.draw()
+
                 if (workerX > maxWidth) {
                     workerWidth = workerX
                     workerX = left
-                    workerY += this.heightOfNodePx + padding
-                    workerHeight += this.heightOfNodePx + padding
+                    workerY += this.heightOfWorkerNodePx + padding
+                    workerHeight += this.heightOfWorkerNodePx + padding
                 }
                 workerNodes.push(nodeBox)
                 if (workerHeight == 0) {
-                    workerHeight = this.heightOfNodePx + padding
+                    workerHeight = this.heightOfWorkerNodePx + padding
                 }
                 nodeBox.x = workerX
                 nodeBox.y = workerY
-                workerX += this.widthOfNodePx + padding
+                workerX += this.widthOfWorkerNodePx + padding
             }
             this.addChild(nodeBox)
         }
