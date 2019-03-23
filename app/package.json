@@ -29,6 +29,7 @@
   "homepage": "https://github.com/hjacobs/kube-ops-view#readme",
   "dependencies": {
     "pixi.js": "^4.8.5",
+    "@pixi/filter-crt": "^2.7.0",
     "babel-runtime": "^6.26.0",
     "babel-polyfill": "^6.26.0"
   },
