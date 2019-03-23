@@ -1,6 +1,6 @@
 import Tooltip from './tooltip.js'
 import Cluster from './cluster.js'
-import {Pod, ALL_PODS, sortByName, sortByMemory, sortByCPU, sortByAge, sortByStatus} from './pod.js'
+import {Pod, ALL_PODS, ALL_SORTS} from './pod.js'
 import SelectBox from './selectbox'
 import {Theme, ALL_THEMES} from './themes.js'
 import {DESATURATION_FILTER} from './filters.js'
@@ -20,7 +20,11 @@ export default class App {
         this.filterString = (params.get('q') && decodeURIComponent(params.get('q'))) || ''
         this.selectedClusters = new Set((params.get('clusters') || '').split(',').filter(x => x))
         this.seenPods = new Set()
-        this.sorterFn = sortByName
+        
+        // check localStorage, use the first function as a default option
+        const indexSorterFn = ALL_SORTS.findIndex(obj => obj.text === (localStorage.getItem('sorterFn') || ALL_SORTS[0].text))
+        this.sorterFn = ALL_SORTS[indexSorterFn].value
+
         this.theme = Theme.get(localStorage.getItem('theme'))
         this.eventSource = null
         this.connectTime = null
@@ -330,28 +334,9 @@ export default class App {
         searchText.y = 8
         this.stage.addChild(searchText)
 
-        const items = [
-            {
-                text: 'SORT: NAME', value: sortByName
-            },
-            {
-                text: 'SORT: AGE', value: sortByAge
-            },
-            {
-                text: 'SORT: MEMORY', value: sortByMemory
-            },
-            {
-                text: 'SORT: CPU', value: sortByCPU
-            },
-            {
-                text: 'SORT: STATUS', value: sortByStatus
-            }
-        ]
-        //setting default sort
-        this.sorterFn = items[0].value
         const app = this
-        const selectBox = new SelectBox(items, this.sorterFn, function (value) {
-            app.changeSorting(value)
+        const selectBox = new SelectBox(ALL_SORTS, this.sorterFn, function (text, value) {
+            app.changeSorting(text, value)
         })
         selectBox.x = 265
         selectBox.y = 3
@@ -360,8 +345,8 @@ export default class App {
         const themeOptions = Object.keys(ALL_THEMES).sort().map(name => {
             return {text: name.toUpperCase(), value: name}
         })
-        const themeSelector = new SelectBox(themeOptions, this.theme.name, function (value) {
-            app.switchTheme(value)
+        const themeSelector = new SelectBox(themeOptions, this.theme.name, function (text, value) {
+            app.switchTheme(text, value)
         })
         themeSelector.x = 420
         themeSelector.y = 3
@@ -565,12 +550,13 @@ export default class App {
         this.renderer.render(this.stage)
     }
 
-    changeSorting(newSortFunction) {
+    changeSorting(text, newSortFunction) {
         this.sorterFn = newSortFunction
+        localStorage.setItem('sorterFn', text)
         this.update()
     }
 
-    switchTheme(newTheme) {
+    switchTheme(text, newTheme) {
         this.theme = Theme.get(newTheme)
         this.draw()
         this.update()
