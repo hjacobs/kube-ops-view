@@ -4,12 +4,11 @@ import time
 from pathlib import Path
 from urllib.parse import urljoin
 
-import kubernetes.client
-import kubernetes.config
 import requests
 import tokens
 from requests.auth import AuthBase
 
+from pykube import HTTPClient, KubeConfig
 # default URL points to kubectl proxy
 DEFAULT_CLUSTERS = 'http://localhost:8001/'
 CLUSTER_ID_INVALID_CHARS = re.compile('[^a-z0-9:-]')
@@ -48,18 +47,22 @@ class OAuthTokenAuth(AuthBase):
 
     def __call__(self, request):
         token = tokens.get(self.token_name)
-        request.headers['Authorization'] = 'Bearer {}'.format(token)
+        request.headers['Authorization'] = f'Bearer {token}'
         return request
 
 
 class Cluster:
-    def __init__(self, id, api_server_url, ssl_ca_cert=None, auth=None, cert_file=None, key_file=None):
+    def __init__(
+        self,
+        id: str,
+        name: str,
+        api_server_url: str,
+        client: HTTPClient
+    ):
         self.id = id
+        self.name = name
         self.api_server_url = api_server_url
-        self.ssl_ca_cert = ssl_ca_cert
-        self.auth = auth
-        self.cert_file = cert_file
-        self.key_file = key_file
+        self.client = client
 
 
 class StaticClusterDiscoverer:
@@ -69,29 +72,30 @@ class StaticClusterDiscoverer:
 
         if not api_server_urls:
             try:
-                kubernetes.config.load_incluster_config()
-            except kubernetes.config.ConfigException:
+                config = KubeConfig.from_service_account()
+            except FileNotFoundError:
                 # we are not running inside a cluster
                 # => assume default kubectl proxy URL
-                cluster = Cluster(generate_cluster_id(DEFAULT_CLUSTERS), DEFAULT_CLUSTERS)
-            else:
-                # "load_incluster_config" set defaults in the config class
-                config = kubernetes.client.configuration.Configuration()
+                config = KubeConfig.from_url(DEFAULT_CLUSTERS)
+                client = HTTPClient(config)
                 cluster = Cluster(
-                    generate_cluster_id(config.host),
-                    config.host,
-                    ssl_ca_cert=config.ssl_ca_cert,
-                    auth=StaticAuthorizationHeaderAuth(config.api_key['authorization']))
+                    generate_cluster_id(DEFAULT_CLUSTERS), "cluster", DEFAULT_CLUSTERS, client
+                )
+            else:
+                client = HTTPClient(config)
+                cluster = Cluster(
+                    generate_cluster_id(config.cluster['server']),
+                    "cluster",
+                    config.cluster['server'],
+                    client
+                )
             self._clusters.append(cluster)
         else:
             for api_server_url in api_server_urls:
-
-                if 'localhost' not in api_server_url:
-                    # TODO: hacky way of detecting whether we need a token or not
-                    auth = OAuthTokenAuth('read-only')
-                else:
-                    auth = None
-                self._clusters.append(Cluster(generate_cluster_id(api_server_url), api_server_url, auth=auth))
+                config = KubeConfig.from_url(api_server_url)
+                client = HTTPClient(config)
+                generated_id = generate_cluster_id(api_server_url)
+                self._clusters.append(Cluster(generated_id, generated_id, api_server_url, client))
 
     def get_clusters(self):
         return self._clusters
@@ -114,12 +118,24 @@ class ClusterRegistryDiscoverer:
             clusters = []
             for row in response.json()['items']:
                 # only consider "ready" clusters
-                if row.get('lifecycle_status', 'ready') == 'ready':
-                    clusters.append(Cluster(row['id'], row['api_server_url'], auth=OAuthTokenAuth('read-only')))
+                if row.get("lifecycle_status", "ready") == "ready":
+                    config = KubeConfig.from_url(row['api_server_url'])
+                    client = HTTPClient(config)
+                    client.session.auth = OAuthTokenAuth("read-only")
+                    clusters.append(
+                        Cluster(
+                            row["id"],
+                            row["alias"],
+                            row["api_server_url"],
+                            client
+                        )
+                    )
             self._clusters = clusters
             self._last_cache_refresh = time.time()
         except:
-            logger.exception('Failed to refresh from cluster registry {}'.format(self._url))
+            logger.exception(
+                f"Failed to refresh from cluster registry {self._url}"
+            )
 
     def get_clusters(self):
         now = time.time()
@@ -137,25 +153,20 @@ class KubeconfigDiscoverer:
     def get_clusters(self):
         # Kubernetes Python client expects "vintage" string path
         config_file = str(self._path)
-        contexts, current_context = kubernetes.config.list_kube_config_contexts(config_file)
-        for context in contexts:
-            if self._contexts and context['name'] not in self._contexts:
+        config = KubeConfig.from_file(config_file)
+        for context in config.contexts:
+            if self._contexts and context not in self._contexts:
                 # filter out
                 continue
-            config = kubernetes.client.configuration.Configuration()
-            kubernetes.config.load_kube_config(config_file, context=context['name'], client_configuration=config)
-            authorization = config.api_key.get('authorization')
-            if authorization:
-                auth = StaticAuthorizationHeaderAuth(authorization)
-            else:
-                auth = None
+            # create a new KubeConfig with new "current context"
+            context_config = KubeConfig(config.doc, context)
+            client = HTTPClient(context_config)
             cluster = Cluster(
-                context['name'],
-                config.host,
-                ssl_ca_cert=config.ssl_ca_cert,
-                cert_file=config.cert_file,
-                key_file=config.key_file,
-                auth=auth)
+                context,
+                context,
+                context_config.cluster['server'],
+                client
+            )
             yield cluster
 
 
@@ -163,4 +174,9 @@ class MockDiscoverer:
 
     def get_clusters(self):
         for i in range(3):
-            yield Cluster('mock-cluster-{}'.format(i), api_server_url='https://kube-{}.example.org'.format(i))
+            yield Cluster(
+                f"mock-cluster-{i}",
+                f"mock-cluster-{i}",
+                api_server_url=f"https://kube-{i}.example.org",
+                client=None
+            )

@@ -17,8 +17,16 @@ Relevant configuration settings (environment variables) for OAuth are:
 ``CREDENTIALS_DIR``
     Folder path to load client credentials from. The folder needs to contain two files: ``authcode-client-id`` and ``authcode-client-secret``.
 
+GitHub OAuth Example
+====================
 
-TODO: how to configure
+How to configure Kubernetes Operational View to use GitHub OAuth for access control (example with localhost):
+
+* create a new GitHub OAuth application and configure ``http://localhost:8080/login/oauth/authorized`` as "Authorization Callback URL".
+* create a file ``authcode-client-id`` with the contents of the generated GitHub "Client ID"
+* create a file ``authcode-client-secret`` with the contents of the generated GitHub "Client Secret"
+* point the ``CREDENTIALS_DIR`` environment variable to a folder with these two files
+* start Kubernetes Operational View with ``OAUTHLIB_INSECURE_TRANSPORT=true`` (needed as localhost is not running with SSL/TLS), ``AUTHORIZE_URL=https://github.com/login/oauth/authorize``, and ``ACCESS_TOKEN_URL=https://github.com/login/oauth/access_token``
 
 Screen Tokens
 =============
