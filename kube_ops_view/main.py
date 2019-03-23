@@ -32,6 +32,7 @@ logger = logging.getLogger(__name__)
 
 SERVER_STATUS = {'shutdown': False}
 AUTHORIZE_URL = os.getenv('AUTHORIZE_URL')
+ACCESS_TOKEN_URL = os.getenv('ACCESS_TOKEN_URL')
 APP_URL = os.getenv('APP_URL')
 SCOPE = os.getenv('SCOPE')
 
@@ -40,7 +41,7 @@ app = Flask(__name__)
 oauth_blueprint = OAuth2ConsumerBlueprintWithClientRefresh(
     "oauth", __name__,
     authorization_url=AUTHORIZE_URL,
-    token_url=os.getenv('ACCESS_TOKEN_URL'),
+    token_url=ACCESS_TOKEN_URL,
     token_url_params={'scope': SCOPE} if SCOPE else None,
 )
 app.register_blueprint(oauth_blueprint, url_prefix="/login")

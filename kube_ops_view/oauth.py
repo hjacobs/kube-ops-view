@@ -11,10 +11,11 @@ class OAuth2ConsumerBlueprintWithClientRefresh(OAuth2ConsumerBlueprint):
 
     def refresh_credentials(self):
         with open(os.path.join(CREDENTIALS_DIR, 'authcode-client-id')) as fd:
-            self.client_id = fd.read().strip()
+            # note that we need to set two attributes because of how OAuth2ConsumerBlueprint works :-/
+            self._client_id = self.client_id = fd.read().strip()
         with open(os.path.join(CREDENTIALS_DIR, 'authcode-client-secret')) as fd:
             self.client_secret = fd.read().strip()
 
     def login(self):
         self.refresh_credentials()
-        return super()
+        return super().login()
