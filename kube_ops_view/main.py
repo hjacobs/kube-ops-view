@@ -42,7 +42,7 @@ oauth_blueprint = OAuth2ConsumerBlueprintWithClientRefresh(
     "oauth", __name__,
     authorization_url=AUTHORIZE_URL,
     token_url=ACCESS_TOKEN_URL,
-    token_url_params={'scope': SCOPE} if SCOPE else None,
+    scope=SCOPE
 )
 app.register_blueprint(oauth_blueprint, url_prefix="/login")
 
