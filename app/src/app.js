@@ -498,7 +498,7 @@ export default class App {
                 const status = this.clusterStatuses.get(cluster.id)
                 let clusterBox = clusterComponentById[cluster.id]
                 if (!clusterBox) {
-                    clusterBox = new Cluster(cluster, status, this.tooltip)
+                    clusterBox = new Cluster(cluster, status, this.tooltip, this.config)
                     this.viewContainer.addChild(clusterBox)
                 } else {
                     clusterBox.cluster = cluster
