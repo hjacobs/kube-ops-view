@@ -4,11 +4,12 @@ import App from './app.js'
 const PIXI = require('pixi.js')
 
 export default class Cluster extends PIXI.Graphics {
-    constructor (cluster, status, tooltip) {
+    constructor (cluster, status, tooltip, config) {
         super()
         this.cluster = cluster
         this.status = status
         this.tooltip = tooltip
+        this.config = config
     }
 
     destroy() {
@@ -84,7 +85,7 @@ export default class Cluster extends PIXI.Graphics {
             Math.floor(this.podsPerRowMaster * App.current.sizeOfPodPx + App.current.heightOfTopHandlePx + (App.current.sizeOfPodPx * 2) + 2)
         )
 
-        const maxWidth = window.innerWidth - (this.heightOfWorkerNodePx * 1.2)
+        const maxWidth = (window.innerWidth * (1/this.config.initialScale)) - (this.heightOfWorkerNodePx * 1.2)
 
         for (const nodeName of Object.keys(this.cluster.nodes).sort()) {
             const node = this.cluster.nodes[nodeName]
