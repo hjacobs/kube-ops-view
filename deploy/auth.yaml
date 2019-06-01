@@ -5,7 +5,7 @@ metadata:
   name: kube-ops-view
 ---
 kind: ClusterRole
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: kube-ops-view
 rules:
@@ -20,7 +20,7 @@ rules:
     - list
 ---
 kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: kube-ops-view
 roleRef:
