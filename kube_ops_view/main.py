@@ -110,7 +110,7 @@ def get_events():
     for _id in flask.request.args.get('cluster_ids', '').split():
         if _id:
             cluster_ids.add(_id)
-    return flask.Response(event(cluster_ids), mimetype='text/event-stream')
+    return flask.Response(event(cluster_ids), mimetype='text/event-stream', headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})
 
 
 @app.route('/screen-tokens', methods=['GET', 'POST'])
