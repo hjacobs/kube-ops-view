@@ -5,6 +5,7 @@ metadata:
     application: kube-ops-view-redis
     version: v0.0.1
   name: kube-ops-view-redis
+  namespace: default
 spec:
   replicas: 1
   selector:
@@ -16,9 +17,25 @@ spec:
         application: kube-ops-view-redis
         version: v0.0.1
     spec:
+      # Test
+      serviceAccountName: kube-ops-view-redis
+      # Since there are read-only filesystems, important data is copied to an
+      # emptyDir via an initContainer to avoid read-only errors
+      initContainers:
+      - name: copy-files-to-vol
+        image: bitnami/redis:5.0.5
+        command: ["sh", "-c", "[ \"$(ls -A /mnt/data)\" ] || (cp -R /opt/bitnami/redis/* /mnt/data/ && exit 0)"]
+        volumeMounts:
+        - name: bitnami-fs
+          mountPath: /mnt/data
       containers:
       - name: redis
-        image: redis:5-alpine
+        # bitnami/redis is chosen over library/redis so support out-of-the-box
+        # rootless containers
+        image: bitnami/redis:5.0.5
+        env:
+        - name: ALLOW_EMPTY_PASSWORD
+          value: "yes"
         ports:
         - containerPort: 6379
           protocol: TCP
@@ -32,8 +49,16 @@ spec:
           requests:
             cpu: 50m
             memory: 50Mi
+        volumeMounts:
+        - mountPath: /bitnami/redis/data
+          name: redis-bitnami-data
+        - mountPath: /opt/bitnami/redis
+          name: bitnami-fs
         securityContext:
           readOnlyRootFilesystem: true
           runAsNonRoot: true
-          # we need to use the "redis" uid
-          runAsUser: 100
+      volumes:
+      - name: redis-bitnami-data
+        emptyDir: {}
+      - name: bitnami-fs
+        emptyDir: {}
