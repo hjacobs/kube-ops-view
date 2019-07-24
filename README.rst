@@ -9,7 +9,7 @@ Kubernetes Operational View
 .. image:: https://readthedocs.org/projects/kubernetes-operational-view/badge/?version=latest
    :target: http://kubernetes-operational-view.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
-   
+
 .. image:: 	https://img.shields.io/docker/pulls/hjacobs/kube-ops-view.svg
    :target: https://hub.docker.com/r/hjacobs/kube-ops-view
    :alt: Docker pulls
@@ -81,13 +81,13 @@ It should be as simple as:
 
     $ kubectl apply -f deploy  # apply all manifests from the folder
 
-Afterwards you can open "kube-ops-view" via the kubectl proxy:
+Afterwards you can open "kube-ops-view" via kubectl port-forward:
 
 .. code-block:: bash
 
-    $ kubectl proxy
+    $ kubectl port-forward service/kube-ops-view 8080:80
 
-Now direct your browser to http://localhost:8001/api/v1/namespaces/default/services/kube-ops-view/proxy/
+Now direct your browser to http://localhost:8080/
 
 `Kubernetes Operational View is also available as a Helm Chart`_.
 
