@@ -25,8 +25,8 @@ spec:
         # remove this option to use built-in memory store
         - --redis-url=redis://kube-ops-view-redis:6379
         # example to add external links for nodes and pods
-        # - --node-link-url-template "https://kube-web-view.example.org/clusters/{cluster}/nodes/{name}"
-        # - --pod-link-url-template "https://kube-web-view.example.org/clusters/{cluster}/namespaces/{namespace}/pods/{name}"
+        # - --node-link-url-template=https://kube-web-view.example.org/clusters/{cluster}/nodes/{name}
+        # - --pod-link-url-template=https://kube-web-view.example.org/clusters/{cluster}/namespaces/{namespace}/pods/{name}
         ports:
         - containerPort: 8080
           protocol: TCP
