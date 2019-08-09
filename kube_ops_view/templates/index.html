@@ -23,6 +23,6 @@
         <!-- make sure the font is loaded -->
         <div id="loading" style="font-family: ShareTechMono">Loading..</div>
         <script src="static/build/{{ app_js }}"></script>
-        <script>document.getElementById('loading').style.display = 'none'; const app = new App(); app.run()</script>
+        <script>document.getElementById('loading').style.display = 'none'; const app = new App({{ app_config_json|safe }}); app.run()</script>
     </body>
 </html>

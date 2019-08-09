@@ -14,13 +14,17 @@ const addWheelListener = require('./vendor/addWheelListener')
 
 export default class App {
 
-    constructor() {
+    constructor(config) {
         const params = this.parseLocationHash()
+
         this.config = Config.fromParams(params)
+        this.config.nodeLinkUrlTemplate = config['node_link_url_template']
+        this.config.podLinkUrlTemplate = config['pod_link_url_template']
+
         this.filterString = (params.get('q') && decodeURIComponent(params.get('q'))) || ''
         this.selectedClusters = new Set((params.get('clusters') || '').split(',').filter(x => x))
         this.seenPods = new Set()
-        
+
         // check localStorage, use the first function as a default option
         const indexSorterFn = ALL_SORTS.findIndex(obj => obj.text === (localStorage.getItem('sorterFn') || ALL_SORTS[0].text))
         this.sorterFn = ALL_SORTS[indexSorterFn].value

@@ -78,7 +78,7 @@ def index():
     else:
         logger.error('Could not find JavaScript application bundle app*.js in {}'.format(static_build_path))
         flask.abort(503, 'JavaScript application bundle not found (missing build)')
-    return flask.render_template('index.html', app_js=app_js, version=kube_ops_view.__version__)
+    return flask.render_template('index.html', app_js=app_js, version=kube_ops_view.__version__, app_config_json=json.dumps(app.app_config))
 
 
 def event(cluster_ids: set):
@@ -188,7 +188,10 @@ class CommaSeparatedValues(click.ParamType):
 @click.option('--kubeconfig-contexts', type=CommaSeparatedValues(),
               help='List of kubeconfig contexts to use (default: use all defined contexts)', envvar='KUBECONFIG_CONTEXTS')
 @click.option('--query-interval', type=float, help='Interval in seconds for querying clusters (default: 5)', envvar='QUERY_INTERVAL', default=5)
-def main(port, debug, mock, secret_key, redis_url, clusters: list, cluster_registry_url, kubeconfig_path, kubeconfig_contexts: list, query_interval):
+@click.option('--node-link-url-template', help='Template for target URL when clicking on a Node', envvar='NODE_LINK_URL_TEMPLATE')
+@click.option('--pod-link-url-template', help='Template for target URL when clicking on a Pod', envvar='POD_LINK_URL_TEMPLATE')
+def main(port, debug, mock, secret_key, redis_url, clusters: list, cluster_registry_url, kubeconfig_path, kubeconfig_contexts: list, query_interval,
+         node_link_url_template: str, pod_link_url_template: str):
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
 
     store = RedisStore(redis_url) if redis_url else MemoryStore()
@@ -196,6 +199,7 @@ def main(port, debug, mock, secret_key, redis_url, clusters: list, cluster_regis
     app.debug = debug
     app.secret_key = secret_key
     app.store = store
+    app.app_config = {'node_link_url_template': node_link_url_template, 'pod_link_url_template': pod_link_url_template}
 
     if mock:
         cluster_query = query_mock_cluster

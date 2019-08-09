@@ -70,6 +70,7 @@ export class Node extends PIXI.Graphics {
         topHandle.beginFill(App.current.theme.primaryColor, 1)
         topHandle.drawRect(0, 0, this.widthOfNodePx, App.current.heightOfTopHandlePx)
         topHandle.endFill()
+
         // there is about 2.83 letters per pod
         const roomForText = Math.floor(2.83 * this.podsPerRow)
         const ellipsizedNodeName = this.node.name.length > roomForText ? this.node.name.substring(0, roomForText).concat('…') : this.node.name
@@ -97,6 +98,12 @@ export class Node extends PIXI.Graphics {
         topHandle.on('mouseout', function () {
             nodeBox.tooltip.visible = false
         })
+        if (App.current.config.nodeLinkUrlTemplate !== null) {
+            topHandle.buttonMode = true
+            topHandle.on('click', function() {
+                location.href = App.current.config.nodeLinkUrlTemplate.replace('{cluster}', nodeBox.cluster.cluster.id).replace('{name}', nodeBox.node.name)
+            })
+        }
         const resources = this.getResourceUsage()
         const bars = new Bars(nodeBox, resources, nodeBox.tooltip)
         bars.x = 0

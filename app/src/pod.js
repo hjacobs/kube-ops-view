@@ -228,6 +228,12 @@ export class Pod extends PIXI.Graphics {
             podBox.filters = podBox.filters.filter(x => x != BRIGHTNESS_FILTER)
             this.tooltip.visible = false
         })
+        if (App.current.config.podLinkUrlTemplate !== null) {
+            podBox.buttonMode = true
+            podBox.on('click', function() {
+                location.href = App.current.config.podLinkUrlTemplate.replace('{cluster}', this.cluster.cluster.id).replace('{namespace}', this.pod.namespace).replace('{name}', this.pod.name)
+            })
+        }
         podBox.lineStyle(1, App.current.theme.primaryColor, 1)
         const w = 10 / this.pod.containers.length
         for (let i = 0; i < this.pod.containers.length; i++) {

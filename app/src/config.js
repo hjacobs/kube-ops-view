@@ -13,6 +13,9 @@ export default class Config {
         this.maxConnectionLifetimeSeconds = 300
         // consider cluster data older than 1 minute outdated
         this.maxDataAgeSeconds = 60
+
+        this.nodeLinkUrlTemplate = null
+        this.podLinkUrlTemplate = null
     }
 
     static fromParams(params) {

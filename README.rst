@@ -14,8 +14,6 @@ Kubernetes Operational View
    :target: https://hub.docker.com/r/hjacobs/kube-ops-view
    :alt: Docker pulls
 
-**This project is in a very early state, but it might already be useful.**
-
 .. image:: screenshot.png
    :alt: Screenshot
 
@@ -157,6 +155,10 @@ The following environment variables are supported:
     Optional Redis server to use for pub/sub events and job locking when running more than one replica. Example: ``redis://my-redis:6379``
 ``SERVER_PORT``
     HTTP port to listen on. It defaults to ``8080``.
+``NODE_LINK_URL_TEMPLATE``
+    Template to make Nodes clickable, e.g. can point to `kube-web-view <https://codeberg.org/hjacobs/kube-web-view/>`_. ``{cluster}`` (cluster ID) and ``{name}`` (Node name) will be replaced in the URL template.
+``POD_LINK_URL_TEMPLATE``
+    Template to make Pods clickable, e.g. can point to `kube-web-view <https://codeberg.org/hjacobs/kube-web-view/>`_. ``{cluster}`` (cluster ID), ``{namespace}`` (Pod's namespace), and ``{name}`` (Pod name) will be replaced in the URL template.
 
 
 Supported Browsers

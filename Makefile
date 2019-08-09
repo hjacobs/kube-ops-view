@@ -27,4 +27,6 @@ push: docker
 	docker push "$(IMAGE):$(TAG)"
 
 mock:
-	docker run $(TTYFLAGS) -p 8080:8080 "$(IMAGE):$(TAG)" --mock
+	docker run $(TTYFLAGS) -p 8080:8080 "$(IMAGE):$(TAG)" --mock \
+		--node-link-url-template "https://kube-web-view.example.org/clusters/{cluster}/nodes/{name}" \
+		--pod-link-url-template "https://kube-web-view.example.org/clusters/{cluster}/namespaces/{namespace}/pods/{name}"
