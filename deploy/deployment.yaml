@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   labels:
     application: kube-ops-view
-    version: v0.11
+    version: v0.12
   name: kube-ops-view
 spec:
   replicas: 1
@@ -14,16 +14,19 @@ spec:
     metadata:
       labels:
         application: kube-ops-view
-        version: v0.11
+        version: v0.12
     spec:
       serviceAccount: kube-ops-view
       containers:
       - name: service
         # see https://github.com/hjacobs/kube-ops-view/releases
-        image: hjacobs/kube-ops-view:0.11
+        image: hjacobs/kube-ops-view:0.12
         args:
         # remove this option to use built-in memory store
         - --redis-url=redis://kube-ops-view-redis:6379
+        # example to add external links for nodes and pods
+        # - --node-link-url-template "https://kube-web-view.example.org/clusters/{cluster}/nodes/{name}"
+        # - --pod-link-url-template "https://kube-web-view.example.org/clusters/{cluster}/namespaces/{namespace}/pods/{name}"
         ports:
         - containerPort: 8080
           protocol: TCP
