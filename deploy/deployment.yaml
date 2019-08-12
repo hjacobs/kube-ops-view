@@ -5,6 +5,7 @@ metadata:
     application: kube-ops-view
     version: v0.12
   name: kube-ops-view
+  namespace: default
 spec:
   replicas: 1
   selector:
@@ -16,13 +17,12 @@ spec:
         application: kube-ops-view
         version: v0.12
     spec:
-      serviceAccount: kube-ops-view
+      serviceAccountName: kube-ops-view
       containers:
       - name: service
         # see https://github.com/hjacobs/kube-ops-view/releases
         image: hjacobs/kube-ops-view:0.12
         args:
-        # remove this option to use built-in memory store
         - --redis-url=redis://kube-ops-view-redis:6379
         # example to add external links for nodes and pods
         # - --node-link-url-template=https://kube-web-view.example.org/clusters/{cluster}/nodes/{name}
@@ -38,12 +38,11 @@ spec:
           timeoutSeconds: 1
         resources:
           limits:
+            cpu: 300m
+            memory: 200Mi
+          requests:
             cpu: 200m
             memory: 100Mi
-          requests:
-            cpu: 50m
-            memory: 50Mi
         securityContext:
           readOnlyRootFilesystem: true
           runAsNonRoot: true
-          runAsUser: 1000

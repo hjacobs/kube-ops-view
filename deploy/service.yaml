@@ -4,6 +4,7 @@ metadata:
   labels:
     application: kube-ops-view
   name: kube-ops-view
+  namespace: default
 spec:
   selector:
     application: kube-ops-view
