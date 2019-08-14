@@ -36,4 +36,4 @@ spec:
           readOnlyRootFilesystem: true
           runAsNonRoot: true
           # we need to use the "redis" uid
-          runAsUser: 100
+          runAsUser: 999
