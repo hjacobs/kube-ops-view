@@ -14,6 +14,10 @@ Kubernetes Operational View
    :target: https://hub.docker.com/r/hjacobs/kube-ops-view
    :alt: Docker pulls
 
+.. image:: https://img.shields.io/badge/calver-YY.MM.MICRO-22bfda.svg
+   :target: http://calver.org
+   :alt: Calendar Versioning
+
 .. image:: screenshot.png
    :alt: Screenshot
 
