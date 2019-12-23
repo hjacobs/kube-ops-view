@@ -7,13 +7,19 @@ TTYFLAGS         = $(shell test -t 0 && echo "-it")
 
 default: docker
 
+.PHONY: install
+install:
+	poetry install
+
 clean:
 	rm -fr kube_ops_view/static/build
 
-test:
-	pipenv run flake8
-	pipenv run coverage run --source=kube_ops_view -m py.test
-	pipenv run coverage report
+test: install
+	poetry run flake8
+	poetry run black --check kube_ops_view
+	# poetry run mypy --ignore-missing-imports kube_ops_view
+	poetry run coverage run --source=kube_ops_view -m py.test -v
+	poetry run coverage report
 
 appjs:
 	docker run $(TTYFLAGS) -u $$(id -u) -v $$(pwd):/workdir -w /workdir/app -e NPM_CONFIG_CACHE=/tmp node:11.10-alpine npm install

@@ -1,0 +1,26 @@
+[tool]
+[tool.poetry]
+name = "kube-ops-view"
+version = "2020.0.dev1"
+description = "Kubernetes Operational View - read-only system dashboard for multiple K8s clusters"
+authors = ["Henning Jacobs <henning@jacobs1.de>"]
+
+[tool.poetry.dependencies]
+python = ">=3.7"
+click = "*"
+flask = "*"
+flask-dance = "*"
+gevent = "*"
+json-delta = ">=2.0"
+pykube-ng = "*"
+redlock-py = "*"
+requests = "*"
+stups-tokens = ">=1.1.19"
+
+[tool.poetry.dev-dependencies]
+coveralls = "*"
+flake8 = "*"
+pytest = "*"
+pytest-cov = "*"
+black = "^19.10b0"
+mypy = "^0.761"

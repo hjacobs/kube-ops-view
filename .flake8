@@ -1,0 +1,3 @@
+[flake8]
+max-line-length=240
+ignore=E722,W503,E402,E203
