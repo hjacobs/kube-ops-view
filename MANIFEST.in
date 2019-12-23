@@ -1,3 +1,0 @@
-recursive-include kube_ops_view/static *
-recursive-include kube_ops_view/templates *
-include *.rst
