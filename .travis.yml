@@ -1,4 +1,4 @@
-dist: xenial
+dist: bionic
 sudo: yes
 language: python
 python:
@@ -6,9 +6,7 @@ python:
 services:
   - docker
 install:
-  - pip install tox tox-travis coveralls
-  - pip install pipenv
-  - pipenv install --dev
+  - pip install poetry
   - nvm install 7.4
   - npm install -g eslint
 script:
