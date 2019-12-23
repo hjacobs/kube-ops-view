@@ -17,7 +17,7 @@ clean:
 test: install
 	poetry run flake8
 	poetry run black --check kube_ops_view
-	poetry run mypy --ignore-missing-imports kube_ops_view
+	# poetry run mypy --ignore-missing-imports kube_ops_view
 	poetry run coverage run --source=kube_ops_view -m py.test -v
 	poetry run coverage report
 

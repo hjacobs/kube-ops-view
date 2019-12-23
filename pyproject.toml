@@ -2,7 +2,7 @@
 [tool.poetry]
 name = "kube-ops-view"
 version = "2020.0.dev1"
-description = "Kubernetes Operational View"
+description = "Kubernetes Operational View - read-only system dashboard for multiple K8s clusters"
 authors = ["Henning Jacobs <henning@jacobs1.de>"]
 
 [tool.poetry.dependencies]

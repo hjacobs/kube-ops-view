@@ -2,6 +2,8 @@ FROM python:3.8-slim
 
 WORKDIR /
 
+RUN apt-get update && apt-get install --yes gcc
+
 RUN pip3 install poetry
 
 COPY poetry.lock /
