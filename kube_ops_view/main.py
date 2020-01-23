@@ -97,6 +97,7 @@ def index():
         "index.html",
         app_js=app_js,
         version=kube_ops_view.__version__,
+        route_prefix=app.app_config["route_prefix"],
         app_config_json=json.dumps(app.app_config),
     )
 
@@ -229,6 +230,17 @@ class CommaSeparatedValues(click.ParamType):
     default=8080,
 )
 @click.option(
+    "--route-prefix",
+    help="""The URL prefix under which kube-ops-view is externally reachable
+    (for example, if kube-ops-view is served via a reverse proxy). Used for
+    generating relative and absolute links back to kube-ops-view itself. If the
+    URL has a path portion, it will be used to prefix all HTTP endpoints served
+    by kube-ops-view. If omitted, relevant URL components will be derived
+    automatically.""",
+    envvar="ROUTE_PREFIX",
+    default="/",
+)
+@click.option(
     "-d", "--debug", is_flag=True, help="Run in debugging mode", envvar="DEBUG"
 )
 @click.option(
@@ -287,6 +299,7 @@ class CommaSeparatedValues(click.ParamType):
     help="Template for target URL when clicking on a Pod",
     envvar="POD_LINK_URL_TEMPLATE",
 )
+
 def main(
     port,
     debug,
@@ -300,6 +313,7 @@ def main(
     query_interval,
     node_link_url_template: str,
     pod_link_url_template: str,
+    route_prefix: str,
 ):
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
 
@@ -311,6 +325,7 @@ def main(
     app.app_config = {
         "node_link_url_template": node_link_url_template,
         "pod_link_url_template": pod_link_url_template,
+        "route_prefix": route_prefix,
     }
 
     if mock:
