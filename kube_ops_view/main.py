@@ -299,7 +299,6 @@ class CommaSeparatedValues(click.ParamType):
     help="Template for target URL when clicking on a Pod",
     envvar="POD_LINK_URL_TEMPLATE",
 )
-
 def main(
     port,
     debug,
