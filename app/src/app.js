@@ -633,7 +633,7 @@ export default class App {
         this.disconnect()
         const that = this
         // NOTE: path must be relative to work with kubectl proxy out of the box
-        let url = this.config.route_prefix + 'events'
+        let url = this.config.route_prefix + (this.config.route_prefix === '/' ? 'events' : '/events')
         const clusterIds = Array.from(this.selectedClusters).join(',')
         if (clusterIds) {
             url += '?cluster_ids=' + clusterIds
