@@ -321,6 +321,7 @@ def main(
     app.debug = debug
     app.secret_key = secret_key
     app.store = store
+    app.config['APPLICATION_ROOT'] = route_prefix
     app.app_config = {
         "node_link_url_template": node_link_url_template,
         "pod_link_url_template": pod_link_url_template,

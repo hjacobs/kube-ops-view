@@ -20,6 +20,7 @@ export default class App {
         this.config = Config.fromParams(params)
         this.config.nodeLinkUrlTemplate = config['node_link_url_template']
         this.config.podLinkUrlTemplate = config['pod_link_url_template']
+        this.config.route_prefix = config['route_prefix']
 
         this.filterString = (params.get('q') && decodeURIComponent(params.get('q'))) || ''
         this.selectedClusters = new Set((params.get('clusters') || '').split(',').filter(x => x))
@@ -632,7 +633,7 @@ export default class App {
         this.disconnect()
         const that = this
         // NOTE: path must be relative to work with kubectl proxy out of the box
-        let url = 'events'
+        let url = this.config.route_prefix + 'events'
         const clusterIds = Array.from(this.selectedClusters).join(',')
         if (clusterIds) {
             url += '?cluster_ids=' + clusterIds
