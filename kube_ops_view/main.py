@@ -39,7 +39,6 @@ logger = logging.getLogger(__name__)
 SERVER_STATUS = {"shutdown": False}
 AUTHORIZE_URL = os.getenv("AUTHORIZE_URL")
 ACCESS_TOKEN_URL = os.getenv("ACCESS_TOKEN_URL")
-APP_URL = os.getenv("APP_URL")
 SCOPE = os.getenv("SCOPE")
 
 app = Flask(__name__)
@@ -52,7 +51,6 @@ oauth_blueprint = OAuth2ConsumerBlueprintWithClientRefresh(
     scope=SCOPE,
 )
 app.register_blueprint(oauth_blueprint, url_prefix="/login")
-
 
 def authorize(f):
     @functools.wraps(f)
@@ -169,13 +167,13 @@ def redeem_screen_token(token: str):
     except:
         flask.abort(401)
     flask.session["auth_token"] = (token, "")
-    return redirect(urljoin(APP_URL, "/"))
+    return redirect(app.config["APPLICATION_ROOT"])
 
 
 @app.route("/logout")
 def logout():
     flask.session.pop("auth_token", None)
-    return redirect(urljoin(APP_URL, "/"))
+    return redirect(app.config["APPLICATION_ROOT"])
 
 
 def shutdown():
