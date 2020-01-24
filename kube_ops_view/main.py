@@ -19,7 +19,6 @@ from pathlib import Path
 
 from flask import Flask, redirect, url_for
 from .oauth import OAuth2ConsumerBlueprintWithClientRefresh
-from urllib.parse import urljoin
 
 from .mock import query_mock_cluster
 from .kubernetes import query_kubernetes_cluster
@@ -51,6 +50,7 @@ oauth_blueprint = OAuth2ConsumerBlueprintWithClientRefresh(
     scope=SCOPE,
 )
 app.register_blueprint(oauth_blueprint, url_prefix="/login")
+
 
 def authorize(f):
     @functools.wraps(f)
