@@ -83,4 +83,3 @@ export default class Bars extends PIXI.Graphics {
     }
 
 }
-

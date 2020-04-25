@@ -14,10 +14,11 @@ install:
 clean:
 	rm -fr kube_ops_view/static/build
 
-test: install
-	poetry run flake8
-	poetry run black --check kube_ops_view
-	# poetry run mypy --ignore-missing-imports kube_ops_view
+.PHONY: lint
+lint: install
+	poetry run pre-commit run --all-files
+
+test: lint install
 	poetry run coverage run --source=kube_ops_view -m py.test -v
 	poetry run coverage report
 
