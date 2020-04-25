@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import gevent.monkey
 
 gevent.monkey.patch_all()
@@ -15,6 +14,7 @@ import os
 import signal
 import time
 import kube_ops_view
+from typing import Union
 from pathlib import Path
 
 from flask import Flask, redirect, url_for
@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 SERVER_STATUS = {"shutdown": False}
 AUTHORIZE_URL = os.getenv("AUTHORIZE_URL")
 ACCESS_TOKEN_URL = os.getenv("ACCESS_TOKEN_URL")
-APP_URL = os.getenv("APP_URL")
+APP_URL = os.getenv("APP_URL") or ""
 SCOPE = os.getenv("SCOPE")
 
 app = Flask(__name__)
@@ -134,7 +134,7 @@ def event(cluster_ids: set):
 @app.route("/events")
 @authorize
 def get_events():
-    """SSE (Server Side Events), for an EventSource"""
+    """SSE (Server Side Events), for an EventSource."""
     cluster_ids = set()
     for _id in flask.request.args.get("cluster_ids", "").split():
         if _id:
@@ -165,7 +165,7 @@ def redeem_screen_token(token: str):
     )
     try:
         app.store.redeem_screen_token(token, remote_addr)
-    except:
+    except Exception:
         flask.abort(401)
     flask.session["auth_token"] = (token, "")
     return redirect(urljoin(APP_URL, "/"))
@@ -312,6 +312,13 @@ def main(
         "node_link_url_template": node_link_url_template,
         "pod_link_url_template": pod_link_url_template,
     }
+
+    discoverer: Union[
+        MockDiscoverer,
+        ClusterRegistryDiscoverer,
+        KubeconfigDiscoverer,
+        StaticClusterDiscoverer,
+    ]
 
     if mock:
         cluster_query = query_mock_cluster

@@ -39,7 +39,7 @@ export default class Cluster extends PIXI.Graphics {
         let workerWidth = 0
         let workerHeight = 0
         const workerNodes = []
-        
+
         let maxPodsInWorkers = 0
         let maxPodsInMasters = 0
         // get the largest number of pods (workers and masters)
@@ -56,7 +56,7 @@ export default class Cluster extends PIXI.Graphics {
                 }
             }
         }
-        
+
         // with maxPodsInWorkers we can calculate the size of all nodes in the cluster
         this.podsPerRowWorker = Math.max(
             App.current.defaultPodsPerRow,
@@ -90,7 +90,7 @@ export default class Cluster extends PIXI.Graphics {
         for (const nodeName of Object.keys(this.cluster.nodes).sort()) {
             const node = this.cluster.nodes[nodeName]
             let nodeBox = null
-         
+
             if (isMaster(node.labels)) {
                 nodeBox = new Node(node, this, this.tooltip, this.podsPerRowMaster, this.widthOfMasterNodePx, this.heightOfMasterNodePx)
                 nodeBox.draw()

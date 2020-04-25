@@ -2,7 +2,7 @@ FROM python:3.8-slim
 
 WORKDIR /
 
-RUN apt-get update && apt-get install --yes gcc
+RUN apt-get update && apt-get install --yes --no-install-recommends gcc && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install poetry
 
@@ -11,7 +11,6 @@ COPY pyproject.toml /
 
 RUN poetry config virtualenvs.create false && \
     poetry install --no-interaction --no-dev --no-ansi
-
 
 FROM python:3.8-slim
 
