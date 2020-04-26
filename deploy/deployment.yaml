@@ -3,18 +3,19 @@ kind: Deployment
 metadata:
   labels:
     application: kube-ops-view
-    version: v19.9.0
+    component: frontend
   name: kube-ops-view
 spec:
   replicas: 1
   selector:
     matchLabels:
       application: kube-ops-view
+      component: frontend
   template:
     metadata:
       labels:
         application: kube-ops-view
-        version: v19.9.0
+        component: frontend
     spec:
       serviceAccount: kube-ops-view
       containers:

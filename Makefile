@@ -23,7 +23,6 @@ test: lint install
 	poetry run coverage report
 
 version:
-	sed -i "s/version: v.*/version: v$(VERSION)/" deploy/*.yaml
 	sed -i "s/kube-ops-view:.*/kube-ops-view:$(VERSION)/" deploy/*.yaml
 
 appjs:

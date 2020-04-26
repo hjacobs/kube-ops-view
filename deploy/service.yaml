@@ -3,10 +3,12 @@ kind: Service
 metadata:
   labels:
     application: kube-ops-view
+    component: frontend
   name: kube-ops-view
 spec:
   selector:
     application: kube-ops-view
+    component: frontend
   type: ClusterIP
   ports:
   - port: 80
