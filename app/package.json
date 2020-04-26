@@ -44,7 +44,7 @@
     "eslint-loader": "^2.0.0",
     "rimraf": "^2.6.2",
     "transform-loader": "^0.2.4",
-    "webpack": "^4.6.0",
+    "webpack": "^4.43.0",
     "webpack-cli": "^3.1.2"
   }
 }

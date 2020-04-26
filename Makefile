@@ -22,9 +22,13 @@ test: lint install
 	poetry run coverage run --source=kube_ops_view -m py.test -v
 	poetry run coverage report
 
+version:
+	sed -i "s/version: v.*/version: v$(VERSION)/" deploy/*.yaml
+	sed -i "s/kube-ops-view:.*/kube-ops-view:$(VERSION)/" deploy/*.yaml
+
 appjs:
-	docker run $(TTYFLAGS) -u $$(id -u) -v $$(pwd):/workdir -w /workdir/app -e NPM_CONFIG_CACHE=/tmp node:11.10-alpine npm install
-	docker run $(TTYFLAGS) -u $$(id -u) -v $$(pwd):/workdir -w /workdir/app -e NPM_CONFIG_CACHE=/tmp node:11.10-alpine npm run build
+	docker run $(TTYFLAGS) -u $$(id -u) -v $$(pwd):/workdir -w /workdir/app -e NPM_CONFIG_CACHE=/tmp node:14.0-slim npm install
+	docker run $(TTYFLAGS) -u $$(id -u) -v $$(pwd):/workdir -w /workdir/app -e NPM_CONFIG_CACHE=/tmp node:14.0-slim npm run build
 
 docker: appjs
 	docker build --build-arg "VERSION=$(VERSION)" -t "$(IMAGE):$(TAG)" .
