@@ -17,7 +17,7 @@ spec:
         application: kube-ops-view
         component: frontend
     spec:
-      serviceAccount: kube-ops-view
+      serviceAccountName: kube-ops-view
       containers:
       - name: service
         # see https://github.com/hjacobs/kube-ops-view/releases
