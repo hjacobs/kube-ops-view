@@ -21,7 +21,7 @@ spec:
       containers:
       - name: service
         # see https://github.com/hjacobs/kube-ops-view/releases
-        image: hjacobs/kube-ops-view:19.9.0
+        image: hjacobs/kube-ops-view:20.4.0
         args:
         # remove this option to use built-in memory store
         - --redis-url=redis://kube-ops-view-redis:6379
