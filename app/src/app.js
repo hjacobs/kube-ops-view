@@ -1,6 +1,6 @@
 import Tooltip from './tooltip.js'
 import Cluster from './cluster.js'
-import {Pod, ALL_PODS, ALL_SORTS} from './pod.js'
+import {Pod, ALL_PODS, ALL_SORTS, ALL_STATUS_FILTERS} from './pod.js'
 import SelectBox from './selectbox'
 import {Theme, ALL_THEMES} from './themes.js'
 import {DESATURATION_FILTER} from './filters.js'
@@ -28,6 +28,10 @@ export default class App {
         // check localStorage, use the first function as a default option
         const indexSorterFn = ALL_SORTS.findIndex(obj => obj.text === (localStorage.getItem('sorterFn') || ALL_SORTS[0].text))
         this.sorterFn = ALL_SORTS[indexSorterFn].value
+
+        // filterFn
+        const indexStatusFilterFn = ALL_STATUS_FILTERS.findIndex(obj => obj.text === (localStorage.getItem('statusFilterFn') || ALL_STATUS_FILTERS[0].text))
+        this.statusFilterFn = ALL_STATUS_FILTERS[indexStatusFilterFn].value
 
         this.theme = Theme.get(localStorage.getItem('theme'))
         this.eventSource = null
@@ -102,6 +106,7 @@ export default class App {
         }
     }
 
+
     filter() {
         const searchString = this.filterString
         if (this.searchText) {
@@ -124,12 +129,19 @@ export default class App {
                 }
             }
         }
+
         filterableElements.forEach(value => {
             if (!matchesQuery(value.pod)) {
                 value.filters = [elementDisplayFilter]
             } else {
                 // TODO: pod might have other filters set..
                 value.filters = []
+            }
+        })
+
+        filterableElements.forEach(value => {
+            if (!this.statusFilterFn(value.pod)) {
+                value.filters = [elementDisplayFilter]
             }
         })
     }
@@ -356,6 +368,14 @@ export default class App {
         themeSelector.y = 3
         menuBar.addChild(themeSelector.draw())
 
+        
+        const statusFilterBox = new SelectBox(ALL_STATUS_FILTERS, this.statusFilterFn, function (text, value) {
+            app.changeStatusFilter(text, value)
+        })
+        statusFilterBox.x = 585
+        statusFilterBox.y = 3
+        menuBar.addChild(statusFilterBox.draw())
+
         this.searchText = searchText
     }
 
@@ -557,6 +577,12 @@ export default class App {
     changeSorting(text, newSortFunction) {
         this.sorterFn = newSortFunction
         localStorage.setItem('sorterFn', text)
+        this.update()
+    }
+
+    changeStatusFilter(text, newStatusFilterFunction) {
+        this.statusFilterFn = newStatusFilterFunction
+        localStorage.setItem('statusFilterFn', text)
         this.update()
     }
 
