@@ -5,10 +5,6 @@ import {BRIGHTNESS_FILTER} from './filters.js'
 
 const ALL_PODS = {}
 
-const showAll = (pod) => {
-    return true
-}
-
 const showNotReady = (pod) => {
     if (pod.phase == 'Succeeded') {
         return false
@@ -23,7 +19,7 @@ const showNotReady = (pod) => {
 
 const ALL_STATUS_FILTERS = [
     {
-        text: 'SHOW: All', value: showAll
+        text: 'SHOW: All', value: true
     },
     {
         text: 'SHOW: NotReady', value: showNotReady
