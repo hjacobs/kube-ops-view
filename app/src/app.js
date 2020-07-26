@@ -368,7 +368,7 @@ export default class App {
         themeSelector.y = 3
         menuBar.addChild(themeSelector.draw())
 
-        
+
         const statusFilterBox = new SelectBox(ALL_STATUS_FILTERS, this.statusFilterFn, function (text, value) {
             app.changeStatusFilter(text, value)
         })
