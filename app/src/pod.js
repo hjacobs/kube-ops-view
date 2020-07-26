@@ -19,7 +19,7 @@ const showNotReady = (pod) => {
 
 const ALL_STATUS_FILTERS = [
     {
-        text: 'SHOW: All', value: true
+        text: 'SHOW: All', value: function () { return true }
     },
     {
         text: 'SHOW: NotReady', value: showNotReady
