@@ -5,6 +5,27 @@ import {BRIGHTNESS_FILTER} from './filters.js'
 
 const ALL_PODS = {}
 
+const showNotReady = (pod) => {
+    if (pod.phase == 'Succeeded') {
+        return false
+    }
+    for (let index = 0; index < pod.containers.length; index++) {
+        if (!pod.containers[index].ready) {
+            return true
+        }
+    }
+    return false
+}
+
+const ALL_STATUS_FILTERS = [
+    {
+        text: 'SHOW: All', value: function () { return true }
+    },
+    {
+        text: 'SHOW: NotReady', value: showNotReady
+    },
+]
+
 const sortByName = (a, b) => {
     // https://github.com/hjacobs/kube-ops-view/issues/103
     // *.name might be undefined
@@ -38,6 +59,7 @@ const sortByStatus = (a, b) => {
     return (a.phase).localeCompare(b.phase)
 }
 
+
 const ALL_SORTS = [
     {
         text: 'SORT: NAME', value: sortByName
@@ -56,7 +78,7 @@ const ALL_SORTS = [
     }
 ]
 
-export {ALL_PODS, ALL_SORTS}
+export {ALL_PODS, ALL_SORTS, ALL_STATUS_FILTERS}
 
 export class Pod extends PIXI.Graphics {
 
