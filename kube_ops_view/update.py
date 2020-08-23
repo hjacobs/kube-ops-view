@@ -1,11 +1,14 @@
 import logging
 import time
+from typing import Callable
 
 import gevent
 import json_delta
 import requests.exceptions
 
-from .backoff import expo, random_jitter
+from .backoff import expo
+from .backoff import random_jitter
+from .cluster_discovery import Cluster
 from .utils import get_short_error_message
 
 logger = logging.getLogger(__name__)
@@ -15,7 +18,7 @@ def calculate_backoff(tries: int):
     return random_jitter(expo(tries, factor=2, max_value=60), jitter=4)
 
 
-def handle_query_failure(e: Exception, cluster, backoff: dict):
+def handle_query_failure(e: Exception, cluster: Cluster, backoff: dict):
     if not backoff:
         backoff = {}
     tries = backoff.get("tries", 0) + 1
@@ -37,7 +40,7 @@ def handle_query_failure(e: Exception, cluster, backoff: dict):
 
 def update_clusters(
     cluster_discoverer,
-    query_cluster: callable,
+    query_cluster: Callable[[Cluster], dict],
     store,
     query_interval: float = 5,
     debug: bool = False,
@@ -109,8 +112,8 @@ def update_clusters(
                             store.set_cluster_data(cluster.id, data)
                     store.set_cluster_status(cluster.id, status)
                 store.set_cluster_ids(cluster_ids)
-            except:
-                logger.exception("Failed to update")
+            except Exception as e:
+                logger.exception(f"Failed to update: {e}")
             finally:
                 store.release_lock(lock)
         # sleep 1-2 seconds

@@ -2,12 +2,12 @@ import datetime
 import logging
 import time
 
-import requests
-
 import pykube
-
-from pykube import Pod, Node
-from pykube.objects import APIObject, NamespacedAPIObject
+import requests
+from pykube import Node
+from pykube import Pod
+from pykube.objects import APIObject
+from pykube.objects import NamespacedAPIObject
 
 from .utils import get_short_error_message
 

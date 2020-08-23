@@ -3,24 +3,25 @@ kind: Deployment
 metadata:
   labels:
     application: kube-ops-view
-    version: v19.9.0
+    component: frontend
   name: kube-ops-view
 spec:
   replicas: 1
   selector:
     matchLabels:
       application: kube-ops-view
+      component: frontend
   template:
     metadata:
       labels:
         application: kube-ops-view
-        version: v19.9.0
+        component: frontend
     spec:
-      serviceAccount: kube-ops-view
+      serviceAccountName: kube-ops-view
       containers:
       - name: service
         # see https://github.com/hjacobs/kube-ops-view/releases
-        image: hjacobs/kube-ops-view:19.9.0
+        image: hjacobs/kube-ops-view:20.4.0
         args:
         # remove this option to use built-in memory store
         - --redis-url=redis://kube-ops-view-redis:6379

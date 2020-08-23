@@ -120,4 +120,3 @@ export default class SelectBox extends PIXI.Graphics {
     }
 
 }
-

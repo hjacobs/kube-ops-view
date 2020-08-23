@@ -6,4 +6,4 @@ def test_query_mock_clusters():
     discoverer = MockDiscoverer()
     for cluster in discoverer.get_clusters():
         data = query_mock_cluster(cluster)
-        assert data['id'].startswith('mock-cluster-')
+        assert data["id"].startswith("mock-cluster-")

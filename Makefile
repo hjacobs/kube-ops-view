@@ -14,16 +14,20 @@ install:
 clean:
 	rm -fr kube_ops_view/static/build
 
-test: install
-	poetry run flake8
-	poetry run black --check kube_ops_view
-	# poetry run mypy --ignore-missing-imports kube_ops_view
+.PHONY: lint
+lint: install
+	poetry run pre-commit run --all-files
+
+test: lint install
 	poetry run coverage run --source=kube_ops_view -m py.test -v
 	poetry run coverage report
 
+version:
+	sed -i "s/kube-ops-view:.*/kube-ops-view:$(VERSION)/" deploy/*.yaml
+
 appjs:
-	docker run $(TTYFLAGS) -u $$(id -u) -v $$(pwd):/workdir -w /workdir/app -e NPM_CONFIG_CACHE=/tmp node:11.10-alpine npm install
-	docker run $(TTYFLAGS) -u $$(id -u) -v $$(pwd):/workdir -w /workdir/app -e NPM_CONFIG_CACHE=/tmp node:11.10-alpine npm run build
+	docker run $(TTYFLAGS) -u $$(id -u) -v $$(pwd):/workdir -w /workdir/app -e NPM_CONFIG_CACHE=/tmp node:14.0-slim npm install
+	docker run $(TTYFLAGS) -u $$(id -u) -v $$(pwd):/workdir -w /workdir/app -e NPM_CONFIG_CACHE=/tmp node:14.0-slim npm run build
 
 docker: appjs
 	docker build --build-arg "VERSION=$(VERSION)" -t "$(IMAGE):$(TAG)" .

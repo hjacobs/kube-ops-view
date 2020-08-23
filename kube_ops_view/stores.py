@@ -2,11 +2,14 @@ import json
 import logging
 import random
 import string
-import redis
 import time
-
-from redlock import Redlock
+from abc import ABC
+from abc import abstractmethod
 from queue import Queue
+from typing import Set
+
+import redis
+from redlock import Redlock
 
 logger = logging.getLogger(__name__)
 
@@ -14,21 +17,21 @@ ONE_YEAR = 3600 * 24 * 365
 
 
 def generate_token(n: int):
-    """Generate a random ASCII token of length n"""
+    """Generate a random ASCII token of length n."""
     # uses os.urandom()
     rng = random.SystemRandom()
     return "".join([rng.choice(string.ascii_letters + string.digits) for i in range(n)])
 
 
 def generate_token_data():
-    """Generate screen token data for storing"""
+    """Generate screen token data for storing."""
     token = generate_token(10)
     now = time.time()
     return {"token": token, "created": now, "expires": now + ONE_YEAR}
 
 
 def check_token(token: str, remote_addr: str, data: dict):
-    """Check whether the given screen token is valid, raises exception if not"""
+    """Check whether the given screen token is valid, raises exception if not."""
     now = time.time()
     if (
         data
@@ -41,11 +44,19 @@ def check_token(token: str, remote_addr: str, data: dict):
         raise ValueError("Invalid token")
 
 
-class AbstractStore:
+class AbstractStore(ABC):
+    @abstractmethod
+    def set(self, key, val):
+        pass
+
+    @abstractmethod
+    def get(self, key):
+        return None
+
     def get_cluster_ids(self):
         return self.get("cluster-ids") or []
 
-    def set_cluster_ids(self, cluster_ids: set):
+    def set_cluster_ids(self, cluster_ids: Set[str]):
         self.set("cluster-ids", list(sorted(cluster_ids)))
 
     def get_cluster_status(self, cluster_id: str) -> dict:
@@ -62,7 +73,8 @@ class AbstractStore:
 
 
 class MemoryStore(AbstractStore):
-    """Memory-only backend, mostly useful for local debugging"""
+
+    """Memory-only backend, mostly useful for local debugging."""
 
     def __init__(self):
         self._data = {}
@@ -110,7 +122,8 @@ class MemoryStore(AbstractStore):
 
 
 class RedisStore(AbstractStore):
-    """Redis-based backend for deployments with replicas > 1"""
+
+    """Redis-based backend for deployments with replicas > 1."""
 
     def __init__(self, url: str):
         logger.info("Connecting to Redis on {}..".format(url))
@@ -146,14 +159,14 @@ class RedisStore(AbstractStore):
                 yield (event_type, json.loads(data))
 
     def create_screen_token(self):
-        """Generate a new screen token and store it in Redis"""
+        """Generate a new screen token and store it in Redis."""
         data = generate_token_data()
         token = data["token"]
         self._redis.set("screen-tokens:{}".format(token), json.dumps(data))
         return token
 
     def redeem_screen_token(self, token: str, remote_addr: str):
-        """Validate the given token and bind it to the IP"""
+        """Validate the given token and bind it to the IP."""
         redis_key = "screen-tokens:{}".format(token)
         data = self._redis.get(redis_key)
         if not data:

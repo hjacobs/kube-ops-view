@@ -2,19 +2,20 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    application: kube-ops-view-redis
-    version: v0.0.1
+    application: kube-ops-view
+    component: redis
   name: kube-ops-view-redis
 spec:
   replicas: 1
   selector:
     matchLabels:
-      application: kube-ops-view-redis
+      application: kube-ops-view
+      component: redis
   template:
     metadata:
       labels:
-        application: kube-ops-view-redis
-        version: v0.0.1
+        application: kube-ops-view
+        component: redis
     spec:
       containers:
       - name: redis

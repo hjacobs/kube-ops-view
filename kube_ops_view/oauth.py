@@ -7,7 +7,8 @@ CREDENTIALS_DIR = os.getenv("CREDENTIALS_DIR", "")
 
 
 class OAuth2ConsumerBlueprintWithClientRefresh(OAuth2ConsumerBlueprint):
-    """Same as flask_dance.consumer.OAuth2ConsumerBlueprint, but loads client credentials from file"""
+
+    """Same as flask_dance.consumer.OAuth2ConsumerBlueprint, but loads client credentials from file."""
 
     def refresh_credentials(self):
         with open(os.path.join(CREDENTIALS_DIR, "authcode-client-id")) as fd:

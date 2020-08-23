@@ -1,6 +1,6 @@
-import time
 import random
 import string
+import time
 
 
 def hash_int(x: int):
@@ -35,7 +35,7 @@ def generate_mock_pod(index: int, i: int, j: int):
 
     phase = pod_phases[hash_int((index + 1) * (i + 1) * (j + 1)) % len(pod_phases)]
     containers = []
-    for k in range(1 + j % 2):
+    for _ in range(1 + j % 2):
         # generate "more real data"
         requests_cpu = random.randint(10, 50)
         requests_memory = random.randint(64, 256)
@@ -88,7 +88,7 @@ def generate_mock_pod(index: int, i: int, j: int):
 
 
 def query_mock_cluster(cluster):
-    """Generate deterministic (no randomness!) mock data"""
+    """Generate deterministic (no randomness!) mock data."""
     index = int(cluster.id.split("-")[-1])
     nodes = {}
     for i in range(10):

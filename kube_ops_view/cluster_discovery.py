@@ -2,13 +2,14 @@ import logging
 import re
 import time
 from pathlib import Path
+from typing import List
 from urllib.parse import urljoin
 
 import requests
 import tokens
+from pykube import HTTPClient
+from pykube import KubeConfig
 from requests.auth import AuthBase
-
-from pykube import HTTPClient, KubeConfig
 
 # default URL points to kubectl proxy
 DEFAULT_CLUSTERS = "http://localhost:8001/"
@@ -20,7 +21,7 @@ tokens.configure(from_file_only=True)
 
 
 def generate_cluster_id(url: str):
-    """Generate some "cluster ID" from given API server URL"""
+    """Generate some "cluster ID" from given API server URL."""
     for prefix in ("https://", "http://"):
         if url.startswith(prefix):
             url = url[len(prefix) :]
@@ -28,7 +29,8 @@ def generate_cluster_id(url: str):
 
 
 class StaticAuthorizationHeaderAuth(AuthBase):
-    """Static authentication with given "Authorization" header"""
+
+    """Static authentication with given "Authorization" header."""
 
     def __init__(self, authorization):
         self.authorization = authorization
@@ -39,8 +41,8 @@ class StaticAuthorizationHeaderAuth(AuthBase):
 
 
 class OAuthTokenAuth(AuthBase):
-    """Dynamic authentication using the "tokens" library to load OAuth tokens from file
-    (potentially mounted from a Kubernetes secret)"""
+
+    """Dynamic authentication using the "tokens" library to load OAuth tokens from file (potentially mounted from a Kubernetes secret)."""
 
     def __init__(self, token_name):
         self.token_name = token_name
@@ -105,7 +107,7 @@ class ClusterRegistryDiscoverer:
         self._url = cluster_registry_url
         self._cache_lifetime = cache_lifetime
         self._last_cache_refresh = 0
-        self._clusters = []
+        self._clusters: List[Cluster] = []
         self._session = requests.Session()
         self._session.auth = OAuthTokenAuth("read-only")
 
@@ -127,8 +129,10 @@ class ClusterRegistryDiscoverer:
                     )
             self._clusters = clusters
             self._last_cache_refresh = time.time()
-        except:
-            logger.exception(f"Failed to refresh from cluster registry {self._url}")
+        except Exception as e:
+            logger.exception(
+                f"Failed to refresh from cluster registry {self._url}: {e}"
+            )
 
     def get_clusters(self):
         now = time.time()
