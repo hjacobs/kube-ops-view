@@ -163,7 +163,8 @@ The following environment variables are supported:
     Template to make Nodes clickable, e.g. can point to `kube-web-view <https://codeberg.org/hjacobs/kube-web-view/>`_. ``{cluster}`` (cluster ID) and ``{name}`` (Node name) will be replaced in the URL template.
 ``POD_LINK_URL_TEMPLATE``
     Template to make Pods clickable, e.g. can point to `kube-web-view <https://codeberg.org/hjacobs/kube-web-view/>`_. ``{cluster}`` (cluster ID), ``{namespace}`` (Pod's namespace), and ``{name}`` (Pod name) will be replaced in the URL template.
-
+``ROUTE_PREFIX``
+    The URL prefix under which kube-ops-view is externally reachable (for example, if kube-ops-view is served via a reverse proxy). Used for generating relative and absolute links back to kube-ops-view itself. If the URL has a path portion, it will be used to prefix all HTTP endpoints served by kube-ops-view. If omitted, relevant URL components will be derived automatically.
 
 Supported Browsers
 ==================

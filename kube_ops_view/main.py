@@ -19,7 +19,6 @@ from pathlib import Path
 
 from flask import Flask, redirect, url_for
 from .oauth import OAuth2ConsumerBlueprintWithClientRefresh
-from urllib.parse import urljoin
 
 from .mock import query_mock_cluster
 from .kubernetes import query_kubernetes_cluster
@@ -39,7 +38,6 @@ logger = logging.getLogger(__name__)
 SERVER_STATUS = {"shutdown": False}
 AUTHORIZE_URL = os.getenv("AUTHORIZE_URL")
 ACCESS_TOKEN_URL = os.getenv("ACCESS_TOKEN_URL")
-APP_URL = os.getenv("APP_URL") or ""
 SCOPE = os.getenv("SCOPE")
 
 app = Flask(__name__)
@@ -97,6 +95,7 @@ def index():
         "index.html",
         app_js=app_js,
         version=kube_ops_view.__version__,
+        route_prefix=app.app_config["route_prefix"],
         app_config_json=json.dumps(app.app_config),
     )
 
@@ -168,13 +167,13 @@ def redeem_screen_token(token: str):
     except Exception:
         flask.abort(401)
     flask.session["auth_token"] = (token, "")
-    return redirect(urljoin(APP_URL, "/"))
+    return redirect(app.config["APPLICATION_ROOT"])
 
 
 @app.route("/logout")
 def logout():
     flask.session.pop("auth_token", None)
-    return redirect(urljoin(APP_URL, "/"))
+    return redirect(app.config["APPLICATION_ROOT"])
 
 
 def shutdown():
@@ -227,6 +226,17 @@ class CommaSeparatedValues(click.ParamType):
     help="HTTP port to listen on (default: 8080)",
     envvar="SERVER_PORT",
     default=8080,
+)
+@click.option(
+    "--route-prefix",
+    help="""The URL prefix under which kube-ops-view is externally reachable
+    (for example, if kube-ops-view is served via a reverse proxy). Used for
+    generating relative and absolute links back to kube-ops-view itself. If the
+    URL has a path portion, it will be used to prefix all HTTP endpoints served
+    by kube-ops-view. If omitted, relevant URL components will be derived
+    automatically.""",
+    envvar="ROUTE_PREFIX",
+    default="/",
 )
 @click.option(
     "-d", "--debug", is_flag=True, help="Run in debugging mode", envvar="DEBUG"
@@ -300,6 +310,7 @@ def main(
     query_interval,
     node_link_url_template: str,
     pod_link_url_template: str,
+    route_prefix: str,
 ):
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
 
@@ -308,9 +319,11 @@ def main(
     app.debug = debug
     app.secret_key = secret_key
     app.store = store
+    app.config["APPLICATION_ROOT"] = route_prefix
     app.app_config = {
         "node_link_url_template": node_link_url_template,
         "pod_link_url_template": pod_link_url_template,
+        "route_prefix": route_prefix,
     }
 
     discoverer: Union[
