@@ -81,7 +81,7 @@ It should be as simple as:
 
 .. code-block:: bash
 
-    $ kubectl apply -f deploy  # apply all manifests from the folder
+    $ kubectl apply -k deploy  # apply all manifests from the folder
 
 Afterwards you can open "kube-ops-view" via kubectl port-forward:
 
