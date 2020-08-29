@@ -160,7 +160,7 @@ export default class Cluster extends PIXI.Graphics {
         topHandle.on('click', function(_event) {
             App.current.toggleCluster(that.cluster.id)
         })
-        const text = new PIXI.Text(this.cluster.api_server_url, {fontFamily: 'ShareTechMono', fontSize: 10, fill: 0x000000})
+        const text = new PIXI.Text(''.concat(this.cluster.api_server_url, ' (', this.cluster.id, ')'), {fontFamily: 'ShareTechMono', fontSize: 10, fill: 0x000000})
         text.x = 2
         text.y = 2
         topHandle.addChild(text)
